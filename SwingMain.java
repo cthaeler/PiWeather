@@ -48,7 +48,7 @@ class SwingMain
             DataValue dv = mValues.get(i);
 
             JLabel v = new JLabel(Double.toString(dv.getValue()));
-            v.setFont(new Font("Serif", Font.PLAIN, 64));
+            v.setFont(new Font("Serif", Font.PLAIN, 48));
             v.setAlignmentX(Component.LEFT_ALIGNMENT);
             leftPanel.add(v);
             
