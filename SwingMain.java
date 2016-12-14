@@ -7,6 +7,10 @@ import java.util.ArrayList;
 import java.awt.Image;
 import java.net.*;
 
+import java.net.URL;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.*;
+
 import javax.imageio.ImageIO;
 
 
@@ -43,7 +47,7 @@ class SwingMain
         
 
         mValues = new ArrayList<DataValue>();
-        LoadValues("foo.xml");
+        LoadValues("http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml");
         for (int i=0; i < mValues.size(); i++) {
             DataValue dv = mValues.get(i);
 
@@ -88,14 +92,61 @@ class SwingMain
         jfrm.setVisible(true);
     }
     
+    private static Document loadTestDocument(String url) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        return factory.newDocumentBuilder().parse(new URL(url).openStream());
+    }
+   
+    static String getCharacterDataFromElement(Element e) {
+        Node child = e.getFirstChild();
+        if (child instanceof CharacterData) {
+            CharacterData cd = (CharacterData) child;
+            return cd.getData();
+        }
+        return "?";
+    }
+
+    static double ReadValueFromDoc(Document doc, String e)
+    {
+        NodeList nodes = doc.getElementsByTagName(e);
+        // iterate the pressures
+        for (int i = 0; i < nodes.getLength(); i++) {
+           Element element = (Element) nodes.item(i);
+
+           NodeList value = element.getElementsByTagName("value");
+           Element line = (Element) value.item(0);
+           String strval = getCharacterDataFromElement(line);
+           if (strval.equals("NA"))
+            continue;
+           double d = Double.parseDouble(strval);
+           return d;
+        }
+        return 0;
+    }
+    
     public void LoadValues(String url)
     {
-        mValues.add(new DataValue(57.0, "Temperature"));
-        mValues.add(new DataValue(10.0, "Humidity"));
-        mValues.add(new DataValue(5.0, "Wind Speed"));
-        mValues.add(new DataValue(30.0, "Baraometer"));
-        mValues.add(new DataValue(60.0, "Dewpoint"));
-        mValues.add(new DataValue(10.0, "Visibility"));
+        Document doc;
+        try {
+            doc = loadTestDocument(url);
+        } catch (Exception e) {
+            return;
+        }
+        
+        double d;
+        d = ReadValueFromDoc(doc, "temperature");
+        mValues.add(new DataValue(d, "Temperature"));
+        d = ReadValueFromDoc(doc, "humidity");
+        mValues.add(new DataValue(d, "Humidity"));
+        d = ReadValueFromDoc(doc, "wind-speed");
+        mValues.add(new DataValue(d, "Wind Speed"));
+        d = ReadValueFromDoc(doc, "direction");
+        mValues.add(new DataValue(d, "Wind Direction"));
+        d = ReadValueFromDoc(doc, "pressure");
+        mValues.add(new DataValue(d, "Baraometer"));
+        //d = ReadValueFromDoc(doc, "visibility");
+        //mValues.add(new DataValue(d, "Visibility"));
     }
     
     public static void main(String args[])
