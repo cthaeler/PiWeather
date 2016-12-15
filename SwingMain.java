@@ -50,42 +50,26 @@ class SwingMain
         LoadValues("http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml");
         for (int i=0; i < mValues.size(); i++) {
             DataValue dv = mValues.get(i);
-
-            JLabel v = new JLabel(Double.toString(dv.getValue()));
-            v.setFont(new Font("Serif", Font.PLAIN, 48));
-            v.setAlignmentX(Component.LEFT_ALIGNMENT);
-            leftPanel.add(v);
-            
-            JLabel l = new JLabel(dv.getLabel());
-            l.setFont(new Font("Serif", Font.PLAIN, 10));
-            l.setAlignmentX(Component.LEFT_ALIGNMENT);
-            leftPanel.add(l);
+            leftPanel.add(dv.getValueLabel());
+            leftPanel.add(dv.getLegendLabel());
             
             leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         }
+        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
         mainPanel.add(leftPanel);
-        
-        
-        JEditorPane jep = new JEditorPane();
-        jep.setEditable(false);   
+        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+         
         
         try {
-          jep.setPage("http://www.soar-high.com/charlie/wx.html");
-          //jep.setPage("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif");
+          URL url = new URL("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif");
+          Image image = ImageIO.read(url);
+          JLabel imgLabel = new JLabel(new ImageIcon(image));
+          mainPanel.add(imgLabel);
         }catch (IOException e) {
-          jep.setContentType("text/html");
-          jep.setText("<html>Could not load</html>");
+          JLabel errorLabel = new JLabel("Wx Not Loaded");
+          mainPanel.add(errorLabel);
         }
         
-        JScrollPane scrollPane = new JScrollPane(jep);
-        //jfrm.getContentPane().add(scrollPane);
-        
-        //URL url = new URL("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif");
-        //URL url = new URL("http", "weather.rap.ucar.edu", 80, "/model/ruc12hr_sfc_prcp.gif");
-        //Image image = ImageIO.read(url);
-
-        //JLabel imgLabel = new JLabel(new ImageIcon(image));
-        mainPanel.add(jep);
         
         jfrm.add(mainPanel);
         // Display the frame.
@@ -98,7 +82,7 @@ class SwingMain
         return factory.newDocumentBuilder().parse(new URL(url).openStream());
     }
    
-    static String getCharacterDataFromElement(Element e) {
+    private static String getCharacterDataFromElement(Element e) {
         Node child = e.getFirstChild();
         if (child instanceof CharacterData) {
             CharacterData cd = (CharacterData) child;
@@ -107,7 +91,7 @@ class SwingMain
         return "?";
     }
 
-    static double ReadValueFromDoc(Document doc, String e)
+    private static double ReadValueFromDoc(Document doc, String e)
     {
         NodeList nodes = doc.getElementsByTagName(e);
         // iterate the pressures
@@ -125,7 +109,7 @@ class SwingMain
         return 0;
     }
     
-    public void LoadValues(String url)
+    private void LoadValues(String url)
     {
         Document doc;
         try {
