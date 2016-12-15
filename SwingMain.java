@@ -12,12 +12,18 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.*;
 
 import javax.imageio.ImageIO;
-
+import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 
 class SwingMain
 {
  
     private ArrayList<DataValue> mValues;
+    private JLabel mWxImageLabel;
+    
+    private Toolkit mToolkit;
+    private Timer mTimer;
     
     /**
      * Constructor for objects of class SwingMain
@@ -33,13 +39,16 @@ class SwingMain
         
         JPanel leftPanel = new JPanel();
         BoxLayout leftBox = new BoxLayout(leftPanel, BoxLayout.Y_AXIS);
-        leftPanel.setLayout(leftBox);               
-        // set properties
-        //jfrm.setSize(Toolkit.getDefaultToolkit().getScreenSize());
-        //jfrm.setUndecorated(true);
-        //jfrm.setVisible(true);
+        leftPanel.setLayout(leftBox);
         
-        jfrm.setSize(1024, 600);
+        if (System.getProperty("os.name").equals("Mac OS X")) {
+            jfrm.setSize(1024, 600);
+        } else {
+            // set properties
+            jfrm.setSize(Toolkit.getDefaultToolkit().getScreenSize());
+            jfrm.setUndecorated(true);
+        }
+        
 
         
         // Terminate the program when the user closes the application
@@ -47,7 +56,7 @@ class SwingMain
         
 
         mValues = new ArrayList<DataValue>();
-        LoadValues("http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml");
+        SetupValuesUI();
         for (int i=0; i < mValues.size(); i++) {
             DataValue dv = mValues.get(i);
             leftPanel.add(dv.getValueLabel());
@@ -63,13 +72,11 @@ class SwingMain
         try {
           URL url = new URL("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif");
           Image image = ImageIO.read(url);
-          JLabel imgLabel = new JLabel(new ImageIcon(image));
-          mainPanel.add(imgLabel);
+          mWxImageLabel = new JLabel(new ImageIcon(image));
         }catch (IOException e) {
-          JLabel errorLabel = new JLabel("Wx Not Loaded");
-          mainPanel.add(errorLabel);
+          mWxImageLabel = new JLabel("Wx Not Loaded");
         }
-        
+        mainPanel.add(mWxImageLabel);
         
         jfrm.add(mainPanel);
         // Display the frame.
@@ -109,36 +116,56 @@ class SwingMain
         return 0;
     }
     
-    private void LoadValues(String url)
+    private void SetupValuesUI()
+    {
+        mValues.add(new DataValue(0, "Temperature"));
+        mValues.add(new DataValue(0, "Humidity"));
+        mValues.add(new DataValue(0, "Wind Speed"));
+        mValues.add(new DataValue(0, "Wind Direction"));
+        mValues.add(new DataValue(0, "Baraometer"));
+    }
+    
+    private void UpdateValues()
     {
         Document doc;
         try {
-            doc = loadTestDocument(url);
+            doc = loadTestDocument("http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml");
         } catch (Exception e) {
             return;
         }
-        
         double d;
         d = ReadValueFromDoc(doc, "temperature");
-        mValues.add(new DataValue(d, "Temperature"));
+        mValues.get(0).setValue(d);
         d = ReadValueFromDoc(doc, "humidity");
-        mValues.add(new DataValue(d, "Humidity"));
+        mValues.get(1).setValue(d);
         d = ReadValueFromDoc(doc, "wind-speed");
-        mValues.add(new DataValue(d, "Wind Speed"));
+        mValues.get(2).setValue(d);
         d = ReadValueFromDoc(doc, "direction");
-        mValues.add(new DataValue(d, "Wind Direction"));
+        mValues.get(3).setValue(d);
         d = ReadValueFromDoc(doc, "pressure");
-        mValues.add(new DataValue(d, "Baraometer"));
-        //d = ReadValueFromDoc(doc, "visibility");
-        //mValues.add(new DataValue(d, "Visibility"));
+        mValues.get(4).setValue(d);
+        
+        try {
+          URL imgURL = new URL("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif");
+          Image image = ImageIO.read(imgURL);
+          mWxImageLabel.setIcon(new ImageIcon(image));
+        }catch (IOException e) {
+          mWxImageLabel.setText("Wx Not Loaded");
+        }
     }
     
+    public void UpdateUI()
+    {
+        UpdateValues();
+    }
+  
     public static void main(String args[])
     {
         // Create the frame on the event dispatching thread.
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                new SwingMain();
+                SwingMain m = new SwingMain();
+                new UpdateUITimer(30, m);
             }
         });
     }
