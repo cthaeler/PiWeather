@@ -16,11 +16,15 @@ import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+
 class SwingMain
 {
  
     private ArrayList<DataValue> mValues;
     private JLabel mWxImageLabel;
+    private JLabel mUpdateTimeLabel;
     
     private Toolkit mToolkit;
     private Timer mTimer;
@@ -32,7 +36,10 @@ class SwingMain
     {
         // Create a new JFrame container.
         JFrame jfrm = new JFrame("A Simple Swing Application");
-        //frm.setLayout(new FlowLayout());
+
+        // Terminate the program when the user closes the application
+        jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         JPanel mainPanel = new JPanel();
         BoxLayout frameBox = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
         mainPanel.setLayout(frameBox);
@@ -51,10 +58,11 @@ class SwingMain
         
 
         
-        // Terminate the program when the user closes the application
-        jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
 
+        
+        mUpdateTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
+        leftPanel.add(mUpdateTimeLabel);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         mValues = new ArrayList<DataValue>();
         SetupValuesUI();
         for (int i=0; i < mValues.size(); i++) {
@@ -67,20 +75,16 @@ class SwingMain
         mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
         mainPanel.add(leftPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
-         
-        
-        try {
-          URL url = new URL("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif");
-          Image image = ImageIO.read(url);
-          mWxImageLabel = new JLabel(new ImageIcon(image));
-        }catch (IOException e) {
-          mWxImageLabel = new JLabel("Wx Not Loaded");
-        }
+
+        mWxImageLabel = new JLabel("Wx Map");
         mainPanel.add(mWxImageLabel);
         
         jfrm.add(mainPanel);
+        
         // Display the frame.
         jfrm.setVisible(true);
+        
+        //UpdateValues();
     }
     
     private static Document loadTestDocument(String url) throws Exception {
@@ -127,30 +131,41 @@ class SwingMain
     
     private void UpdateValues()
     {
-        Document doc;
-        try {
-            doc = loadTestDocument("http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml");
-        } catch (Exception e) {
-            return;
-        }
-        double d;
-        d = ReadValueFromDoc(doc, "temperature");
-        mValues.get(0).setValue(d);
-        d = ReadValueFromDoc(doc, "humidity");
-        mValues.get(1).setValue(d);
-        d = ReadValueFromDoc(doc, "wind-speed");
-        mValues.get(2).setValue(d);
-        d = ReadValueFromDoc(doc, "direction");
-        mValues.get(3).setValue(d);
-        d = ReadValueFromDoc(doc, "pressure");
-        mValues.get(4).setValue(d);
-        
+        String tstr = DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now());
+        mUpdateTimeLabel.setText(tstr);
+
         try {
           URL imgURL = new URL("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif");
           Image image = ImageIO.read(imgURL);
           mWxImageLabel.setIcon(new ImageIcon(image));
-        }catch (IOException e) {
+        } catch (IOException e) {
           mWxImageLabel.setText("Wx Not Loaded");
+        }
+        
+        try {
+            String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            URL url = new URL(urlstr);
+            //InputStream iStream = url.openStream();
+            
+            Document doc = factory.newDocumentBuilder().parse(url.openStream());
+            
+            double d;
+            d = ReadValueFromDoc(doc, "temperature");
+            mValues.get(0).setValue(d);
+            d = ReadValueFromDoc(doc, "humidity");
+            mValues.get(1).setValue(d);
+            d = ReadValueFromDoc(doc, "wind-speed");
+            mValues.get(2).setValue(d);
+            d = ReadValueFromDoc(doc, "direction");
+            mValues.get(3).setValue(d);
+            d = ReadValueFromDoc(doc, "pressure");
+            mValues.get(4).setValue(d);
+        } catch (Exception e) {
+            for (int i=0; i < mValues.size(); i++) {
+                mValues.get(i).setValue(99.99);
+            }
         }
     }
     
@@ -165,7 +180,7 @@ class SwingMain
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 SwingMain m = new SwingMain();
-                new UpdateUITimer(30, m);
+                new UpdateUITimer(60, m);
             }
         });
     }

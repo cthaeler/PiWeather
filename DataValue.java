@@ -42,7 +42,7 @@ public class DataValue
         mDataLabel.setFont(new Font("Serif", Font.PLAIN, 48));
         mDataLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mLegendLabel = new JLabel(mLegend);
-        mLegendLabel.setFont(new Font("Serif", Font.PLAIN, 10));
+        mLegendLabel.setFont(new Font("Serif", Font.PLAIN, 14));
         mLegendLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     }
     
