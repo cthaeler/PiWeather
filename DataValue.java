@@ -1,8 +1,7 @@
-
 /**
  * Write a description of class DataValue here.
  * 
- * @author Charles Thaeler 
+ * @author Charles Thaeler <cst@soar-high.com>
  * @version 0.1
  */
 import javax.swing.*;

@@ -1,8 +1,8 @@
 /**
- * Write a description of class UpdateUITimer here.
+ * Write a description of class MapUpdateTimer here.
  * 
  * @author Charles Thaeler <cst@soar-high.com>
- * @version (a version number or a date)
+ * @version 0.1
  */
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,13 +12,12 @@ import java.util.TimerTask;
  * seconds have passed.
  */
 
-public class UpdateUITimer {
+public class MapUpdateTimer {
   //Toolkit toolkit;
   Timer timer;
   PiWeather mMain;
 
-  public UpdateUITimer(int seconds, PiWeather main) {
-    //toolkit = Toolkit.getDefaultToolkit();
+  public MapUpdateTimer(int seconds, PiWeather main) {
     timer = new Timer();
     timer.schedule(new RemindTask(), 0, seconds * 1000);
     mMain = main;
@@ -26,7 +25,7 @@ public class UpdateUITimer {
 
   class RemindTask extends TimerTask {
     public void run() {
-      mMain.UpdateUI();
+      mMain.UpdateWxMap();
     }
   }
 

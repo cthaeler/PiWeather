@@ -1,4 +1,10 @@
-// Main for Swing Mandelbrot
+/**
+ * Main for PiWeather
+ * 
+ * @author Charles Thaeler <cst@soar-high.com>
+ * @version 0.1
+ */
+
 import java.awt.event.*;
 import javax.swing.*;
 import java.awt.*;
@@ -24,6 +30,8 @@ class PiWeather
 {
  
     private ArrayList<DataValue> mValues;
+    private ArrayList<String> mMapURLs;
+    private int mCurMap;
     private JLabel mWxImageLabel;
     private JLabel mUpdateTimeLabel;
     private JButton mQuitButton;
@@ -36,6 +44,8 @@ class PiWeather
      */
     PiWeather()
     {
+        SetupMapList();
+        
         // Create a new JFrame container.
         JFrame jfrm = new JFrame("A Simple Swing Application");
 
@@ -69,8 +79,6 @@ class PiWeather
         
         leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
         
-        mValues = new ArrayList<DataValue>();
-        
         SetupValuesUI();
         
         for (int i=0; i < mValues.size(); i++) {
@@ -101,8 +109,6 @@ class PiWeather
         
         // Display the frame.
         jfrm.setVisible(true);
-        
-        //UpdateValues();
     }
         
     private static Document loadTestDocument(String url) throws Exception {
@@ -138,8 +144,22 @@ class PiWeather
         return 0;
     }
     
+    private void SetupMapList()
+    {
+        mMapURLs = new ArrayList<String>();
+        mCurMap = 0;
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif"));  // Precipitation
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptyp.gif"));  // Precipitation Type
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_wind.gif"));  // Surface Winds
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_temp.gif"));  // Temperature
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif"));  // Radar Reflectivity
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_0_clouds.gif"));  // Clouds
+        mMapURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_WMC_vis.jpg"));  // Sat image
+    }
+    
     private void SetupValuesUI()
     {
+        mValues = new ArrayList<DataValue>();
         mValues.add(new DataValue(0, "Temperature"));
         mValues.add(new DataValue(0, "Humidity"));
         mValues.add(new DataValue(0, "Wind Speed"));
@@ -147,18 +167,23 @@ class PiWeather
         mValues.add(new DataValue(0, "Baraometer"));
     }
     
-    private void UpdateValues()
+    private void UpdateMap()
     {
-        String tstr = DateTimeFormatter.ofPattern("HH:mm").format(LocalTime.now());
-        mUpdateTimeLabel.setText(tstr);
-
         try {
-          URL imgURL = new URL("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif");
+          mCurMap++;
+          if (mCurMap >= mMapURLs.size()) mCurMap=0;
+          URL imgURL = new URL(mMapURLs.get(mCurMap));
           Image image = ImageIO.read(imgURL);
           mWxImageLabel.setIcon(new ImageIcon(image));
         } catch (IOException e) {
           mWxImageLabel.setText("Wx Not Loaded");
         }
+    }
+    
+    private void UpdateValues()
+    {
+        String tstr = DateTimeFormatter.ofPattern("HH:mm").format(LocalTime.now());
+        mUpdateTimeLabel.setText(tstr);
         
         try {
             String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
@@ -191,7 +216,12 @@ class PiWeather
     {
         UpdateValues();
     }
-  
+    
+    public void UpdateWxMap()
+    {
+        UpdateMap();
+    }
+    
     public static void main(String args[])
     {
         // Create the frame on the event dispatching thread.
@@ -199,6 +229,7 @@ class PiWeather
             public void run() {
                 PiWeather m = new PiWeather();
                 new UpdateUITimer(60, m);
+                new MapUpdateTimer(10, m);
             }
         });
     }
