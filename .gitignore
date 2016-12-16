@@ -1,11 +1,1 @@
-SwingMain$1.class
-SwingMain.class
-DataValue.class
-UpdateUITimer$RemindTask.class
-UpdateUITimer.class
-SwingMain$2.class
-MapUpdateTimer$RemindTask.class
-MapUpdateTimer.class
-PiWeather$1.class
-PiWeather$2.class
-PiWeather.class
+*.class

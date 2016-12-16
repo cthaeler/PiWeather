@@ -71,9 +71,9 @@ class PiWeather
         }
         
        
-        mUpdateTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm").format(LocalTime.now()));
+        mUpdateTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
         mUpdateTimeLabel.setForeground(Color.white);
-        mUpdateTimeLabel.setFont(new Font("Serif", Font.PLAIN, 48));
+        mUpdateTimeLabel.setFont(new Font("Serif", Font.PLAIN, 36));
         
         leftPanel.add(mUpdateTimeLabel);
         
@@ -180,11 +180,15 @@ class PiWeather
         }
     }
     
+    private void UpdateTimeDisplay()
+    {
+        String tstr = DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now());
+        mUpdateTimeLabel.setText(tstr);
+    }
+    
     private void UpdateValues()
     {
-        String tstr = DateTimeFormatter.ofPattern("HH:mm").format(LocalTime.now());
-        mUpdateTimeLabel.setText(tstr);
-        
+
         try {
             String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -222,6 +226,11 @@ class PiWeather
         UpdateMap();
     }
     
+    public void UpdateTimeUI()
+    {
+        UpdateTimeDisplay();
+    }
+    
     public static void main(String args[])
     {
         // Create the frame on the event dispatching thread.
@@ -230,6 +239,7 @@ class PiWeather
                 PiWeather m = new PiWeather();
                 new UpdateUITimer(60, m);
                 new MapUpdateTimer(10, m);
+                new TimeUpdateTimer(1, m);
             }
         });
     }

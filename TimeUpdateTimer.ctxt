@@ -1,0 +1,5 @@
+#BlueJ class context
+comment0.target=TimeUpdateTimer
+comment1.params=seconds\ main
+comment1.target=TimeUpdateTimer(int,\ PiWeather)
+numComments=2
