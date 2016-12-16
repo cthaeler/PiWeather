@@ -20,7 +20,7 @@ import java.util.TimerTask;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
-class SwingMain
+class PiWeather
 {
  
     private ArrayList<DataValue> mValues;
@@ -32,9 +32,9 @@ class SwingMain
     private Timer mTimer;
     
     /**
-     * Constructor for objects of class SwingMain
+     * Constructor for objects of class PiWeather
      */
-    SwingMain()
+    PiWeather()
     {
         // Create a new JFrame container.
         JFrame jfrm = new JFrame("A Simple Swing Application");
@@ -60,16 +60,19 @@ class SwingMain
             jfrm.setUndecorated(true);
         }
         
-
-        
-
-        
-        mUpdateTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
+       
+        mUpdateTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm").format(LocalTime.now()));
         mUpdateTimeLabel.setForeground(Color.white);
+        mUpdateTimeLabel.setFont(new Font("Serif", Font.PLAIN, 48));
+        
         leftPanel.add(mUpdateTimeLabel);
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
+        
         mValues = new ArrayList<DataValue>();
+        
         SetupValuesUI();
+        
         for (int i=0; i < mValues.size(); i++) {
             DataValue dv = mValues.get(i);
             leftPanel.add(dv.getValueLabel());
@@ -146,7 +149,7 @@ class SwingMain
     
     private void UpdateValues()
     {
-        String tstr = DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now());
+        String tstr = DateTimeFormatter.ofPattern("HH:mm").format(LocalTime.now());
         mUpdateTimeLabel.setText(tstr);
 
         try {
@@ -194,7 +197,7 @@ class SwingMain
         // Create the frame on the event dispatching thread.
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                SwingMain m = new SwingMain();
+                PiWeather m = new PiWeather();
                 new UpdateUITimer(60, m);
             }
         });

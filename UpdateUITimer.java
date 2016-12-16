@@ -17,9 +17,9 @@ import java.util.TimerTask;
 public class UpdateUITimer {
   //Toolkit toolkit;
   Timer timer;
-  SwingMain mMain;
+  PiWeather mMain;
 
-  public UpdateUITimer(int seconds, SwingMain main) {
+  public UpdateUITimer(int seconds, PiWeather main) {
     //toolkit = Toolkit.getDefaultToolkit();
     timer = new Timer();
     timer.schedule(new RemindTask(), 0, seconds * 1000);
