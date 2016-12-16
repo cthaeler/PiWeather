@@ -1,4 +1,5 @@
 // Main for Swing Mandelbrot
+import java.awt.event.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -25,6 +26,7 @@ class SwingMain
     private ArrayList<DataValue> mValues;
     private JLabel mWxImageLabel;
     private JLabel mUpdateTimeLabel;
+    private JButton mQuitButton;
     
     private Toolkit mToolkit;
     private Timer mTimer;
@@ -41,12 +43,14 @@ class SwingMain
         jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel mainPanel = new JPanel();
+        mainPanel.setBackground(Color.BLACK);
         BoxLayout frameBox = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
         mainPanel.setLayout(frameBox);
         
         JPanel leftPanel = new JPanel();
         BoxLayout leftBox = new BoxLayout(leftPanel, BoxLayout.Y_AXIS);
         leftPanel.setLayout(leftBox);
+        leftPanel.setBackground(Color.BLACK);
         
         if (System.getProperty("os.name").equals("Mac OS X")) {
             jfrm.setSize(1024, 600);
@@ -61,6 +65,7 @@ class SwingMain
 
         
         mUpdateTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
+        mUpdateTimeLabel.setForeground(Color.white);
         leftPanel.add(mUpdateTimeLabel);
         leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         mValues = new ArrayList<DataValue>();
@@ -72,6 +77,16 @@ class SwingMain
             
             leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         }
+        mQuitButton = new JButton("Quit");
+        mQuitButton.setActionCommand("quit");
+        
+        mQuitButton.addActionListener(new ActionListener() {
+             public void actionPerformed(ActionEvent e) {
+                    System.exit(0);
+             }          
+          });
+        leftPanel.add(mQuitButton);
+        
         mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
         mainPanel.add(leftPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
@@ -86,7 +101,7 @@ class SwingMain
         
         //UpdateValues();
     }
-    
+        
     private static Document loadTestDocument(String url) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
