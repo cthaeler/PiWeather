@@ -128,19 +128,27 @@ class PiWeather
 
     private static double ReadValueFromDoc(Document doc, String e)
     {
-        NodeList nodes = doc.getElementsByTagName(e);
-        // iterate the pressures
-        for (int i = 0; i < nodes.getLength(); i++) {
-           Element element = (Element) nodes.item(i);
+        NodeList dataNodes = doc.getElementsByTagName("data");
+        for (int n = 0; n < dataNodes.getLength(); n++) {
+            Element element = (Element) dataNodes.item(n);
+            String typeString = element.getAttribute("type");
+            if (typeString.equals("current observations")) {
+                NodeList nodes = element.getElementsByTagName(e);
+                // iterate the pressures
+                for (int i = 0; i < nodes.getLength(); i++) {
+                   Element childElement = (Element) nodes.item(i);
+                   NodeList value = childElement.getElementsByTagName("value");
+                   Element line = (Element) value.item(0);
+                   String strval = getCharacterDataFromElement(line);   
+                   if (strval.equals("NA"))
+                    continue;
+                   double d = Double.parseDouble(strval);
+                   return d;
+                }
 
-           NodeList value = element.getElementsByTagName("value");
-           Element line = (Element) value.item(0);
-           String strval = getCharacterDataFromElement(line);
-           if (strval.equals("NA"))
-            continue;
-           double d = Double.parseDouble(strval);
-           return d;
+            }
         }
+        
         return 0;
     }
     
