@@ -47,7 +47,7 @@ class PiWeather
         SetupMapList();
         
         // Create a new JFrame container.
-        JFrame jfrm = new JFrame("A Simple Swing Application");
+        JFrame jfrm = new JFrame("Pi Wx Display");
 
         // Terminate the program when the user closes the application
         jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -177,26 +177,30 @@ class PiWeather
         mValues.add(new DataValue(0, "Baraometer"));
     }
     
-    private void UpdateMap()
+    public void UpdateWxMap()
     {
+        
         try {
           mCurMap++;
           if (mCurMap >= mMapURLs.size()) mCurMap=0;
           URL imgURL = new URL(mMapURLs.get(mCurMap));
           Image image = ImageIO.read(imgURL);
-          mWxImageLabel.setIcon(new ImageIcon(image));
+          if (image.getHeight(null) > 500)
+            mWxImageLabel.setIcon(new ImageIcon(image.getScaledInstance(500, -1, Image.SCALE_AREA_AVERAGING)));
+           else
+            mWxImageLabel.setIcon(new ImageIcon(image));
         } catch (IOException e) {
           mWxImageLabel.setText("Wx Not Loaded");
         }
     }
     
-    private void UpdateTimeDisplay()
+    public void UpdateClock()
     {
         String tstr = DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now());
         mUpdateTimeLabel.setText(tstr);
     }
     
-    private void UpdateValues()
+    public void UpdateDataValues()
     {
 
         try {
@@ -226,30 +230,16 @@ class PiWeather
         }
     }
     
-    public void UpdateUI()
-    {
-        UpdateValues();
-    }
-    
-    public void UpdateWxMap()
-    {
-        UpdateMap();
-    }
-    
-    public void UpdateTimeUI()
-    {
-        UpdateTimeDisplay();
-    }
     
     public static void main(String args[])
     {
         // Create the frame on the event dispatching thread.
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                PiWeather m = new PiWeather();
-                new UpdateUITimer(60, m);
-                new MapUpdateTimer(10, m);
-                new TimeUpdateTimer(1, m);
+                PiWeather piWXMain = new PiWeather();
+                new UpdateUITimer(60, piWXMain);
+                new MapUpdateTimer(10, piWXMain);
+                new TimeUpdateTimer(1, piWXMain);
             }
         });
     }

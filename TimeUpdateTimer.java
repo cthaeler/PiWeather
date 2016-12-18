@@ -21,7 +21,7 @@ public class TimeUpdateTimer
 
   class RemindTask extends TimerTask {
     public void run() {
-      mMain.UpdateTimeUI();
+      mMain.UpdateClock();
     }
   }
 
