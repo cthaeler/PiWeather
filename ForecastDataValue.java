@@ -24,7 +24,7 @@ public class ForecastDataValue
     public ForecastDataValue()
     {
         // initialise instance variables
-        mTemp = 99.0;
+        mTemp = 999;
         mIconURL = "";
         CreateUIComponents();
     }
@@ -44,7 +44,7 @@ public class ForecastDataValue
         mLabelIcon = new JLabel("");
         
         mLegendLabel = new JLabel("");
-        mLegendLabel.setFont(new Font("Serif", Font.PLAIN, 14));
+        mLegendLabel.setFont(new Font("Serif", Font.PLAIN, 36));
         mLegendLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mLegendLabel.setForeground(Color.white);
     }
@@ -55,8 +55,8 @@ public class ForecastDataValue
         try {
           URL imgURL = new URL(mIconURL);
           Image image = ImageIO.read(imgURL);
-          if (image.getHeight(null) > 60)
-            mLabelIcon.setIcon(new ImageIcon(image.getScaledInstance(60, -1, Image.SCALE_AREA_AVERAGING)));
+          if (image.getHeight(null) > 75)
+            mLabelIcon.setIcon(new ImageIcon(image.getScaledInstance(75, -1, Image.SCALE_AREA_AVERAGING)));
           else
             mLabelIcon.setIcon(new ImageIcon(image));
         } catch (IOException e) {

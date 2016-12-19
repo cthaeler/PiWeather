@@ -116,9 +116,14 @@ class PiWeather
         rightPanel.setLayout(rightBox);
         rightPanel.setBackground(Color.BLACK);
         
-        SetupForecastUI();
+        mForecastValues = new ArrayList<ForecastDataValue>();
+        for (int fc = 0; fc < 14; fc++) {
+            ForecastDataValue fv = new ForecastDataValue();
+            mForecastValues.add(fv);
+        }
         
-        for (int i=-1; i < mForecastValues.size(); i+=2) {
+       
+        for (int i=-1; i < mForecastValues.size()-1; i+=2) {
             JPanel pairPanel = new JPanel();
             pairPanel.setBackground(Color.BLACK);
             BoxLayout pairBox = new BoxLayout(pairPanel, BoxLayout.X_AXIS);
@@ -127,26 +132,26 @@ class PiWeather
             if (i == -1) {
                 // Just a Layout label 
                 JLabel dummy = new JLabel("Forecast");
-                dummy.setFont(new Font("Serif", Font.PLAIN, 20));
+                dummy.setFont(new Font("Serif", Font.PLAIN, 32));
                 dummy.setAlignmentX(Component.LEFT_ALIGNMENT);
                 dummy.setForeground(Color.white);
                 pairPanel.add(dummy);
-                pairPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+                pairPanel.add(Box.createRigidArea(new Dimension(35, 0)));
             } else {
                 JPanel forecastPanel = new JPanel();
                 forecastPanel.setBackground(Color.BLACK);
-                BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.Y_AXIS);
+                BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.X_AXIS);
                 forecastPanel.setLayout(forecastBox);
      
                 ForecastDataValue lfv = mForecastValues.get(i);
-                forecastPanel.add(lfv.getValueIcon());
                 forecastPanel.add(lfv.getLegendLabel());
+                forecastPanel.add(lfv.getValueIcon());
                 pairPanel.add(forecastPanel);
                 pairPanel.add(Box.createRigidArea(new Dimension(25, 0)));
             }
             JPanel forecastPanel = new JPanel();
             forecastPanel.setBackground(Color.BLACK);
-            BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.Y_AXIS);
+            BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.X_AXIS);
             forecastPanel.setLayout(forecastBox);
             ForecastDataValue rfv = mForecastValues.get(i+1);
             forecastPanel.add(rfv.getValueIcon());
@@ -229,7 +234,6 @@ class PiWeather
     
     public void UpdateWxMap()
     {
-        
         try {
           mCurMap++;
           if (mCurMap >= mMapURLs.size()) mCurMap=0;
@@ -278,45 +282,7 @@ class PiWeather
         }
     }
     
-    private void SetupForecastUI()
-    {
-        mForecastValues = new ArrayList<ForecastDataValue>();
-        try {
-            String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            URL url = new URL(urlstr);
-            
-            Document doc = factory.newDocumentBuilder().parse(url.openStream());
-            NodeList dataNodes = doc.getElementsByTagName("data");
-            int numDataNodes = dataNodes.getLength();
-            for (int n = 0; n < dataNodes.getLength(); n++) {
-                Element dataElement = (Element) dataNodes.item(n);
-                String typeString = dataElement.getAttribute("type");
-                if (typeString.equals("forecast")) {
-                    // found the forecasts, now find the conditions icons
-                    NodeList conditionNodes = dataElement.getElementsByTagName("conditions-icon");
-                    int numConditionNodes = conditionNodes.getLength();
-                    if (conditionNodes.getLength() > 0) {
-                        Element childElement = (Element) conditionNodes.item(0);
-                        NodeList iconNodes = childElement.getElementsByTagName("icon-link");
-                        int numIconNodes = iconNodes.getLength();
-                        
-                        // iterate the icons
-                        for (int i = 0; i < iconNodes.getLength(); i++) {
-                           Element iconElement = (Element) iconNodes.item(i);
-                           String iconURL = getCharacterDataFromElement(iconElement);
-                           ForecastDataValue val = new ForecastDataValue(iconURL, 99.0);
-                           mForecastValues.add(val);
-                        }
-                    }
-                    return;
-                }
-            }
-        } catch (Exception e) {
-            // do nothing :(
-        }
-    }
+    
     
     public void UpdateForecastValues()
     {
