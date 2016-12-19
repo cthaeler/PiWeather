@@ -59,17 +59,7 @@ public class DataValue
         mLegend = s;
         mLegendLabel.setText(mLegend);
     }
-    
-    public double getValue()
-    {
-        return mValue;
-    }
-    
-    public String getLegend()
-    {
-        return mLegend;
-    }
-    
+ 
     public JLabel getValueLabel()
     {
         return mDataLabel;

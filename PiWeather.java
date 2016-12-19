@@ -4,9 +4,8 @@
  * @author Charles Thaeler <cst@soar-high.com>
  * @version 0.1
  */
-
-import java.awt.event.*;
 import javax.swing.*;
+import java.awt.event.*;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
@@ -31,6 +30,7 @@ class PiWeather
  
     private ArrayList<DataValue> mValues;
     private ArrayList<String> mMapURLs;
+    private ArrayList<ForecastDataValue> mForecastValues;
     private int mCurMap;
     private JLabel mWxImageLabel;
     private JLabel mUpdateTimeLabel;
@@ -51,17 +51,6 @@ class PiWeather
 
         // Terminate the program when the user closes the application
         jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        JPanel mainPanel = new JPanel();
-        mainPanel.setBackground(Color.BLACK);
-        BoxLayout frameBox = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
-        mainPanel.setLayout(frameBox);
-        
-        JPanel leftPanel = new JPanel();
-        BoxLayout leftBox = new BoxLayout(leftPanel, BoxLayout.Y_AXIS);
-        leftPanel.setLayout(leftBox);
-        leftPanel.setBackground(Color.BLACK);
-        
         if (System.getProperty("os.name").equals("Mac OS X")) {
             jfrm.setSize(1024, 600);
         } else {
@@ -69,6 +58,19 @@ class PiWeather
             jfrm.setSize(Toolkit.getDefaultToolkit().getScreenSize());
             jfrm.setUndecorated(true);
         }
+        
+        // Main panel to add the sub panels too
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBackground(Color.BLACK);
+        BoxLayout frameBox = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
+        mainPanel.setLayout(frameBox);
+        
+        /* Left Panel for the local current observations */
+        JPanel leftPanel = new JPanel();
+        BoxLayout leftBox = new BoxLayout(leftPanel, BoxLayout.Y_AXIS);
+        leftPanel.setLayout(leftBox);
+        leftPanel.setBackground(Color.BLACK);
+        
         
        
         mUpdateTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
@@ -102,21 +104,66 @@ class PiWeather
         mainPanel.add(leftPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
 
+        // Center Panel for the weather map images
         mWxImageLabel = new JLabel("Wx Map");
         mainPanel.add(mWxImageLabel);
         
+        // right panel for the forcast info
+        JPanel rightPanel = new JPanel();
+        BoxLayout rightBox = new BoxLayout(rightPanel, BoxLayout.Y_AXIS);
+        rightPanel.setLayout(rightBox);
+        rightPanel.setBackground(Color.BLACK);
+        
+        SetupForecastUI();
+        
+        for (int i=-1; i < mForecastValues.size(); i+=2) {
+            JPanel pairPanel = new JPanel();
+            pairPanel.setBackground(Color.BLACK);
+            BoxLayout pairBox = new BoxLayout(pairPanel, BoxLayout.X_AXIS);
+            pairPanel.setLayout(pairBox);
+            // left one
+            if (i == -1) {
+                // dummy 
+                JLabel dummy = new JLabel("Forecast");
+                dummy.setFont(new Font("Serif", Font.PLAIN, 24));
+                dummy.setAlignmentX(Component.LEFT_ALIGNMENT);
+                dummy.setForeground(Color.white);
+                pairPanel.add(dummy);
+                pairPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+            } else {
+                JPanel forecastPanel = new JPanel();
+                forecastPanel.setBackground(Color.BLACK);
+                BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.Y_AXIS);
+                forecastPanel.setLayout(forecastBox);
+     
+                ForecastDataValue lfv = mForecastValues.get(i);
+                forecastPanel.add(lfv.getValueIcon());
+                forecastPanel.add(lfv.getLegendLabel());
+                pairPanel.add(forecastPanel);
+            }
+            JPanel forecastPanel = new JPanel();
+            forecastPanel.setBackground(Color.BLACK);
+            BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.Y_AXIS);
+            forecastPanel.setLayout(forecastBox);
+            ForecastDataValue rfv = mForecastValues.get(i+1);
+            forecastPanel.add(rfv.getValueIcon());
+            forecastPanel.add(rfv.getLegendLabel());
+            pairPanel.add(forecastPanel);
+
+            rightPanel.add(pairPanel);
+            rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        }
+        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        mainPanel.add(rightPanel);
+        
+        // Add the panel to the frame
         jfrm.add(mainPanel);
         
         // Display the frame.
         jfrm.setVisible(true);
     }
         
-    private static Document loadTestDocument(String url) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        return factory.newDocumentBuilder().parse(new URL(url).openStream());
-    }
-   
+    
     private static String getCharacterDataFromElement(Element e) {
         Node child = e.getFirstChild();
         if (child instanceof CharacterData) {
@@ -202,13 +249,11 @@ class PiWeather
     
     public void UpdateDataValues()
     {
-
         try {
             String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             URL url = new URL(urlstr);
-            //InputStream iStream = url.openStream();
             
             Document doc = factory.newDocumentBuilder().parse(url.openStream());
             
@@ -227,6 +272,108 @@ class PiWeather
             for (int i=0; i < mValues.size(); i++) {
                 mValues.get(i).setValue(99.99);
             }
+        }
+    }
+    
+    private void SetupForecastUI()
+    {
+        mForecastValues = new ArrayList<ForecastDataValue>();
+        try {
+            String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            URL url = new URL(urlstr);
+            
+            Document doc = factory.newDocumentBuilder().parse(url.openStream());
+            NodeList dataNodes = doc.getElementsByTagName("data");
+            int numDataNodes = dataNodes.getLength();
+            for (int n = 0; n < dataNodes.getLength(); n++) {
+                Element dataElement = (Element) dataNodes.item(n);
+                String typeString = dataElement.getAttribute("type");
+                if (typeString.equals("forecast")) {
+                    // found the forecasts, now find the conditions icons
+                    NodeList conditionNodes = dataElement.getElementsByTagName("conditions-icon");
+                    int numConditionNodes = conditionNodes.getLength();
+                    if (conditionNodes.getLength() > 0) {
+                        Element childElement = (Element) conditionNodes.item(0);
+                        NodeList iconNodes = childElement.getElementsByTagName("icon-link");
+                        int numIconNodes = iconNodes.getLength();
+                        
+                        // iterate the icons
+                        for (int i = 0; i < iconNodes.getLength(); i++) {
+                           Element iconElement = (Element) iconNodes.item(i);
+                           String iconURL = getCharacterDataFromElement(iconElement);
+                           ForecastDataValue val = new ForecastDataValue(iconURL, 99.0);
+                           mForecastValues.add(val);
+                        }
+                    }
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            // do nothing :(
+        }
+    }
+    
+    public void UpdateForecastValues()
+    {
+        try {
+            String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            URL url = new URL(urlstr);
+            
+            Document doc = factory.newDocumentBuilder().parse(url.openStream());
+            NodeList dataNodes = doc.getElementsByTagName("data");
+            int numDataNodes = dataNodes.getLength();
+            for (int n = 0; n < dataNodes.getLength(); n++) {
+                // first let's find the icon data
+                Element dataElement = (Element) dataNodes.item(n);
+                String typeString = dataElement.getAttribute("type");
+                if (typeString.equals("forecast")) {
+                    // found the forecasts, now find the conditions icons
+                    NodeList conditionNodes = dataElement.getElementsByTagName("conditions-icon");
+                    int numConditionNodes = conditionNodes.getLength();
+                    if (conditionNodes.getLength() > 0) {
+                        Element childElement = (Element) conditionNodes.item(0);
+                        NodeList iconNodes = childElement.getElementsByTagName("icon-link");
+                        int numIconNodes = iconNodes.getLength();
+                        
+                        // iterate the icons
+                        for (int i = 0; i < iconNodes.getLength(); i++) {
+                           Element iconElement = (Element) iconNodes.item(i);
+                           String iconURL = getCharacterDataFromElement(iconElement);
+                           mForecastValues.get(i).setIconURL(iconURL);
+                        }
+                    }
+                    
+                    // Now let's find the min and max temperature data
+                    NodeList tempNodes = dataElement.getElementsByTagName("temperature");
+                    int numTempNodes = tempNodes.getLength();
+                    for (int t = 0; t < tempNodes.getLength(); t++) {
+                        Element tempElement = (Element) tempNodes.item(t);
+                        String tempType = tempElement.getAttribute("type"); // this should be "minimum" or "maximum"
+                        NodeList tempValueNodes = tempElement.getElementsByTagName("value");
+                        for (int v = 0; v < tempValueNodes.getLength(); v++) {
+                            Element value = (Element) tempValueNodes.item(v);
+                            String strval = getCharacterDataFromElement(value);   
+                            double d = Double.parseDouble(strval);
+                            int valueIndex = 0;
+                            if (tempType.equals("minimum")) {
+                                // set a minimum value
+                                valueIndex = v*2 + 1;
+                            } else {
+                                // set a maximum value
+                                valueIndex = v*2;
+                            }
+                            if (valueIndex < mForecastValues.size())
+                                mForecastValues.get(valueIndex).setTemp(d);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // do nothing :(
         }
     }
     
