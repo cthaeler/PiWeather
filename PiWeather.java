@@ -105,8 +105,10 @@ class PiWeather
         mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
 
         // Center Panel for the weather map images
-        mWxImageLabel = new JLabel("Wx Map");
+        mWxImageLabel = new JLabel("");
         mainPanel.add(mWxImageLabel);
+        
+        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
         
         // right panel for the forcast info
         JPanel rightPanel = new JPanel();
@@ -123,9 +125,9 @@ class PiWeather
             pairPanel.setLayout(pairBox);
             // left one
             if (i == -1) {
-                // dummy 
+                // Just a Layout label 
                 JLabel dummy = new JLabel("Forecast");
-                dummy.setFont(new Font("Serif", Font.PLAIN, 24));
+                dummy.setFont(new Font("Serif", Font.PLAIN, 20));
                 dummy.setAlignmentX(Component.LEFT_ALIGNMENT);
                 dummy.setForeground(Color.white);
                 pairPanel.add(dummy);
@@ -140,6 +142,7 @@ class PiWeather
                 forecastPanel.add(lfv.getValueIcon());
                 forecastPanel.add(lfv.getLegendLabel());
                 pairPanel.add(forecastPanel);
+                pairPanel.add(Box.createRigidArea(new Dimension(25, 0)));
             }
             JPanel forecastPanel = new JPanel();
             forecastPanel.setBackground(Color.BLACK);
@@ -221,7 +224,7 @@ class PiWeather
         mValues.add(new DataValue(0, "Humidity"));
         mValues.add(new DataValue(0, "Wind Speed"));
         mValues.add(new DataValue(0, "Wind Direction"));
-        mValues.add(new DataValue(0, "Baraometer"));
+        mValues.add(new DataValue(0, "Baraometer", "%.2f"));
     }
     
     public void UpdateWxMap()

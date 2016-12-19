@@ -41,10 +41,10 @@ public class ForecastDataValue
 
     private void CreateUIComponents()
     {
-        mLabelIcon = new JLabel("none");
+        mLabelIcon = new JLabel("");
         
-        mLegendLabel = new JLabel("Temp");
-        mLegendLabel.setFont(new Font("Serif", Font.PLAIN, 12));
+        mLegendLabel = new JLabel("");
+        mLegendLabel.setFont(new Font("Serif", Font.PLAIN, 14));
         mLegendLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mLegendLabel.setForeground(Color.white);
     }
@@ -67,7 +67,8 @@ public class ForecastDataValue
     public void setTemp(double temp)
     {
         mTemp = temp;
-        mLegendLabel.setText(Double.toString(mTemp));
+        String str = String.format("%.0f", mTemp);
+        mLegendLabel.setText(str);
     }
 
     
