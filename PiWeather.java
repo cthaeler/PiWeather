@@ -23,6 +23,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import java.time.*;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 class PiWeather
@@ -328,12 +329,20 @@ class PiWeather
                             String strval = getCharacterDataFromElement(value);   
                             double d = Double.parseDouble(strval);
                             int valueIndex = 0;
+                            LocalTime lt = LocalTime.now();
+                            int hour = lt.getHour();
                             if (tempType.equals("minimum")) {
-                                // set a minimum value
-                                valueIndex = v*2 + 1;
+                                if (hour > 11)
+                                    valueIndex = v*2;
+                                else
+                                    // set a minimum value
+                                    valueIndex = v*2 + 1;
                             } else {
-                                // set a maximum value
-                                valueIndex = v*2;
+                                if (hour > 11)
+                                    // set a maximum value
+                                    valueIndex = v*2 + 1;
+                                else
+                                    valueIndex = v*2;
                             }
                             if (valueIndex < mForecastValues.size())
                                 mForecastValues.get(valueIndex).setTemp(d);
