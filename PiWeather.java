@@ -187,9 +187,9 @@ class PiWeather
             String[] data;
             String cmdStr;
             if (mIsPi) {
-                cmdStr = "python /home/pi/bin/dht.py";
+                cmdStr = "python ./dht.py";
             } else {
-                cmdStr = "python /Users/cst/bin/dht.py";
+                cmdStr = "python ./dht_mac.py";
             }
             Process proc = rt.exec(cmdStr);
             BufferedReader bri = new BufferedReader(new InputStreamReader(proc.getInputStream()));
