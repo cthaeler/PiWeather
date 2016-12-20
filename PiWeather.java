@@ -245,7 +245,7 @@ class PiWeather
            else
             mWxImageLabel.setIcon(new ImageIcon(image));
         } catch (IOException e) {
-          mWxImageLabel.setText("Wx Not Loaded");
+          // Don't do anything
         }
     }
     
