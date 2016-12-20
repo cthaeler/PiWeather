@@ -30,12 +30,15 @@ class PiWeather
 {
  
     private ArrayList<DataValue> mValues;
-    private ArrayList<String> mMapURLs;
     private ArrayList<ForecastDataValue> mForecastValues;
+    private ArrayList<String> mMapURLs;
     private int mCurMap;
     private JLabel mWxImageLabel;
-    private JLabel mUpdateTimeLabel;
+    private JLabel mTimeLabel;
     private JButton mQuitButton;
+    private boolean mIsPi;
+    private static double mInsideTemp;
+    private static double mInsideHumidity;
     
     private Toolkit mToolkit;
     private Timer mTimer;
@@ -45,21 +48,24 @@ class PiWeather
      */
     PiWeather()
     {
-        SetupMapList();
-        
         // Create a new JFrame container.
         JFrame jfrm = new JFrame("Pi Wx Display");
 
         // Terminate the program when the user closes the application
         jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         if (System.getProperty("os.name").equals("Mac OS X")) {
+            mIsPi = false;
             jfrm.setSize(1024, 600);
         } else {
+            mIsPi = true;
             // set properties
             jfrm.setSize(Toolkit.getDefaultToolkit().getScreenSize());
             jfrm.setUndecorated(true);
         }
         
+        SetupMapList();
+        GetInsideInfo();
+
         // Main panel to add the sub panels too
         JPanel mainPanel = new JPanel();
         mainPanel.setBackground(Color.BLACK);
@@ -74,11 +80,11 @@ class PiWeather
         
         
        
-        mUpdateTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
-        mUpdateTimeLabel.setForeground(Color.white);
-        mUpdateTimeLabel.setFont(new Font("Serif", Font.PLAIN, 36));
+        mTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
+        mTimeLabel.setForeground(Color.white);
+        mTimeLabel.setFont(new Font("Serif", Font.PLAIN, 36));
         
-        leftPanel.add(mUpdateTimeLabel);
+        leftPanel.add(mTimeLabel);
         
         leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
         
@@ -173,6 +179,39 @@ class PiWeather
     }
         
     
+    private void GetInsideInfo()
+    {
+        try {
+            Runtime rt = Runtime.getRuntime();
+            String line;
+            String[] data;
+            String cmdStr;
+            if (mIsPi) {
+                cmdStr = "python /home/pi/bin/dht.py";
+            } else {
+                cmdStr = "python /Users/cst/bin/dht.py";
+            }
+            Process proc = rt.exec(cmdStr);
+            BufferedReader bri = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            if((line = bri.readLine()) != null){
+                if(!line.contains("ERRROR")) {
+                    data=line.split("\\|");
+                    mInsideTemp = Double.parseDouble(data[0]);
+                    mInsideHumidity = Double.parseDouble(data[1]);
+                } else {
+                    mInsideTemp = 0.0;
+                    mInsideHumidity = 0.0;
+                }
+            }
+          
+            bri.close();
+            proc.waitFor();
+        } catch  (Exception e) {
+            mInsideTemp = 0.0;
+            mInsideHumidity = 0.0;
+        }
+    }
+    
     private static String getCharacterDataFromElement(Element e) {
         Node child = e.getFirstChild();
         if (child instanceof CharacterData) {
@@ -197,11 +236,10 @@ class PiWeather
                    Element line = (Element) value.item(0);
                    String strval = getCharacterDataFromElement(line);   
                    if (strval.equals("NA"))
-                    continue;
+                       continue;
                    double d = Double.parseDouble(strval);
                    return d;
                 }
-
             }
         }
         
@@ -226,8 +264,8 @@ class PiWeather
     private void SetupValuesUI()
     {
         mValues = new ArrayList<DataValue>();
-        mValues.add(new DataValue(0, "Temperature"));
-        mValues.add(new DataValue(0, "Humidity"));
+        mValues.add(new DataValue(0, 0, "Temperature"));
+        mValues.add(new DataValue(0, 0, "Humidity"));
         mValues.add(new DataValue(0, "Wind Speed"));
         mValues.add(new DataValue(0, "Wind Direction"));
         mValues.add(new DataValue(0, "Baraometer", "%.2f"));
@@ -252,11 +290,12 @@ class PiWeather
     public void UpdateClock()
     {
         String tstr = DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now());
-        mUpdateTimeLabel.setText(tstr);
+        mTimeLabel.setText(tstr);
     }
     
     public void UpdateDataValues()
     {
+        GetInsideInfo();
         try {
             String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -267,9 +306,9 @@ class PiWeather
             
             double d;
             d = ReadValueFromDoc(doc, "temperature");
-            mValues.get(0).setValue(d);
+            mValues.get(0).setValue(d, mInsideTemp);
             d = ReadValueFromDoc(doc, "humidity");
-            mValues.get(1).setValue(d);
+            mValues.get(1).setValue(d, mInsideHumidity);
             d = ReadValueFromDoc(doc, "wind-speed");
             mValues.get(2).setValue(d);
             d = ReadValueFromDoc(doc, "direction");
@@ -354,6 +393,7 @@ class PiWeather
             // do nothing :(
         }
     }
+    
     
     
     public static void main(String args[])

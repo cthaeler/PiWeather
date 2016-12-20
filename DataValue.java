@@ -11,6 +11,7 @@ public class DataValue
 {
     // instance variables - replace the example below with your own
     private double mValue;
+    private double mInsideValue;
     private String mFormatStr;
     private String mLegend;
     private JLabel mDataLabel;
@@ -23,6 +24,7 @@ public class DataValue
     {
         // initialise instance variables
         mValue = 0;
+        mInsideValue = -999;
         mLegend = "";
         mFormatStr = "%.0f";
         CreateLabels();
@@ -33,6 +35,7 @@ public class DataValue
     {
         // initialise instance variables
         mValue = value;
+        mInsideValue = -999;
         mLegend = legend;
         mFormatStr = "%.0f";
         CreateLabels();
@@ -42,10 +45,22 @@ public class DataValue
     {
         // initialise instance variables
         mValue = value;
+        mInsideValue = -999;
         mLegend = legend;
         mFormatStr = fmt;
         CreateLabels();
     }
+    
+    public DataValue(double value, double insideValue, String legend)
+    {
+        // initialise instance variables
+        mValue = value;
+        mInsideValue = insideValue;
+        mLegend = legend;
+        mFormatStr = "%.0f | %.0f";
+        CreateLabels();
+    }
+    
     private void CreateLabels()
     {
         mDataLabel = new JLabel(Double.toString(mValue));
@@ -63,6 +78,14 @@ public class DataValue
     {
         mValue = x;
         String str = String.format(mFormatStr, mValue);
+        mDataLabel.setText(str);
+    }
+    
+    public void setValue(double x, double i)
+    {
+        mValue = x;
+        mInsideValue = i;
+        String str = String.format(mFormatStr, mValue, mInsideValue);
         mDataLabel.setText(str);
     }
     
