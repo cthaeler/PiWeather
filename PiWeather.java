@@ -402,7 +402,7 @@ class PiWeather
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 PiWeather piWXMain = new PiWeather();
-                new UpdateUITimer(60, piWXMain);
+                new UpdateUITimer(20, piWXMain);
                 new MapUpdateTimer(10, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
             }
