@@ -143,7 +143,7 @@ class PiWeather
                 dummy.setAlignmentX(Component.LEFT_ALIGNMENT);
                 dummy.setForeground(Color.white);
                 pairPanel.add(dummy);
-                pairPanel.add(Box.createRigidArea(new Dimension(35, 0)));
+                pairPanel.add(Box.createRigidArea(new Dimension(30, 0)));
             } else {
                 JPanel forecastPanel = new JPanel();
                 forecastPanel.setBackground(Color.BLACK);
@@ -363,7 +363,8 @@ class PiWeather
                         Element tempElement = (Element) tempNodes.item(t);
                         String tempType = tempElement.getAttribute("type"); // this should be "minimum" or "maximum"
                         NodeList tempValueNodes = tempElement.getElementsByTagName("value");
-                        for (int v = 0; v < tempValueNodes.getLength(); v++) {
+                        int numNodes = tempValueNodes.getLength();
+                        for (int v = 0; v < numNodes; v++) {
                             Element value = (Element) tempValueNodes.item(v);
                             String strval = getCharacterDataFromElement(value);   
                             double d = Double.parseDouble(strval);
@@ -371,18 +372,19 @@ class PiWeather
                             LocalTime lt = LocalTime.now();
                             int hour = lt.getHour();
                             if (tempType.equals("minimum")) {
-                                if (hour > 11)
+                                if (hour > 14)
                                     valueIndex = v*2;
                                 else
                                     // set a minimum value
-                                    valueIndex = v*2 + 1;
+                                    valueIndex = v*2+1;
                             } else {
-                                if (hour > 11)
+                                if (hour > 14)
                                     // set a maximum value
-                                    valueIndex = v*2 + 1;
+                                    valueIndex = v*2+1;
                                 else
                                     valueIndex = v*2;
                             }
+
                             if (valueIndex < mForecastValues.size())
                                 mForecastValues.get(valueIndex).setTemp(d);
                         }
