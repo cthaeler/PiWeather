@@ -15,8 +15,10 @@ public class ForecastDataValue
     // instance variables - replace the example below with your own
     private double mTemp;
     private String mIconURL;
-    private JLabel mLabelIcon;
-    private JLabel mLegendLabel;
+    private String mInfo;
+    private JLabel mImageLabel;
+    private JLabel mInfoLabel;
+    private JLabel mTempLabel;
 
     /**
      * Constructor for objects of class DataValue
@@ -26,27 +28,34 @@ public class ForecastDataValue
         // initialise instance variables
         mTemp = 999;
         mIconURL = "";
+        mInfo = "";
         CreateUIComponents();
     }
 
     
-    public ForecastDataValue(String iconURL, double temp)
+    public ForecastDataValue(String iconURL, double temp, String info)
     {
         // initialise instance variables
         mTemp = temp;
         mIconURL = iconURL;
+        mInfo = info;
         CreateUIComponents();
         SetIconImage();
     }
 
     private void CreateUIComponents()
     {
-        mLabelIcon = new JLabel("");
+        mTempLabel = new JLabel("");
+        mTempLabel.setFont(new Font("Monospaced", Font.PLAIN, 48));
+        mTempLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mTempLabel.setForeground(Color.white);
         
-        mLegendLabel = new JLabel("");
-        mLegendLabel.setFont(new Font("Serif", Font.PLAIN, 36));
-        mLegendLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mLegendLabel.setForeground(Color.white);
+        mInfoLabel = new JLabel("");
+        mInfoLabel.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        mInfoLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mInfoLabel.setForeground(Color.white);
+        
+        mImageLabel = new JLabel("");
     }
     
         
@@ -55,12 +64,12 @@ public class ForecastDataValue
         try {
           URL imgURL = new URL(mIconURL);
           Image image = ImageIO.read(imgURL);
-          if (image.getHeight(null) > 75)
-            mLabelIcon.setIcon(new ImageIcon(image.getScaledInstance(75, -1, Image.SCALE_AREA_AVERAGING)));
-          else
-            mLabelIcon.setIcon(new ImageIcon(image));
+          //if (image.getHeight(null) > 80)
+          //  mImageLabel.setIcon(new ImageIcon(image.getScaledInstance(80, -1, Image.SCALE_AREA_AVERAGING)));
+          //else
+            mImageLabel.setIcon(new ImageIcon(image));
         } catch (IOException e) {
-          mLabelIcon.setText("none");
+          mImageLabel.setText("none");
         }
     }
     
@@ -68,9 +77,14 @@ public class ForecastDataValue
     {
         mTemp = temp;
         String str = String.format("%.0f", mTemp);
-        mLegendLabel.setText(str);
+        mTempLabel.setText(str);
     }
 
+    public void setInfo(String info)
+    {
+        mInfo = info;
+        mInfoLabel.setText(mInfo);
+    }
     
     public void setIconURL(String url)
     {
@@ -79,14 +93,19 @@ public class ForecastDataValue
     }
     
     
-    public JLabel getValueIcon()
+    public JLabel getImageLabel()
     {
-        return mLabelIcon;
+        return mImageLabel;
     }
     
-    public JLabel getLegendLabel()
+    public JLabel getInfoLabel()
     {
-        return mLegendLabel;
+        return mInfoLabel;
+    }
+    
+        public JLabel getTempLabel()
+    {
+        return mTempLabel;
     }
 }
 

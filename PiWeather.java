@@ -28,17 +28,24 @@ import java.time.format.DateTimeFormatter;
 
 class PiWeather
 {
- 
     private ArrayList<DataValue> mValues;
+    private double mCurrTemp;
+    private JLabel mCurrTempLabel;
+    private String mCurrConditionIconURL;
+    private JLabel mCurrConditionIconLabel;
+    private JLabel mNowLabel;
     private ArrayList<ForecastDataValue> mForecastValues;
     private ArrayList<String> mMapURLs;
+    private ArrayList<String> mSatURLs;
     private int mCurMap;
+    private int mCurSat;
     private JLabel mWxImageLabel;
+    private JLabel mSatImageLabel;
     private JLabel mTimeLabel;
     private JButton mQuitButton;
     private boolean mIsPi;
-    private static double mInsideTemp;
-    private static double mInsideHumidity;
+    private double mInsideTemp;
+    private double mInsideHumidity;
     
     private Toolkit mToolkit;
     private Timer mTimer;
@@ -63,8 +70,8 @@ class PiWeather
             jfrm.setUndecorated(true);
         }
         
-        SetupMapList();
-        GetInsideInfo();
+        
+        ReadInsideSensor();
 
         // Main panel to add the sub panels too
         JPanel mainPanel = new JPanel();
@@ -72,13 +79,48 @@ class PiWeather
         BoxLayout frameBox = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
         mainPanel.setLayout(frameBox);
         
-        /* Left Panel for the local current observations */
+        mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        
+        
+        mainPanel.add(SetupLeftPanel());
+        
+        
+        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+
+           
+        mainPanel.add(SetupCenterPanel());
+        
+        
+        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+       
+
+        mainPanel.add(SetupRightPanel());
+        
+        // Add the panel to the frame
+        jfrm.add(mainPanel);
+        
+        // Display the frame.
+        jfrm.setVisible(true);
+                
+        UpdateClock();
+        UpdateWxMap();
+        UpdateForecastValues();
+    }
+    
+    private JPanel SetupLeftPanel()
+    {
+        mValues = new ArrayList<DataValue>();
+        mValues.add(new DataValue(0, 0, "Temperature"));
+        mValues.add(new DataValue(0, 0, "Humidity"));
+        mValues.add(new DataValue(0, "Wind Speed"));
+        mValues.add(new DataValue(0, "Wind Direction"));
+        mValues.add(new DataValue(0, "Baraometer", "%.2f"));
+        
+        // Left Panel for the local current observations
         JPanel leftPanel = new JPanel();
         BoxLayout leftBox = new BoxLayout(leftPanel, BoxLayout.Y_AXIS);
         leftPanel.setLayout(leftBox);
         leftPanel.setBackground(Color.BLACK);
-        
-        
        
         mTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
         mTimeLabel.setForeground(Color.white);
@@ -87,8 +129,6 @@ class PiWeather
         leftPanel.add(mTimeLabel);
         
         leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
-        
-        SetupValuesUI();
         
         for (int i=0; i < mValues.size(); i++) {
             DataValue dv = mValues.get(i);
@@ -107,79 +147,184 @@ class PiWeather
           });
         leftPanel.add(mQuitButton);
         
-        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
-        mainPanel.add(leftPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        return leftPanel;
+    }
+    
+    private JPanel SetupCenterPanel()
+    {
+        mMapURLs = new ArrayList<String>();
+        mCurMap = 0;
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif"));  // Precipitation
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptyp.gif"));  // Precipitation Type
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_wind.gif"));  // Surface Winds
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_temp.gif"));  // Temperature
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif"));  // Radar Reflectivity
+        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_0_clouds.gif"));  // Clouds
+        
+
+        mSatURLs = new ArrayList<String>();
+        mCurSat = 0;
+        // Sat images - US
+        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_vis.jpg"));  // Sat image
+        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_ir.jpg")); // IR
+        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_irbw.jpg")); // IRBW
+        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_wv.jpg")); // Weather
+        // Sat Images - WMC (Winamuca, western US)
+        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_WMC_vis.jpg"));  // Sat image
+        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_ir.jpg")); // IR
+        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_irbw.jpg")); // IRBW
+        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_wv.jpg")); // Weather
+
 
         // Center Panel for the weather map images
+        JPanel centerPanel = new JPanel();
+        BoxLayout imageBox = new BoxLayout(centerPanel, BoxLayout.Y_AXIS);
+        centerPanel.setLayout(imageBox);
+        centerPanel.setBackground(Color.BLACK);
+        
         mWxImageLabel = new JLabel("");
-        mainPanel.add(mWxImageLabel);
+        centerPanel.add(mWxImageLabel);
         
-        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         
-        // right panel for the forcast info
-        JPanel rightPanel = new JPanel();
-        BoxLayout rightBox = new BoxLayout(rightPanel, BoxLayout.Y_AXIS);
-        rightPanel.setLayout(rightBox);
-        rightPanel.setBackground(Color.BLACK);
+        mSatImageLabel = new JLabel("");
+        centerPanel.add(mSatImageLabel);
         
+        return centerPanel;
+     }
+    
+    private JPanel SetupRightPanel()
+    {
         mForecastValues = new ArrayList<ForecastDataValue>();
-        for (int fc = 0; fc < 14; fc++) {
+        for (int fc = 0; fc < 15; fc++) {
             ForecastDataValue fv = new ForecastDataValue();
             mForecastValues.add(fv);
         }
         
-       
-        for (int i=-1; i < mForecastValues.size()-1; i+=2) {
-            JPanel pairPanel = new JPanel();
-            pairPanel.setBackground(Color.BLACK);
-            BoxLayout pairBox = new BoxLayout(pairPanel, BoxLayout.X_AXIS);
-            pairPanel.setLayout(pairBox);
+        // right panel for the forcast info
+        JPanel rightMainPanel = new JPanel();
+        BoxLayout rightMainBox = new BoxLayout(rightMainPanel, BoxLayout.X_AXIS);
+        rightMainPanel.setLayout(rightMainBox);
+        rightMainPanel.setBackground(Color.BLACK);
+        
+        JPanel leftListPanel = new JPanel();
+        leftListPanel.setBackground(Color.BLACK);
+        BoxLayout leftListPanelBox = new BoxLayout(leftListPanel, BoxLayout.Y_AXIS);
+        leftListPanel.setLayout(leftListPanelBox);
+        
+        JPanel rightListPanel = new JPanel();
+        rightListPanel.setBackground(Color.BLACK);
+        BoxLayout rightListPanelBox = new BoxLayout(rightListPanel, BoxLayout.Y_AXIS);
+        rightListPanel.setLayout(rightListPanelBox);
+        
+        for (int i=-1; i < mForecastValues.size()-1-4; i+=2) {
             // left one
             if (i == -1) {
-                // Just a Layout label 
-                JLabel dummy = new JLabel("Forecast");
-                dummy.setFont(new Font("Serif", Font.PLAIN, 32));
-                dummy.setAlignmentX(Component.LEFT_ALIGNMENT);
-                dummy.setForeground(Color.white);
-                pairPanel.add(dummy);
-                pairPanel.add(Box.createRigidArea(new Dimension(30, 0)));
-            } else {
                 JPanel forecastPanel = new JPanel();
                 forecastPanel.setBackground(Color.BLACK);
                 BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.X_AXIS);
                 forecastPanel.setLayout(forecastBox);
-     
+                
+                // The info Panel contains temp and info strings
+                JPanel infoPanel = new JPanel();
+                infoPanel.setBackground(Color.BLACK);
+                BoxLayout infoBox = new BoxLayout(infoPanel, BoxLayout.Y_AXIS);
+                infoPanel.setLayout(infoBox);
+                
+                mCurrTempLabel = new JLabel(String.format("%.0f", 0.0));
+                mCurrTempLabel.setFont(new Font("Monospaced", Font.PLAIN, 48));
+                mCurrTempLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                mCurrTempLabel.setForeground(Color.white);
+                infoPanel.add(mCurrTempLabel);
+                mNowLabel = new JLabel("Now");
+                mNowLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                mNowLabel.setForeground(Color.white);
+                mNowLabel.setFont(new Font("Monospaced", Font.PLAIN, 16));
+                infoPanel.add(mNowLabel);
+                
+                infoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                forecastPanel.add(infoPanel);
+
+                forecastPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+                
+                mCurrConditionIconLabel = new JLabel("");
+                mCurrConditionIconLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                forecastPanel.add(mCurrConditionIconLabel);
+                
+                leftListPanel.add(forecastPanel);
+                leftListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            } else {
                 ForecastDataValue lfv = mForecastValues.get(i);
-                forecastPanel.add(lfv.getLegendLabel());
-                forecastPanel.add(lfv.getValueIcon());
-                pairPanel.add(forecastPanel);
-                pairPanel.add(Box.createRigidArea(new Dimension(25, 0)));
+                // a forecast panel contains an info panel with temp and info and the image
+                JPanel forecastPanel = new JPanel();
+                forecastPanel.setBackground(Color.BLACK);
+                BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.X_AXIS);
+                forecastPanel.setLayout(forecastBox);
+                
+                // The info Panel contains temp and info strings
+                JPanel infoPanel = new JPanel();
+                infoPanel.setBackground(Color.BLACK);
+                BoxLayout infoBox = new BoxLayout(infoPanel, BoxLayout.Y_AXIS);
+                infoPanel.setLayout(infoBox);
+                
+                JLabel tempLabel = lfv.getTempLabel();
+                tempLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                infoPanel.add(tempLabel);
+                JLabel infoLabel = lfv.getInfoLabel();
+                infoLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                infoPanel.add(infoLabel);
+                
+                infoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                forecastPanel.add(infoPanel);
+
+                forecastPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+                
+                JLabel imgLabel = lfv.getImageLabel();
+                imgLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                forecastPanel.add(imgLabel);
+                
+                leftListPanel.add(forecastPanel);
+                leftListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
             }
+            ForecastDataValue rfv = mForecastValues.get(i+1);
+            
             JPanel forecastPanel = new JPanel();
             forecastPanel.setBackground(Color.BLACK);
             BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.X_AXIS);
             forecastPanel.setLayout(forecastBox);
-            ForecastDataValue rfv = mForecastValues.get(i+1);
-            forecastPanel.add(rfv.getValueIcon());
-            forecastPanel.add(rfv.getLegendLabel());
-            pairPanel.add(forecastPanel);
-
-            rightPanel.add(pairPanel);
-            rightPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            
+            JLabel imgLabel = rfv.getImageLabel();
+            imgLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            forecastPanel.add(imgLabel);
+            forecastPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+            
+            JPanel infoPanel = new JPanel();
+            infoPanel.setBackground(Color.BLACK);
+            BoxLayout infoBox = new BoxLayout(infoPanel, BoxLayout.Y_AXIS);
+            infoPanel.setLayout(infoBox);
+            
+            JLabel tempLabel = rfv.getTempLabel();
+            tempLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            infoPanel.add(tempLabel);
+            JLabel infoLabel = rfv.getInfoLabel();
+            infoLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            infoPanel.add(infoLabel);
+            
+            infoPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            forecastPanel.add(infoPanel);
+            
+            rightListPanel.add(forecastPanel);
+            rightListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
-        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
-        mainPanel.add(rightPanel);
-        
-        // Add the panel to the frame
-        jfrm.add(mainPanel);
-        
-        // Display the frame.
-        jfrm.setVisible(true);
+        rightMainPanel.add(leftListPanel);
+        rightMainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        rightMainPanel.add(rightListPanel);
+
+        return rightMainPanel;
     }
         
     
-    private void GetInsideInfo()
+    private void ReadInsideSensor()
     {
         try {
             Runtime rt = Runtime.getRuntime();
@@ -212,6 +357,8 @@ class PiWeather
         }
     }
     
+    
+    
     private static String getCharacterDataFromElement(Element e) {
         Node child = e.getFirstChild();
         if (child instanceof CharacterData) {
@@ -221,6 +368,8 @@ class PiWeather
         return "?";
     }
 
+    
+    
     private static double ReadValueFromDoc(Document doc, String e)
     {
         NodeList dataNodes = doc.getElementsByTagName("data");
@@ -246,42 +395,54 @@ class PiWeather
         return 0;
     }
     
-    private void SetupMapList()
+    private String ReadCurrentConditionsIconFromDocument(Document doc)
     {
-        mMapURLs = new ArrayList<String>();
-        mCurMap = 0;
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif"));  // Precipitation
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptyp.gif"));  // Precipitation Type
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_wind.gif"));  // Surface Winds
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_temp.gif"));  // Temperature
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif"));  // Radar Reflectivity
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_0_clouds.gif"));  // Clouds
-        mMapURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_WMC_vis.jpg"));  // Sat image
-        mMapURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_irbw.jpg")); // IR
-        mMapURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_wv.jpg")); // Weather
+        NodeList dataNodes = doc.getElementsByTagName("data");
+        for (int n = 0; n < dataNodes.getLength(); n++) {
+            Element element = (Element) dataNodes.item(n);
+            String typeString = element.getAttribute("type");
+            if (typeString.equals("current observations")) {
+                NodeList nodes = element.getElementsByTagName("conditions-icon");
+                
+                if (nodes.getLength() > 0) {
+                    Element e = (Element)nodes.item(0);
+                    NodeList iconNodes = e.getElementsByTagName("icon-link");
+                    Element line = (Element) iconNodes.item(0);
+                    String strval = getCharacterDataFromElement(line);
+                    return strval;
+                }
+
+            }
+        }
+        return "";
     }
     
-    private void SetupValuesUI()
-    {
-        mValues = new ArrayList<DataValue>();
-        mValues.add(new DataValue(0, 0, "Temperature"));
-        mValues.add(new DataValue(0, 0, "Humidity"));
-        mValues.add(new DataValue(0, "Wind Speed"));
-        mValues.add(new DataValue(0, "Wind Direction"));
-        mValues.add(new DataValue(0, "Baraometer", "%.2f"));
-    }
+    
     
     public void UpdateWxMap()
     {
+        int imageSize = 275;
         try {
           mCurMap++;
           if (mCurMap >= mMapURLs.size()) mCurMap=0;
           URL imgURL = new URL(mMapURLs.get(mCurMap));
           Image image = ImageIO.read(imgURL);
-          if (image.getHeight(null) > 500)
-            mWxImageLabel.setIcon(new ImageIcon(image.getScaledInstance(500, -1, Image.SCALE_AREA_AVERAGING)));
+          if (image.getHeight(null) > imageSize)
+            mWxImageLabel.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
            else
             mWxImageLabel.setIcon(new ImageIcon(image));
+        } catch (IOException e) {
+          // Don't do anything
+        }
+        try {
+          mCurSat++;
+          if (mCurSat >= mSatURLs.size()) mCurSat=0;
+          URL imgURL = new URL(mSatURLs.get(mCurSat));
+          Image image = ImageIO.read(imgURL);
+          if (image.getHeight(null) > imageSize)
+            mSatImageLabel.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
+           else
+            mSatImageLabel.setIcon(new ImageIcon(image));
         } catch (IOException e) {
           // Don't do anything
         }
@@ -295,7 +456,8 @@ class PiWeather
     
     public void UpdateDataValues()
     {
-        GetInsideInfo();
+        ReadInsideSensor();
+
         try {
             String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -305,7 +467,7 @@ class PiWeather
             Document doc = factory.newDocumentBuilder().parse(url.openStream());
             
             double d;
-            d = ReadValueFromDoc(doc, "temperature");
+            mCurrTemp = d = ReadValueFromDoc(doc, "temperature");
             mValues.get(0).setValue(d, mInsideTemp);
             d = ReadValueFromDoc(doc, "humidity");
             mValues.get(1).setValue(d, mInsideHumidity);
@@ -315,6 +477,14 @@ class PiWeather
             mValues.get(3).setValue(d);
             d = ReadValueFromDoc(doc, "pressure");
             mValues.get(4).setValue(d);
+            
+            mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
+            URL imgURL = new URL(mCurrConditionIconURL);
+            Image image = ImageIO.read(imgURL);
+            mCurrConditionIconLabel.setIcon(new ImageIcon(image));
+            
+            String str = String.format("%.0f", mCurrTemp);
+            mCurrTempLabel.setText(str);  
         } catch (Exception e) {
             for (int i=0; i < mValues.size(); i++) {
                 mValues.get(i).setValue(99.99);
@@ -334,12 +504,39 @@ class PiWeather
             
             Document doc = factory.newDocumentBuilder().parse(url.openStream());
             NodeList dataNodes = doc.getElementsByTagName("data");
-            int numDataNodes = dataNodes.getLength();
+
             for (int n = 0; n < dataNodes.getLength(); n++) {
                 // first let's find the icon data
                 Element dataElement = (Element) dataNodes.item(n);
                 String typeString = dataElement.getAttribute("type");
                 if (typeString.equals("forecast")) {
+                    
+                    // found the forecasts now find the time coordinates
+                    NodeList timeCoordsNodes = dataElement.getElementsByTagName("time-layout");
+                    for (int tc = 0; tc < timeCoordsNodes.getLength(); tc++) {
+                        Element childElement = (Element) timeCoordsNodes.item(tc);
+                        NodeList svtNodes = childElement.getElementsByTagName("start-valid-time");
+                        if (svtNodes.getLength() > 7) {
+                            // found the full list
+                            for (int svt = 0; svt < svtNodes.getLength(); svt++) {
+                                Element svtElement = (Element) svtNodes.item(svt);
+                                Attr attr = svtElement.getAttributeNode("period-name");
+                                String info = attr.getValue();
+                                if (info.length() > 15) {
+                                    info = info.substring(0, Math.min(info.length(), 15));
+                                } else {
+                                    if((svt % 2) == 0) {
+                                       // even
+                                       info = String.format("%15s", info);
+                                    } else {
+                                       // odd
+                                       info = String.format("%-15s", info);
+                                    }
+                                }
+                                mForecastValues.get(svt).setInfo(info);
+                            }
+                        }
+                    }
                     // found the forecasts, now find the conditions icons
                     NodeList conditionNodes = dataElement.getElementsByTagName("conditions-icon");
                     int numConditionNodes = conditionNodes.getLength();
@@ -405,7 +602,7 @@ class PiWeather
             public void run() {
                 PiWeather piWXMain = new PiWeather();
                 new UpdateUITimer(20, piWXMain);
-                new MapUpdateTimer(10, piWXMain);
+                new MapUpdateTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
             }
         });

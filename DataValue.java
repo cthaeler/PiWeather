@@ -64,12 +64,12 @@ public class DataValue
     private void CreateLabels()
     {
         mDataLabel = new JLabel(Double.toString(mValue));
-        mDataLabel.setFont(new Font("Serif", Font.PLAIN, 48));
+        mDataLabel.setFont(new Font("Monospaced", Font.PLAIN, 48));
         mDataLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mDataLabel.setForeground(Color.white);
         
         mLegendLabel = new JLabel(mLegend);
-        mLegendLabel.setFont(new Font("Serif", Font.PLAIN, 14));
+        mLegendLabel.setFont(new Font("Monospaced", Font.PLAIN, 14));
         mLegendLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mLegendLabel.setForeground(Color.white);
     }
