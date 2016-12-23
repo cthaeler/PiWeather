@@ -28,27 +28,26 @@ import java.time.format.DateTimeFormatter;
 
 class PiWeather
 {
-    private ArrayList<DataValue> mValues;
     private double mCurrTemp;
-    private JLabel mCurrTempLabel;
     private String mCurrConditionIconURL;
-    private JLabel mCurrConditionIconLabel;
-    private JLabel mNowLabel;
+    private double mInsideTemp;
+    private double mInsideHumidity;
+    
+    private ArrayList<DataValue> mValues;
     private ArrayList<ForecastDataValue> mForecastValues;
     private ArrayList<String> mMapURLs;
     private ArrayList<String> mSatURLs;
     private int mCurMap;
     private int mCurSat;
+
     private JLabel mWxImageLabel;
     private JLabel mSatImageLabel;
+    
     private JLabel mTimeLabel;
     private JButton mQuitButton;
-    private boolean mIsPi;
-    private double mInsideTemp;
-    private double mInsideHumidity;
     
-    private Toolkit mToolkit;
-    private Timer mTimer;
+    private boolean mIsPi;
+
     
     /**
      * Constructor for objects of class PiWeather
@@ -85,13 +84,13 @@ class PiWeather
         mainPanel.add(SetupLeftPanel());
         
         
-        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        mainPanel.add(Box.createRigidArea(new Dimension(30, 0)));
 
            
         mainPanel.add(SetupCenterPanel());
         
         
-        mainPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        mainPanel.add(Box.createRigidArea(new Dimension(30, 0)));
        
 
         mainPanel.add(SetupRightPanel());
@@ -102,9 +101,10 @@ class PiWeather
         // Display the frame.
         jfrm.setVisible(true);
                 
-        UpdateClock();
-        UpdateWxMap();
-        UpdateForecastValues();
+        //UpdateClock();
+        //UpdateDataValues();
+        //UpdateWxMap();
+        //UpdateForecastValues();
     }
     
     private JPanel SetupLeftPanel()
@@ -124,13 +124,13 @@ class PiWeather
        
         mTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
         mTimeLabel.setForeground(Color.white);
-        mTimeLabel.setFont(new Font("Serif", Font.PLAIN, 36));
+        mTimeLabel.setFont(new Font("Monospaced", Font.PLAIN, 36));
         
         leftPanel.add(mTimeLabel);
         
         leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
         
-        for (int i=0; i < mValues.size(); i++) {
+        for (int i = 0; i < mValues.size(); i++) {
             DataValue dv = mValues.get(i);
             leftPanel.add(dv.getValueLabel());
             leftPanel.add(dv.getLegendLabel());
@@ -196,7 +196,7 @@ class PiWeather
     private JPanel SetupRightPanel()
     {
         mForecastValues = new ArrayList<ForecastDataValue>();
-        for (int fc = 0; fc < 15; fc++) {
+        for (int fc = 0; fc < 16; fc++) {
             ForecastDataValue fv = new ForecastDataValue();
             mForecastValues.add(fv);
         }
@@ -217,103 +217,70 @@ class PiWeather
         BoxLayout rightListPanelBox = new BoxLayout(rightListPanel, BoxLayout.Y_AXIS);
         rightListPanel.setLayout(rightListPanelBox);
         
-        for (int i=-1; i < mForecastValues.size()-1-4; i+=2) {
+        for (int i = 0; i < mForecastValues.size()-4; i+=2) {
             // left one
-            if (i == -1) {
-                JPanel forecastPanel = new JPanel();
-                forecastPanel.setBackground(Color.BLACK);
-                BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.X_AXIS);
-                forecastPanel.setLayout(forecastBox);
-                
-                // The info Panel contains temp and info strings
-                JPanel infoPanel = new JPanel();
-                infoPanel.setBackground(Color.BLACK);
-                BoxLayout infoBox = new BoxLayout(infoPanel, BoxLayout.Y_AXIS);
-                infoPanel.setLayout(infoBox);
-                
-                mCurrTempLabel = new JLabel(String.format("%.0f", 0.0));
-                mCurrTempLabel.setFont(new Font("Monospaced", Font.PLAIN, 48));
-                mCurrTempLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                mCurrTempLabel.setForeground(Color.white);
-                infoPanel.add(mCurrTempLabel);
-                mNowLabel = new JLabel("Now");
-                mNowLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                mNowLabel.setForeground(Color.white);
-                mNowLabel.setFont(new Font("Monospaced", Font.PLAIN, 16));
-                infoPanel.add(mNowLabel);
-                
-                infoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                forecastPanel.add(infoPanel);
+            ForecastDataValue lfv = mForecastValues.get(i);
+            // a forecast panel contains an info panel with temp and info and the image
+            JPanel leftFP = new JPanel();
+            leftFP.setBackground(Color.BLACK);
+            BoxLayout leftFB = new BoxLayout(leftFP, BoxLayout.X_AXIS);
+            leftFP.setLayout(leftFB);
+            
+            // The info Panel contains temp and info strings
+            JPanel leftIP = new JPanel();
+            leftIP.setBackground(Color.BLACK);
+            BoxLayout infoBox = new BoxLayout(leftIP, BoxLayout.Y_AXIS);
+            leftIP.setLayout(infoBox);
+            
+            JLabel leftTL = lfv.getTempLabel();
+            leftTL.setAlignmentX(Component.LEFT_ALIGNMENT);
+            leftIP.add(leftTL);
+            JLabel leftIL = lfv.getInfoLabel();
+            leftIL.setAlignmentX(Component.LEFT_ALIGNMENT);
+            leftIP.add(leftIL);
+            
+            leftIP.setAlignmentX(Component.LEFT_ALIGNMENT);
+            leftFP.add(leftIP);
 
-                forecastPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-                
-                mCurrConditionIconLabel = new JLabel("");
-                mCurrConditionIconLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                forecastPanel.add(mCurrConditionIconLabel);
-                
-                leftListPanel.add(forecastPanel);
-                leftListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-            } else {
-                ForecastDataValue lfv = mForecastValues.get(i);
-                // a forecast panel contains an info panel with temp and info and the image
-                JPanel forecastPanel = new JPanel();
-                forecastPanel.setBackground(Color.BLACK);
-                BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.X_AXIS);
-                forecastPanel.setLayout(forecastBox);
-                
-                // The info Panel contains temp and info strings
-                JPanel infoPanel = new JPanel();
-                infoPanel.setBackground(Color.BLACK);
-                BoxLayout infoBox = new BoxLayout(infoPanel, BoxLayout.Y_AXIS);
-                infoPanel.setLayout(infoBox);
-                
-                JLabel tempLabel = lfv.getTempLabel();
-                tempLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                infoPanel.add(tempLabel);
-                JLabel infoLabel = lfv.getInfoLabel();
-                infoLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                infoPanel.add(infoLabel);
-                
-                infoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                forecastPanel.add(infoPanel);
+            leftFP.add(Box.createRigidArea(new Dimension(10, 0)));
+            
+            JLabel leftImg = lfv.getImageLabel();
+            leftImg.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            leftFP.add(leftImg);
+            
+            leftListPanel.add(leftFP);
+            leftListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
-                forecastPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-                
-                JLabel imgLabel = lfv.getImageLabel();
-                imgLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                forecastPanel.add(imgLabel);
-                
-                leftListPanel.add(forecastPanel);
-                leftListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-            }
+            
+            
             ForecastDataValue rfv = mForecastValues.get(i+1);
             
-            JPanel forecastPanel = new JPanel();
-            forecastPanel.setBackground(Color.BLACK);
-            BoxLayout forecastBox = new BoxLayout(forecastPanel, BoxLayout.X_AXIS);
-            forecastPanel.setLayout(forecastBox);
+            JPanel rightFP = new JPanel();
+            rightFP.setBackground(Color.BLACK);
+            BoxLayout rightFB = new BoxLayout(rightFP, BoxLayout.X_AXIS);
+            rightFP.setLayout(rightFB);
             
-            JLabel imgLabel = rfv.getImageLabel();
-            imgLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            forecastPanel.add(imgLabel);
-            forecastPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+            JLabel rightImg = rfv.getImageLabel();
+            rightImg.setAlignmentX(Component.LEFT_ALIGNMENT);
+            rightFP.add(rightImg);
+            rightFP.add(Box.createRigidArea(new Dimension(10, 0)));
             
-            JPanel infoPanel = new JPanel();
-            infoPanel.setBackground(Color.BLACK);
-            BoxLayout infoBox = new BoxLayout(infoPanel, BoxLayout.Y_AXIS);
-            infoPanel.setLayout(infoBox);
+            JPanel rightIP = new JPanel();
+            rightIP.setBackground(Color.BLACK);
+            BoxLayout rightIB = new BoxLayout(rightIP, BoxLayout.Y_AXIS);
+            rightIP.setLayout(rightIB);
             
-            JLabel tempLabel = rfv.getTempLabel();
-            tempLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-            infoPanel.add(tempLabel);
-            JLabel infoLabel = rfv.getInfoLabel();
-            infoLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-            infoPanel.add(infoLabel);
+            JLabel rightTL = rfv.getTempLabel();
+            rightTL.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            rightIP.add(rightTL);
+            JLabel rightIL = rfv.getInfoLabel();
+            rightIL.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            rightIP.add(rightIL);
             
-            infoPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-            forecastPanel.add(infoPanel);
+            rightIP.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            rightFP.add(rightIP);
             
-            rightListPanel.add(forecastPanel);
+            rightListPanel.add(rightFP);
             rightListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
         rightMainPanel.add(leftListPanel);
@@ -478,17 +445,11 @@ class PiWeather
             d = ReadValueFromDoc(doc, "pressure");
             mValues.get(4).setValue(d);
             
-            mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
-            URL imgURL = new URL(mCurrConditionIconURL);
-            Image image = ImageIO.read(imgURL);
-            mCurrConditionIconLabel.setIcon(new ImageIcon(image));
-            
-            String str = String.format("%.0f", mCurrTemp);
-            mCurrTempLabel.setText(str);  
+            mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc); 
         } catch (Exception e) {
-            for (int i=0; i < mValues.size(); i++) {
-                mValues.get(i).setValue(99.99);
-            }
+            //for (int i=0; i < mValues.size(); i++) {
+            //    mValues.get(i).setValue(99.99);
+            //}
         }
     }
     
@@ -505,6 +466,10 @@ class PiWeather
             Document doc = factory.newDocumentBuilder().parse(url.openStream());
             NodeList dataNodes = doc.getElementsByTagName("data");
 
+            mForecastValues.get(0).setTemp(mCurrTemp);
+            mForecastValues.get(0).setIconURL(mCurrConditionIconURL);
+            mForecastValues.get(0).setInfo("Now", false);
+            
             for (int n = 0; n < dataNodes.getLength(); n++) {
                 // first let's find the icon data
                 Element dataElement = (Element) dataNodes.item(n);
@@ -522,18 +487,7 @@ class PiWeather
                                 Element svtElement = (Element) svtNodes.item(svt);
                                 Attr attr = svtElement.getAttributeNode("period-name");
                                 String info = attr.getValue();
-                                if (info.length() > 15) {
-                                    info = info.substring(0, Math.min(info.length(), 15));
-                                } else {
-                                    if((svt % 2) == 0) {
-                                       // even
-                                       info = String.format("%15s", info);
-                                    } else {
-                                       // odd
-                                       info = String.format("%-15s", info);
-                                    }
-                                }
-                                mForecastValues.get(svt).setInfo(info);
+                                mForecastValues.get(svt+1).setInfo(info, ((svt % 2) == 0));
                             }
                         }
                     }
@@ -549,7 +503,7 @@ class PiWeather
                         for (int i = 0; i < iconNodes.getLength(); i++) {
                            Element iconElement = (Element) iconNodes.item(i);
                            String iconURL = getCharacterDataFromElement(iconElement);
-                           mForecastValues.get(i).setIconURL(iconURL);
+                           mForecastValues.get(i+1).setIconURL(iconURL);
                         }
                     }
                     
@@ -583,7 +537,7 @@ class PiWeather
                             }
 
                             if (valueIndex < mForecastValues.size())
-                                mForecastValues.get(valueIndex).setTemp(d);
+                                mForecastValues.get(valueIndex+1).setTemp(d);
                         }
                     }
                 }

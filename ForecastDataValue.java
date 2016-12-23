@@ -80,8 +80,19 @@ public class ForecastDataValue
         mTempLabel.setText(str);
     }
 
-    public void setInfo(String info)
+    public void setInfo(String info, boolean isEven)
     {
+        if (info.length() > 15) {
+            info = info.substring(0, Math.min(info.length(), 15));
+        } else {
+            if(isEven) {
+               // even
+               info = String.format("%15s", info);
+            } else {
+               // odd
+               info = String.format("%-15s", info);
+            }
+        }
         mInfo = info;
         mInfoLabel.setText(mInfo);
     }
