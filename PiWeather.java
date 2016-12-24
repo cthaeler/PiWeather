@@ -310,10 +310,10 @@ class PiWeather
             String[] data;
             String cmdStr;
             if (mIsPi) {
-                if (mSensor == "DHT11")
+                if (mSensor.equals("DHT11"))
                     cmdStr = "python ./dht11.py";
                 else
-                    cmdStr = "python .dht.py";
+                    cmdStr = "python ./dht.py";
             } else {
                 cmdStr = "python ./dht_mac.py";
             }
