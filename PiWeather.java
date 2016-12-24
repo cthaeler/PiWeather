@@ -47,26 +47,37 @@ class PiWeather
     private JButton mQuitButton;
     
     private boolean mIsPi;
+    private String mSensor;
 
     
     /**
      * Constructor for objects of class PiWeather
      */
-    PiWeather()
+    PiWeather(String args[])
     {
+        if (args.length > 0)
+            mSensor = args[0];
+        
+        if (System.getProperty("os.name").equals("Mac OS X")) {
+            mIsPi = false;
+        } else {
+            mIsPi = true;
+            if (!(mSensor.equals("DHT11") || mSensor.equals("DHT22"))) {
+                System.err.println("Bad sensor type");
+                System.exit(1);
+            }
+        }
         // Create a new JFrame container.
         JFrame jfrm = new JFrame("Pi Wx Display");
 
         // Terminate the program when the user closes the application
         jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        if (System.getProperty("os.name").equals("Mac OS X")) {
-            mIsPi = false;
-            jfrm.setSize(1024, 600);
-        } else {
-            mIsPi = true;
+        if (mIsPi) {
             // set properties
             jfrm.setSize(Toolkit.getDefaultToolkit().getScreenSize());
             jfrm.setUndecorated(true);
+        } else {
+            jfrm.setSize(1024, 600);
         }
         
         
@@ -299,7 +310,10 @@ class PiWeather
             String[] data;
             String cmdStr;
             if (mIsPi) {
-                cmdStr = "python ./dht.py";
+                if (mSensor == "DHT11")
+                    cmdStr = "python ./dht11.py";
+                else
+                    cmdStr = "python .dht.py";
             } else {
                 cmdStr = "python ./dht_mac.py";
             }
@@ -554,7 +568,7 @@ class PiWeather
         // Create the frame on the event dispatching thread.
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                PiWeather piWXMain = new PiWeather();
+                PiWeather piWXMain = new PiWeather(args);
                 new UpdateUITimer(20, piWXMain);
                 new MapUpdateTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
