@@ -47,6 +47,7 @@ class PiWeather
     private JButton mQuitButton;
     
     private boolean mIsPi;
+    private boolean mHasSensor;
     private String mSensor;
 
     
@@ -60,9 +61,11 @@ class PiWeather
         
         if (System.getProperty("os.name").equals("Mac OS X")) {
             mIsPi = false;
+            mHasSensor = false;
         } else {
             mIsPi = true;
-            if (!(mSensor.equals("DHT11") || mSensor.equals("DHT22"))) {
+            mHasSensor = false;
+            if (mSensor.length() > 0 && !(mSensor.equals("DHT11") || mSensor.equals("DHT22"))) {
                 System.err.println("Bad sensor type");
                 System.exit(1);
             }
@@ -80,8 +83,12 @@ class PiWeather
             jfrm.setSize(1024, 600);
         }
         
-        
-        ReadInsideSensor();
+        if (mHasSensor) {
+            ReadInsideSensor();
+        } else {
+            mInsideTemp = 0.0;
+            mInsideHumidity = 0.0;
+        }
 
         // Main panel to add the sub panels too
         JPanel mainPanel = new JPanel();
@@ -121,8 +128,13 @@ class PiWeather
     private JPanel SetupLeftPanel()
     {
         mValues = new ArrayList<DataValue>();
-        mValues.add(new DataValue(0, 0, "Temperature"));
-        mValues.add(new DataValue(0, 0, "Humidity"));
+        if (mHasSensor) {
+            mValues.add(new DataValue(0, 0, "Temperature"));
+            mValues.add(new DataValue(0, 0, "Humidity"));
+        } else {
+            mValues.add(new DataValue(0, "Temperature"));
+            mValues.add(new DataValue(0, "Humidity"));
+        }
         mValues.add(new DataValue(0, "Wind Speed"));
         mValues.add(new DataValue(0, "Wind Direction"));
         mValues.add(new DataValue(0, "Baraometer", "%.2f"));
@@ -437,7 +449,8 @@ class PiWeather
     
     public void UpdateDataValues()
     {
-        ReadInsideSensor();
+        if (mHasSensor)
+            ReadInsideSensor();
 
         try {
             String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
@@ -449,9 +462,15 @@ class PiWeather
             
             double d;
             mCurrTemp = d = ReadValueFromDoc(doc, "temperature");
-            mValues.get(0).setValue(d, mInsideTemp);
+            if (mHasSensor)
+                mValues.get(0).setValue(d, mInsideTemp);
+            else
+                mValues.get(0).setValue(d);
             d = ReadValueFromDoc(doc, "humidity");
-            mValues.get(1).setValue(d, mInsideHumidity);
+            if (mHasSensor)
+                mValues.get(1).setValue(d, mInsideHumidity);
+            else
+                mValues.get(1).setValue(d);
             d = ReadValueFromDoc(doc, "wind-speed");
             mValues.get(2).setValue(d);
             d = ReadValueFromDoc(doc, "direction");

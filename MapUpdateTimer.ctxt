@@ -1,6 +1,4 @@
 #BlueJ class context
-comment0.target=MapUpdateTimer
-comment0.text=\n\ Simple\ demo\ that\ uses\ java.util.Timer\ to\ schedule\ a\ task\ to\ execute\ once\ 5\n\ seconds\ have\ passed.\n
-comment1.params=seconds\ main
-comment1.target=MapUpdateTimer(int,\ PiWeather)
-numComments=2
+comment0.params=seconds\ main
+comment0.target=MapUpdateTimer(int,\ PiWeather)
+numComments=1
