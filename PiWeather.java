@@ -65,9 +65,12 @@ class PiWeather
         } else {
             mIsPi = true;
             mHasSensor = false;
-            if (mSensor.length() > 0 && !(mSensor.equals("DHT11") || mSensor.equals("DHT22"))) {
-                System.err.println("Bad sensor type");
-                System.exit(1);
+            if (mSensor.length() > 0) {
+                mHasSensor = true;
+                if (!(mSensor.equals("DHT11") || mSensor.equals("DHT22"))) {
+                    System.err.println("Bad sensor type");
+                    System.exit(1);
+                }
             }
         }
         // Create a new JFrame container.
