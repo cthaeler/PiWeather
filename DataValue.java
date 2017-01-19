@@ -9,7 +9,7 @@ import java.awt.*;
 
 public class DataValue
 {
-    // instance variables - replace the example below with your own
+    // instance variables
     private double mValue;
     private double mInsideValue;
     private String mFormatStr;
@@ -58,6 +58,16 @@ public class DataValue
         mInsideValue = insideValue;
         mLegend = legend;
         mFormatStr = "%.0f | %.0f";
+        CreateLabels();
+    }
+    
+    public DataValue(double value, double insideValue, String legend, String fmt)
+    {
+        // initialise instance variables
+        mValue = value;
+        mInsideValue = insideValue;
+        mLegend = legend;
+        mFormatStr = fmt;
         CreateLabels();
     }
     

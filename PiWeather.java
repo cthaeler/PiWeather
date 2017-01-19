@@ -28,27 +28,32 @@ import java.time.format.DateTimeFormatter;
 
 class PiWeather
 {
-    private double mCurrTemp;
+    private double mCurrTemp = 0.0;
+    private double mInsideTemp = 0.0;
+    private double mCurrHumidity = 0.0;
+    private double mInsideHumidity = 0.0;
+    private double mCurrPres = 0.0;
+    private double mCurrSpeed = 0.0;
+    private double mCurrDir = 0.0;
     private String mCurrConditionIconURL;
-    private double mInsideTemp;
-    private double mInsideHumidity;
     
     private ArrayList<DataValue> mValues;
     private ArrayList<ForecastDataValue> mForecastValues;
     private ArrayList<String> mMapURLs;
     private ArrayList<String> mSatURLs;
-    private int mCurMap;
-    private int mCurSat;
+    private int mCurMap = 0;
+    private int mCurSat = 0;
 
     private JLabel mWxImageLabel;
     private JLabel mSatImageLabel;
     
     private JLabel mTimeLabel;
+    private JLabel mLastUpdateLabel;
     private JButton mQuitButton;
     
-    private boolean mIsPi;
-    private boolean mHasSensor;
-    private String mSensor;
+    private boolean mIsPi = true;
+    private boolean mHasSensor = false;
+    private String mSensor = "";
 
     
     /**
@@ -100,19 +105,14 @@ class PiWeather
         mainPanel.setLayout(frameBox);
         
         mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        
-        
-        mainPanel.add(SetupLeftPanel());
-        
-        
-        mainPanel.add(Box.createRigidArea(new Dimension(30, 0)));
 
-           
-        mainPanel.add(SetupCenterPanel());
-        
-        
+        mainPanel.add(SetupLeftPanel());
+
         mainPanel.add(Box.createRigidArea(new Dimension(30, 0)));
-       
+  
+        mainPanel.add(SetupCenterPanel());
+
+        mainPanel.add(Box.createRigidArea(new Dimension(30, 0)));
 
         mainPanel.add(SetupRightPanel());
         
@@ -132,14 +132,13 @@ class PiWeather
     {
         mValues = new ArrayList<DataValue>();
         if (mHasSensor) {
-            mValues.add(new DataValue(0, 0, "Temperature"));
-            mValues.add(new DataValue(0, 0, "Humidity"));
+            mValues.add(new DataValue(0, 0, "Temperature", "%.0f | %.0f"));
+            mValues.add(new DataValue(0, 0, "Humidity", "%.0f | %.0f"));
         } else {
             mValues.add(new DataValue(0, "Temperature"));
             mValues.add(new DataValue(0, "Humidity"));
         }
-        mValues.add(new DataValue(0, "Wind Speed"));
-        mValues.add(new DataValue(0, "Wind Direction"));
+        mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
         mValues.add(new DataValue(0, "Baraometer", "%.2f"));
         
         // Left Panel for the local current observations
@@ -152,6 +151,10 @@ class PiWeather
         mTimeLabel.setForeground(Color.white);
         mTimeLabel.setFont(new Font("Monospaced", Font.PLAIN, 36));
         
+        mLastUpdateLabel = new JLabel(DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm:ss").format(LocalDateTime.now()));
+        mLastUpdateLabel.setForeground(Color.green);
+        mLastUpdateLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        
         leftPanel.add(mTimeLabel);
         
         leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
@@ -163,6 +166,9 @@ class PiWeather
             
             leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         }
+        
+        leftPanel.add(mLastUpdateLabel);
+        
         mQuitButton = new JButton("Quit");
         mQuitButton.setActionCommand("quit");
         
@@ -171,6 +177,7 @@ class PiWeather
                     System.exit(0);
              }          
           });
+          
         leftPanel.add(mQuitButton);
         
         return leftPanel;
@@ -446,60 +453,83 @@ class PiWeather
     
     public void UpdateClock()
     {
-        String tstr = DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        LocalDateTime dateTime = LocalDateTime.now();
+        String tstr = dateTime.format(formatter);
         mTimeLabel.setText(tstr);
     }
     
-    public void UpdateDataValues()
+    
+    public void UpdateFromWeb()
     {
-        if (mHasSensor)
+        if (mHasSensor) {
             ReadInsideSensor();
+        }
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm:ss");
+        LocalDateTime dateTime = LocalDateTime.now();
+        String tstr = dateTime.format(formatter);
+        mLastUpdateLabel.setText(tstr);
+        
+        
         try {
             String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
+
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
+            
             URL url = new URL(urlstr);
+            InputStream stream = url.openStream();
+            Document doc = factory.newDocumentBuilder().parse(stream);
             
-            Document doc = factory.newDocumentBuilder().parse(url.openStream());
-            
-            double d;
-            mCurrTemp = d = ReadValueFromDoc(doc, "temperature");
-            if (mHasSensor)
-                mValues.get(0).setValue(d, mInsideTemp);
-            else
-                mValues.get(0).setValue(d);
-            d = ReadValueFromDoc(doc, "humidity");
-            if (mHasSensor)
-                mValues.get(1).setValue(d, mInsideHumidity);
-            else
-                mValues.get(1).setValue(d);
-            d = ReadValueFromDoc(doc, "wind-speed");
-            mValues.get(2).setValue(d);
-            d = ReadValueFromDoc(doc, "direction");
-            mValues.get(3).setValue(d);
-            d = ReadValueFromDoc(doc, "pressure");
-            mValues.get(4).setValue(d);
-            
-            mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc); 
+            if (UpdateDataValues(doc)) {
+                // don't bother trying to update the forcast if the data values update failed
+                if (UpdateForecastValues(doc)) {
+                    mLastUpdateLabel.setForeground(Color.green);
+                } else {
+                    mLastUpdateLabel.setForeground(Color.yellow);
+                }
+            } else {
+                mLastUpdateLabel.setForeground(Color.red);
+            }
         } catch (Exception e) {
-            //for (int i=0; i < mValues.size(); i++) {
-            //    mValues.get(i).setValue(99.99);
-            //}
+            mLastUpdateLabel.setForeground(Color.red);
         }
     }
     
-    
-    
-    public void UpdateForecastValues()
+    private boolean UpdateDataValues(Document doc)
     {
         try {
-            String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            URL url = new URL(urlstr);
+            mCurrTemp = ReadValueFromDoc(doc, "temperature");
+            if (mHasSensor)
+                mValues.get(0).setValue(mCurrTemp, mInsideTemp);
+            else
+                mValues.get(0).setValue(mCurrTemp);
+            mCurrHumidity = ReadValueFromDoc(doc, "humidity");
+            if (mHasSensor)
+                mValues.get(1).setValue(mCurrHumidity, mInsideHumidity);
+            else
+                mValues.get(1).setValue(mCurrHumidity);
             
-            Document doc = factory.newDocumentBuilder().parse(url.openStream());
+            mCurrDir = ReadValueFromDoc(doc, "direction");
+            mCurrSpeed = ReadValueFromDoc(doc, "wind-speed");
+            mValues.get(2).setValue(mCurrDir, mCurrSpeed);
+            mCurrPres = ReadValueFromDoc(doc, "pressure");
+            mValues.get(3).setValue(mCurrPres);
+            
+            mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
+        } catch (Exception e) {
+            mLastUpdateLabel.setForeground(Color.red);
+            return false;
+        }
+        return true;
+    }
+    
+    
+   
+    private boolean UpdateForecastValues(Document doc)
+    {
+        try {
             NodeList dataNodes = doc.getElementsByTagName("data");
 
             mForecastValues.get(0).setTemp(mCurrTemp);
@@ -546,52 +576,52 @@ class PiWeather
                     // Now let's find the min and max temperature data
                     NodeList tempNodes = dataElement.getElementsByTagName("temperature");
                     int numTempNodes = tempNodes.getLength();
-                    for (int t = 0; t < tempNodes.getLength(); t++) {
-                        Element tempElement = (Element) tempNodes.item(t);
+                    for (int nodeIdx = 0; nodeIdx < numTempNodes; nodeIdx++) {
+                        Element tempElement = (Element) tempNodes.item(nodeIdx);
                         String tempType = tempElement.getAttribute("type"); // this should be "minimum" or "maximum"
                         NodeList tempValueNodes = tempElement.getElementsByTagName("value");
-                        int numNodes = tempValueNodes.getLength();
-                        for (int v = 0; v < numNodes; v++) {
-                            Element value = (Element) tempValueNodes.item(v);
-                            String strval = getCharacterDataFromElement(value);   
+                        int numValueNodes = tempValueNodes.getLength();
+                        for (int valueNodeIdx = 0; valueNodeIdx < numValueNodes; valueNodeIdx++) {
+                            Element valueElement = (Element) tempValueNodes.item(valueNodeIdx);
+                            String strval = getCharacterDataFromElement(valueElement);   
                             double d = Double.parseDouble(strval);
                             int valueIndex = 0;
                             LocalTime lt = LocalTime.now();
                             int hour = lt.getHour();
                             if (tempType.equals("minimum")) {
                                 if (hour > 14)
-                                    valueIndex = v*2;
+                                    valueIndex = valueNodeIdx*2;
                                 else
                                     // set a minimum value
-                                    valueIndex = v*2+1;
+                                    valueIndex = valueNodeIdx*2+1;
                             } else {
                                 if (hour > 14)
                                     // set a maximum value
-                                    valueIndex = v*2+1;
+                                    valueIndex = valueNodeIdx*2+1;
                                 else
-                                    valueIndex = v*2;
+                                    valueIndex = valueNodeIdx*2;
                             }
 
-                            if (valueIndex < mForecastValues.size())
+                            if (valueIndex+1 < mForecastValues.size())
                                 mForecastValues.get(valueIndex+1).setTemp(d);
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            // do nothing :(
+            return false;
         }
+        return true;
     }
     
     
     
     public static void main(String args[])
     {
-        // Create the frame on the event dispatching thread.
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 PiWeather piWXMain = new PiWeather(args);
-                new UpdateUITimer(20, piWXMain);
+                new UpdateUITimer(60, piWXMain);
                 new MapUpdateTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
             }

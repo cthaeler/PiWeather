@@ -18,16 +18,14 @@ public class UpdateUITimer {
   PiWeather mMain;
 
   public UpdateUITimer(int seconds, PiWeather main) {
-    //toolkit = Toolkit.getDefaultToolkit();
+    mMain = main;
     timer = new Timer();
     timer.schedule(new RemindTask(), 0, seconds * 1000);
-    mMain = main;
   }
 
   class RemindTask extends TimerTask {
     public void run() {
-      mMain.UpdateDataValues();
-      mMain.UpdateForecastValues();
+      mMain.UpdateFromWeb();
     }
   }
 

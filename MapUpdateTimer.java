@@ -18,9 +18,9 @@ public class MapUpdateTimer {
   PiWeather mMain;
 
   public MapUpdateTimer(int seconds, PiWeather main) {
+    mMain = main;
     timer = new Timer();
     timer.schedule(new RemindTask(), 0, seconds * 1000);
-    mMain = main;
   }
 
   class RemindTask extends TimerTask {
