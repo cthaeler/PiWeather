@@ -17,6 +17,10 @@ import java.net.URL;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.*;
 
+import static java.nio.file.StandardOpenOption.*;
+import java.nio.file.*;
+import java.io.*;
+
 import javax.imageio.ImageIO;
 import java.util.Properties;
 import java.util.Timer;
@@ -28,6 +32,15 @@ import java.time.format.DateTimeFormatter;
 
 class PiWeather
 {
+    // Novato
+    private int mLocationURL = 1;
+    private String[][] mLocations = {
+        {"Novato", "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
+        {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
+        {"Escondido", "http://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
+    };
+    
+    private boolean mSaveXMLFile = true;
     private double mCurrTemp = 0.0;
     private double mInsideTemp = 0.0;
     private double mCurrHumidity = 0.0;
@@ -36,7 +49,7 @@ class PiWeather
     private double mCurrSpeed = 0.0;
     private double mCurrDir = 0.0;
     private String mCurrConditionIconURL;
-    
+
     private ArrayList<DataValue> mValues;
     private ArrayList<ForecastDataValue> mForecastValues;
     private ArrayList<String> mMapURLs;
@@ -48,12 +61,14 @@ class PiWeather
     private JLabel mSatImageLabel;
     
     private JLabel mTimeLabel;
+    private JLabel mLocationLabel;
     private JLabel mLastUpdateLabel;
     private JButton mQuitButton;
     
     private boolean mIsPi = true;
     private boolean mHasSensor = false;
     private String mSensor = "";
+    
 
     
     /**
@@ -121,26 +136,10 @@ class PiWeather
         
         // Display the frame.
         jfrm.setVisible(true);
-                
-        //UpdateClock();
-        //UpdateDataValues();
-        //UpdateWxMap();
-        //UpdateForecastValues();
     }
     
     private JPanel SetupLeftPanel()
     {
-        mValues = new ArrayList<DataValue>();
-        if (mHasSensor) {
-            mValues.add(new DataValue(0, 0, "Temperature", "%.0f | %.0f"));
-            mValues.add(new DataValue(0, 0, "Humidity", "%.0f | %.0f"));
-        } else {
-            mValues.add(new DataValue(0, "Temperature"));
-            mValues.add(new DataValue(0, "Humidity"));
-        }
-        mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
-        mValues.add(new DataValue(0, "Baraometer", "%.2f"));
-        
         // Left Panel for the local current observations
         JPanel leftPanel = new JPanel();
         BoxLayout leftBox = new BoxLayout(leftPanel, BoxLayout.Y_AXIS);
@@ -151,14 +150,27 @@ class PiWeather
         mTimeLabel.setForeground(Color.white);
         mTimeLabel.setFont(new Font("Monospaced", Font.PLAIN, 36));
         
-        mLastUpdateLabel = new JLabel(DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm:ss").format(LocalDateTime.now()));
-        mLastUpdateLabel.setForeground(Color.green);
-        mLastUpdateLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
         
         leftPanel.add(mTimeLabel);
         
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
+        mLocationLabel = new JLabel(mLocations[mLocationURL][0]);
+        mLocationLabel.setForeground(Color.green);
+        mLocationLabel.setFont(new Font("Monospaced", Font.PLAIN, 24));
+        leftPanel.add(mLocationLabel);
         
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        
+        // create the Current Conditions values list
+        mValues = new ArrayList<DataValue>();
+        if (mHasSensor) {
+            mValues.add(new DataValue(0, 0, "Temperature", "%3.0f|%.0f"));
+            mValues.add(new DataValue(0, 0, "Humidity", "%3.0f|%.0f"));
+        } else {
+            mValues.add(new DataValue(0, "Temperature"));
+            mValues.add(new DataValue(0, "Humidity"));
+        }
+        mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
+        mValues.add(new DataValue(0, "Barometer", "%.2f"));
         for (int i = 0; i < mValues.size(); i++) {
             DataValue dv = mValues.get(i);
             leftPanel.add(dv.getValueLabel());
@@ -166,6 +178,16 @@ class PiWeather
             
             leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         }
+
+        JLabel lu = new JLabel("Last Update");
+        lu.setForeground(Color.green);
+        lu.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        leftPanel.add(lu);
+        
+        mLastUpdateLabel = new JLabel("Now");
+        mLastUpdateLabel.setForeground(Color.green);
+        mLastUpdateLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        SetLastUpdateTime();
         
         leftPanel.add(mLastUpdateLabel);
         
@@ -460,28 +482,61 @@ class PiWeather
     }
     
     
+    private void SetLastUpdateTime()
+    {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm:ss");
+        LocalDateTime dateTime = LocalDateTime.now();
+        String tstr = dateTime.format(formatter);
+        mLastUpdateLabel.setText(tstr);
+    }
+    
+    
+    private void CopyWxXMLFile()
+    {
+        LocalDateTime dt = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH_mm");
+        String tstr = dt.format(formatter);
+        // save the xml
+        Path p = Paths.get("./logfile_"+tstr+".xml");
+        try {
+            URL url = new URL(mLocations[mLocationURL][1]);
+            InputStream in = url.openStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        
+            OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(p, CREATE, APPEND));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                writer.write(line);
+                writer.write("\n");
+            }
+            writer.flush();
+        } catch (IOException x) {
+            System.err.println(x);
+        }
+    }
+    
     public void UpdateFromWeb()
     {
         if (mHasSensor) {
             ReadInsideSensor();
         }
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm:ss");
-        LocalDateTime dateTime = LocalDateTime.now();
-        String tstr = dateTime.format(formatter);
-        mLastUpdateLabel.setText(tstr);
-        
+        SetLastUpdateTime();
         
         try {
-            String urlstr = "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml";
-
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             
-            URL url = new URL(urlstr);
+            LocalDateTime dt = LocalDateTime.now();
+            if (mSaveXMLFile && dt.getMinute() == 0) {
+                CopyWxXMLFile();
+            }
+
+            URL url = new URL(mLocations[mLocationURL][1]);
             InputStream stream = url.openStream();
             Document doc = factory.newDocumentBuilder().parse(stream);
             
+
             if (UpdateDataValues(doc)) {
                 // don't bother trying to update the forcast if the data values update failed
                 if (UpdateForecastValues(doc)) {
