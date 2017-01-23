@@ -33,7 +33,7 @@ import java.time.format.DateTimeFormatter;
 class PiWeather
 {
     // Novato
-    private int mLocationURL = 1;
+    private int mLocationURL = 0;
     private String[][] mLocations = {
         {"Novato", "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
         {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
@@ -497,7 +497,7 @@ class PiWeather
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH_mm");
         String tstr = dt.format(formatter);
         // save the xml
-        Path p = Paths.get("./logfile_"+tstr+".xml");
+        Path p = Paths.get("./logfile_"+mLocations[mLocationURL][0]+"_"+tstr+".xml");
         try {
             URL url = new URL(mLocations[mLocationURL][1]);
             InputStream in = url.openStream();
