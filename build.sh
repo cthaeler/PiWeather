@@ -1,3 +1,4 @@
+#!/bin/bash
 javac DataValue.java
 javac ForecastDataValue.java
 javac MapUpdateTimer.java

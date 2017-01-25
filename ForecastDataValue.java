@@ -69,7 +69,7 @@ public class ForecastDataValue
           //else
             mImageLabel.setIcon(new ImageIcon(image));
         } catch (IOException e) {
-          mImageLabel.setText("none");
+          mImageLabel.setIcon(new ImageIcon("badURL.png"));
         }
     }
     

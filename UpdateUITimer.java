@@ -6,6 +6,7 @@
  */
 import java.util.Timer;
 import java.util.TimerTask;
+import java.time.LocalDateTime;
 
 /**
  * Simple demo that uses java.util.Timer to schedule a task to execute once 5
@@ -20,7 +21,9 @@ public class UpdateUITimer {
   public UpdateUITimer(int seconds, PiWeather main) {
     mMain = main;
     timer = new Timer();
-    timer.schedule(new RemindTask(), 0, seconds * 1000);
+    LocalDateTime dt = LocalDateTime.now();
+    // line up on an even minute (or close)
+    timer.schedule(new RemindTask(), (60 - dt.getSecond())*1000, seconds * 1000);
   }
 
   class RemindTask extends TimerTask {

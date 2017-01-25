@@ -155,10 +155,10 @@ class PiWeather
         
         mLocationLabel = new JLabel(mLocations[mLocationURL][0]);
         mLocationLabel.setForeground(Color.green);
-        mLocationLabel.setFont(new Font("Monospaced", Font.PLAIN, 24));
+        mLocationLabel.setFont(new Font("Monospaced", Font.PLAIN, 28));
         leftPanel.add(mLocationLabel);
         
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         
         // create the Current Conditions values list
         mValues = new ArrayList<DataValue>();
@@ -250,8 +250,9 @@ class PiWeather
     
     private JPanel SetupRightPanel()
     {
+        // allow 18 slots
         mForecastValues = new ArrayList<ForecastDataValue>();
-        for (int fc = 0; fc < 16; fc++) {
+        for (int fc = 0; fc < 18; fc++) {
             ForecastDataValue fv = new ForecastDataValue();
             mForecastValues.add(fv);
         }
@@ -272,7 +273,8 @@ class PiWeather
         BoxLayout rightListPanelBox = new BoxLayout(rightListPanel, BoxLayout.Y_AXIS);
         rightListPanel.setLayout(rightListPanelBox);
         
-        for (int i = 0; i < mForecastValues.size()-4; i+=2) {
+        // only show 12 for now
+        for (int i = 0; i < 12; i+=2) {
             // left one
             ForecastDataValue lfv = mForecastValues.get(i);
             // a forecast panel contains an info panel with temp and info and the image
@@ -336,7 +338,7 @@ class PiWeather
             rightFP.add(rightIP);
             
             rightListPanel.add(rightFP);
-            rightListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            //rightListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
         rightMainPanel.add(leftListPanel);
         rightMainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
@@ -459,6 +461,7 @@ class PiWeather
         } catch (IOException e) {
           // Don't do anything
         }
+        
         try {
           mCurSat++;
           if (mCurSat >= mSatURLs.size()) mCurSat=0;
@@ -497,7 +500,7 @@ class PiWeather
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH_mm");
         String tstr = dt.format(formatter);
         // save the xml
-        Path p = Paths.get("./logfile_"+mLocations[mLocationURL][0]+"_"+tstr+".xml");
+        Path p = Paths.get("./wxfiles/wxfile_"+mLocations[mLocationURL][0]+"_"+tstr+".xml");
         try {
             URL url = new URL(mLocations[mLocationURL][1]);
             InputStream in = url.openStream();
@@ -523,13 +526,19 @@ class PiWeather
 
         SetLastUpdateTime();
         
+        mLocationURL++;
+        if (mLocationURL >= mLocations.length) mLocationURL = 0;
+        mLocationLabel.setText(mLocations[mLocationURL][0]);
+        
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             
-            LocalDateTime dt = LocalDateTime.now();
-            if (mSaveXMLFile && dt.getMinute() == 0) {
-                CopyWxXMLFile();
+            if (false) {
+                LocalDateTime dt = LocalDateTime.now();
+                if (mSaveXMLFile && dt.getMinute()%20 == 0) {
+                    CopyWxXMLFile();
+                }
             }
 
             URL url = new URL(mLocations[mLocationURL][1]);
@@ -587,6 +596,7 @@ class PiWeather
         try {
             NodeList dataNodes = doc.getElementsByTagName("data");
 
+            // the 0'th element is the current condition
             mForecastValues.get(0).setTemp(mCurrTemp);
             mForecastValues.get(0).setIconURL(mCurrConditionIconURL);
             mForecastValues.get(0).setInfo("Now", false);
@@ -595,6 +605,8 @@ class PiWeather
                 // first let's find the icon data
                 Element dataElement = (Element) dataNodes.item(n);
                 String typeString = dataElement.getAttribute("type");
+                
+                // look for the forecast data
                 if (typeString.equals("forecast")) {
                     
                     // found the forecasts now find the time coordinates
@@ -602,6 +614,7 @@ class PiWeather
                     for (int tc = 0; tc < timeCoordsNodes.getLength(); tc++) {
                         Element childElement = (Element) timeCoordsNodes.item(tc);
                         NodeList svtNodes = childElement.getElementsByTagName("start-valid-time");
+                        // find the full list not the short lists just so it's easier
                         if (svtNodes.getLength() > 7) {
                             // found the full list
                             for (int svt = 0; svt < svtNodes.getLength(); svt++) {
@@ -612,7 +625,7 @@ class PiWeather
                             }
                         }
                     }
-                    // found the forecasts, now find the conditions icons
+                    // now find the conditions icons
                     NodeList conditionNodes = dataElement.getElementsByTagName("conditions-icon");
                     int numConditionNodes = conditionNodes.getLength();
                     if (conditionNodes.getLength() > 0) {
@@ -630,16 +643,23 @@ class PiWeather
                     
                     // Now let's find the min and max temperature data
                     NodeList tempNodes = dataElement.getElementsByTagName("temperature");
+                    // there should be two sections with 6, 7 or 8 entries as either minimum or maximum temperatures
                     int numTempNodes = tempNodes.getLength();
                     for (int nodeIdx = 0; nodeIdx < numTempNodes; nodeIdx++) {
                         Element tempElement = (Element) tempNodes.item(nodeIdx);
                         String tempType = tempElement.getAttribute("type"); // this should be "minimum" or "maximum"
+                        String tempTimeLayout = tempElement.getAttribute("time-layout");
+                        // the time layout should look like this "k-p24h-n8-1":
+                        int numTemps = Integer.parseInt(tempTimeLayout.substring(8, 9));
+                        int numSeq = Integer.parseInt(tempTimeLayout.substring(10, 11));
                         NodeList tempValueNodes = tempElement.getElementsByTagName("value");
                         int numValueNodes = tempValueNodes.getLength();
                         for (int valueNodeIdx = 0; valueNodeIdx < numValueNodes; valueNodeIdx++) {
                             Element valueElement = (Element) tempValueNodes.item(valueNodeIdx);
                             String strval = getCharacterDataFromElement(valueElement);   
                             double d = Double.parseDouble(strval);
+                            int valueIndex = valueNodeIdx*2 + numSeq;
+/*
                             int valueIndex = 0;
                             LocalTime lt = LocalTime.now();
                             int hour = lt.getHour();
@@ -656,9 +676,9 @@ class PiWeather
                                 else
                                     valueIndex = valueNodeIdx*2;
                             }
-
-                            if (valueIndex+1 < mForecastValues.size())
-                                mForecastValues.get(valueIndex+1).setTemp(d);
+*/
+                            if (valueIndex < mForecastValues.size())
+                                mForecastValues.get(valueIndex).setTemp(d);
                         }
                     }
                 }
@@ -676,6 +696,7 @@ class PiWeather
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 PiWeather piWXMain = new PiWeather(args);
+                piWXMain.UpdateFromWeb();
                 new UpdateUITimer(60, piWXMain);
                 new MapUpdateTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
