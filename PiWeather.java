@@ -482,6 +482,11 @@ class PiWeather
         LocalDateTime dateTime = LocalDateTime.now();
         String tstr = dateTime.format(formatter);
         mTimeLabel.setText(tstr);
+        
+        if (mHasSensor && dateTime.getSecond()%5==0) {
+            ReadInsideSensor();
+            mValues.get(0).setValue(mCurrTemp, mInsideTemp);
+        }
     }
     
     
@@ -494,7 +499,7 @@ class PiWeather
     }
     
     
-    private void CopyWxXMLFile()
+    private void SaveWxXMLFile()
     {
         LocalDateTime dt = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH_mm");
@@ -537,7 +542,7 @@ class PiWeather
             if (false) {
                 LocalDateTime dt = LocalDateTime.now();
                 if (mSaveXMLFile && dt.getMinute()%20 == 0) {
-                    CopyWxXMLFile();
+                    SaveWxXMLFile();
                 }
             }
 
@@ -659,24 +664,7 @@ class PiWeather
                             String strval = getCharacterDataFromElement(valueElement);   
                             double d = Double.parseDouble(strval);
                             int valueIndex = valueNodeIdx*2 + numSeq;
-/*
-                            int valueIndex = 0;
-                            LocalTime lt = LocalTime.now();
-                            int hour = lt.getHour();
-                            if (tempType.equals("minimum")) {
-                                if (hour > 14)
-                                    valueIndex = valueNodeIdx*2;
-                                else
-                                    // set a minimum value
-                                    valueIndex = valueNodeIdx*2+1;
-                            } else {
-                                if (hour > 14)
-                                    // set a maximum value
-                                    valueIndex = valueNodeIdx*2+1;
-                                else
-                                    valueIndex = valueNodeIdx*2;
-                            }
-*/
+                            
                             if (valueIndex < mForecastValues.size())
                                 mForecastValues.get(valueIndex).setTemp(d);
                         }
@@ -697,7 +685,7 @@ class PiWeather
             public void run() {
                 PiWeather piWXMain = new PiWeather(args);
                 piWXMain.UpdateFromWeb();
-                new UpdateUITimer(60, piWXMain);
+                new UpdateUITimer(30, piWXMain);
                 new MapUpdateTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
             }
