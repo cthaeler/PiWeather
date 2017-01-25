@@ -587,10 +587,12 @@ class PiWeather
     {
         try {
             mCurrTemp = ReadValueFromDoc(doc, "temperature");
+            mCurrHumidity = ReadValueFromDoc(doc, "humidity");
+            
             if (mHasSensor) {
                 mValues.get(0).setValue(mCurrTemp, mInsideTemp);
                 // match the width
-                if (mCurrTemp >= 100) {
+                if (mCurrTemp >= 100 || mCurrHumidity >= 100) {
                     mValues.get(0).setFormat("%3.0f|%.0f");
                     mValues.get(1).setFormat("%3.0f|%.0f");
                 } else {
@@ -601,7 +603,6 @@ class PiWeather
                 mValues.get(0).setValue(mCurrTemp);
             }
             
-            mCurrHumidity = ReadValueFromDoc(doc, "humidity");
             if (mHasSensor)
                 mValues.get(1).setValue(mCurrHumidity, mInsideHumidity);
             else
