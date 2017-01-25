@@ -482,8 +482,16 @@ class PiWeather
         LocalDateTime dateTime = LocalDateTime.now();
         String tstr = dateTime.format(formatter);
         mTimeLabel.setText(tstr);
-        
-        if (mHasSensor && dateTime.getSecond()%5==0) {
+    }
+    
+    public boolean HasSensor()
+    {
+        return mHasSensor;
+    }
+    
+    public void UpdateFromSensor()
+    {
+        if (mHasSensor) {
             ReadInsideSensor();
             mValues.get(0).setValue(mCurrTemp, mInsideTemp);
         }
@@ -687,6 +695,7 @@ class PiWeather
                 piWXMain.UpdateFromWeb();
                 new UpdateUITimer(30, piWXMain);
                 new MapUpdateTimer(5, piWXMain);
+                if (piWXMain.HasSensor()) new UpdateSensorTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
             }
         });
