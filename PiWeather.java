@@ -82,6 +82,15 @@ class PiWeather
         if (System.getProperty("os.name").equals("Mac OS X")) {
             mIsPi = false;
             mHasSensor = false;
+            
+            // allow for the fake mac sensor
+            if (mSensor.length() > 0) {
+                mHasSensor = true;
+                if (!mSensor.equals("mac")) {
+                    System.err.println("Bad sensor type");
+                    System.exit(1);
+                }
+            }
         } else {
             mIsPi = true;
             mHasSensor = false;
@@ -163,8 +172,8 @@ class PiWeather
         // create the Current Conditions values list
         mValues = new ArrayList<DataValue>();
         if (mHasSensor) {
-            mValues.add(new DataValue(0, 0, "Temperature", "%3.0f|%.0f"));
-            mValues.add(new DataValue(0, 0, "Humidity", "%3.0f|%.0f"));
+            mValues.add(new DataValue(0, 0, "Temperature (out|in)", "%2.0f|%.0f"));
+            mValues.add(new DataValue(0, 0, "Humidity    (out|in)", "%2.0f|%.0f"));
         } else {
             mValues.add(new DataValue(0, "Temperature"));
             mValues.add(new DataValue(0, "Humidity"));
@@ -578,10 +587,20 @@ class PiWeather
     {
         try {
             mCurrTemp = ReadValueFromDoc(doc, "temperature");
-            if (mHasSensor)
+            if (mHasSensor) {
                 mValues.get(0).setValue(mCurrTemp, mInsideTemp);
-            else
+                // match the width
+                if (mCurrTemp >= 100) {
+                    mValues.get(0).setFormat("%3.0f|%.0f");
+                    mValues.get(1).setFormat("%3.0f|%.0f");
+                } else {
+                    mValues.get(0).setFormat("%2.0f|%.0f");
+                    mValues.get(1).setFormat("%2.0f|%.0f");
+                }
+            } else {
                 mValues.get(0).setValue(mCurrTemp);
+            }
+            
             mCurrHumidity = ReadValueFromDoc(doc, "humidity");
             if (mHasSensor)
                 mValues.get(1).setValue(mCurrHumidity, mInsideHumidity);

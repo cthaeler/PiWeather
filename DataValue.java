@@ -99,6 +99,13 @@ public class DataValue
         mDataLabel.setText(str);
     }
     
+    public void setFormat(String format)
+    {
+        mFormatStr = format;
+        String str = String.format(mFormatStr, mValue, mInsideValue);
+        mDataLabel.setText(str);
+    }
+    
     public void setLegend(String s)
     {
         mLegend = s;
