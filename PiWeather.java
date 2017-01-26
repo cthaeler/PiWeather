@@ -38,6 +38,8 @@ class PiWeather
         {"Novato", "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
         {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
         {"Escondido", "http://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
+        {"Chicago", "http://forecast.weather.gov/MapClick.php?lat=41.85&lon=-87.65&unit=0&lg=english&FcstType=dwml"},
+        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
     private boolean mSaveXMLFile = true;
@@ -347,7 +349,7 @@ class PiWeather
             rightFP.add(rightIP);
             
             rightListPanel.add(rightFP);
-            //rightListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            rightListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
         rightMainPanel.add(leftListPanel);
         rightMainPanel.add(Box.createRigidArea(new Dimension(0, 15)));

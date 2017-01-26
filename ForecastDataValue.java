@@ -6,6 +6,7 @@
  */
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
 import javax.imageio.ImageIO;
@@ -58,16 +59,65 @@ public class ForecastDataValue
         mImageLabel = new JLabel("");
     }
     
+    private boolean isImageCached(String url)
+    {
+        // make sure the cache directory exists
+        File cacheDir = new File("cache");
+
+        // if the directory does not exist, create it
+        if (!cacheDir.exists()) {
+            try {
+                cacheDir.mkdir();
+            } catch (Exception e) {
+              return false;
+            }
+        }
+    
+        File cacheFile = new File(cachedImageFilename(url));
+        return cacheFile.exists();
+    }
+    
+    private String cachedImageFilename(String url)
+    {
+        String cacheFile = "badURL.png";
+        
+        // the URL should look like one of the following
+        // http://forecast.weather.gov/newimages/medium/nshra60.png
+        // http://forecast.weather.gov/DualImage.php?i=shra&amp;j=few&amp;ip=20
+        
+        if (url.contains("DualImage")) {
+            int idxi = url.indexOf("i=");
+            String fnamei = url.substring(idxi+2, url.indexOf("&amp", idxi));
+            int idxj = url.indexOf("j=");
+            String fnamej = url.substring(idxj+2, url.indexOf("&amp", idxj));
+            cacheFile = "cache/"+fnamei+"_"+fnamej+".png";
+        } else {
+            int idx = url.lastIndexOf("/");
+            String fname = url.substring(idx+1, url.length());
+            cacheFile = "cache/"+fname;
+        }
+        
+        return cacheFile;
+    }
         
     private void SetIconImage()
     {
+
         try {
-          URL imgURL = new URL(mIconURL);
-          Image image = ImageIO.read(imgURL);
-          //if (image.getHeight(null) > 80)
-          //  mImageLabel.setIcon(new ImageIcon(image.getScaledInstance(80, -1, Image.SCALE_AREA_AVERAGING)));
-          //else
+          if (isImageCached(mIconURL)) {
+            Image image = ImageIO.read(new File(cachedImageFilename(mIconURL)));
             mImageLabel.setIcon(new ImageIcon(image));
+          } else {
+            URL imgURL = new URL(mIconURL);
+            BufferedImage image = ImageIO.read(imgURL);
+            
+            File cacheFile = new File(cachedImageFilename(mIconURL));
+            ImageIO.write(image, "PNG", cacheFile);
+            //if (image.getHeight(null) > 80)
+            //  mImageLabel.setIcon(new ImageIcon(image.getScaledInstance(80, -1, Image.SCALE_AREA_AVERAGING)));
+            //else
+            mImageLabel.setIcon(new ImageIcon(image));
+          }
         } catch (IOException e) {
           mImageLabel.setIcon(new ImageIcon("badURL.png"));
         }
