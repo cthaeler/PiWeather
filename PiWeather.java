@@ -36,11 +36,13 @@ class PiWeather
     private int mLocationURL = 0;
     private String[][] mLocations = {
         {"Novato", "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
-        {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
-        {"Escondido", "http://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
-        {"Chicago", "http://forecast.weather.gov/MapClick.php?lat=41.85&lon=-87.65&unit=0&lg=english&FcstType=dwml"},
-        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
+//        {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
+//        {"Escondido", "http://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
+//        {"Chicago", "http://forecast.weather.gov/MapClick.php?lat=41.85&lon=-87.65&unit=0&lg=english&FcstType=dwml"},
+//        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
+    
+    private String[] mSupportedSensors = {"DHT11", "DHT22", "mac"};
     
     private boolean mSaveXMLFile = true;
     private double mCurrTemp = 0.0;
@@ -70,6 +72,7 @@ class PiWeather
     private boolean mIsPi = true;
     private boolean mHasSensor = false;
     private String mSensor = "";
+    private boolean mFullFrame = false;
     
 
     
@@ -78,38 +81,20 @@ class PiWeather
      */
     PiWeather(String args[])
     {
-        if (args.length > 0)
-            mSensor = args[0];
+        ProcessArgs(args);
+
         
         if (System.getProperty("os.name").equals("Mac OS X")) {
             mIsPi = false;
-            mHasSensor = false;
-            
-            // allow for the fake mac sensor
-            if (mSensor.length() > 0) {
-                mHasSensor = true;
-                if (!mSensor.equals("mac")) {
-                    System.err.println("Bad sensor type");
-                    System.exit(1);
-                }
-            }
         } else {
             mIsPi = true;
-            mHasSensor = false;
-            if (mSensor.length() > 0) {
-                mHasSensor = true;
-                if (!(mSensor.equals("DHT11") || mSensor.equals("DHT22"))) {
-                    System.err.println("Bad sensor type");
-                    System.exit(1);
-                }
-            }
         }
         // Create a new JFrame container.
         JFrame jfrm = new JFrame("Pi Wx Display");
 
         // Terminate the program when the user closes the application
         jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        if (mIsPi) {
+        if (mFullFrame) {
             // set properties
             jfrm.setSize(Toolkit.getDefaultToolkit().getScreenSize());
             jfrm.setUndecorated(true);
@@ -119,9 +104,6 @@ class PiWeather
         
         if (mHasSensor) {
             ReadInsideSensor();
-        } else {
-            mInsideTemp = 0.0;
-            mInsideHumidity = 0.0;
         }
 
         // Main panel to add the sub panels too
@@ -147,6 +129,57 @@ class PiWeather
         
         // Display the frame.
         jfrm.setVisible(true);
+    }
+    
+    private boolean isSupportedSensor(String sensor)
+    {
+        for (String s: mSupportedSensors) {
+            if (s.equalsIgnoreCase(sensor)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private void ProcessArgs(String[] args)
+    {
+        for (int i = 0; i < args.length; i++) {
+            switch(args[i]) {
+            case "-s": // sensor
+                if (i+1 >= args.length) {
+                    PrintUsage();
+                    System.exit(1);
+                } else {
+                    if (isSupportedSensor(args[i+1])) {
+                        mSensor = args[i+1].toUpperCase();
+                        mHasSensor = true;
+                        i++;
+                    } else {
+                        System.err.println("Bad Sensor type");
+                        PrintUsage();
+                        System.exit(1);
+                    }
+                }
+                break;
+            case "-f": // full frame
+                mFullFrame = true;
+                break;
+            case "-h": // help
+                PrintUsage();
+                System.exit(1);
+            default: // nothing else matches
+                System.err.println("Unknown switch");
+                PrintUsage();
+                System.exit(1);
+            }
+        }
+    }
+    
+    private void PrintUsage()
+    {
+        System.out.println("Usage: PiWeather -s [DHT11, DHT22, mac] -f");
+        System.out.println("  -s sensor type, one of DHT11, DHT22 or mac The mac sensor is a simulatored sensor for testing");
+        System.out.println("  -f Full frame");
     }
     
     private JPanel SetupLeftPanel()
