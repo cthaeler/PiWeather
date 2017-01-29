@@ -4,3 +4,4 @@ wxfiles_fmt
 icons.zip
 cache
 doc
+*.ctxt
