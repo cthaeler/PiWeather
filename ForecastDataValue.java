@@ -87,9 +87,13 @@ public class ForecastDataValue
         
         if (url.contains("DualImage")) {
             int idxi = url.indexOf("i=");
-            String fnamei = url.substring(idxi+2, url.indexOf("&amp", idxi));
+            int idxamp = url.indexOf("&", idxi);
+            if (idxamp == -1) idxamp = url.length();
+            String fnamei = url.substring(idxi+2, idxamp);
             int idxj = url.indexOf("j=");
-            String fnamej = url.substring(idxj+2, url.indexOf("&amp", idxj));
+            idxamp = url.indexOf("&", idxj);
+            if (idxamp == -1) idxamp = url.length();
+            String fnamej = url.substring(idxj+2, idxamp);
             cacheFile = "cache/"+fnamei+"_"+fnamej+".png";
         } else {
             int idx = url.lastIndexOf("/");

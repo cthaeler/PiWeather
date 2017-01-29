@@ -31,6 +31,14 @@ public class DataValue
     }
 
     
+    /**
+    * Constructor for DataValue 
+    * <p>
+    * Constructor taking the value and legend
+    *
+    * @param  value  Data Value that will be displayed
+    * @param  legend The Legend displayed under the data value
+    **/
     public DataValue(double value, String legend)
     {
         // initialise instance variables
@@ -41,6 +49,15 @@ public class DataValue
         CreateLabels();
     }
     
+    /**
+    * Constructor for DataValue 
+    * <p>
+    * Constructor taking the value, legend and format string
+    *
+    * @param  value  Data Value that will be displayed
+    * @param  legend The Legend displayed under the data value
+    * @param  fmt Format for the value
+    **/
     public DataValue(double value, String legend, String fmt)
     {
         // initialise instance variables
@@ -51,6 +68,15 @@ public class DataValue
         CreateLabels();
     }
     
+    /**
+    * Constructor for DataValue 
+    * <p>
+    * Constructor taking the value, inside value and legend
+    *
+    * @param  value  Data Value that will be displayed
+    * @param  insideValue  Value read from a sensor (or other source)
+    * @param  legend The Legend displayed under the data value
+    **/
     public DataValue(double value, double insideValue, String legend)
     {
         // initialise instance variables
@@ -61,6 +87,16 @@ public class DataValue
         CreateLabels();
     }
     
+    /**
+    * Constructor for DataValue 
+    * <p>
+    * Constructor taking the value, inside value and legend
+    *
+    * @param  value  Data Value that will be displayed
+    * @param  insideValue  Value read from a sensor (or other source)
+    * @param  legend The Legend displayed under the data value
+    * @param  fmt Format for the value
+    **/
     public DataValue(double value, double insideValue, String legend, String fmt)
     {
         // initialise instance variables
