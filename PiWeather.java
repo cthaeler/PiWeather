@@ -30,11 +30,11 @@ import java.time.*;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-class PiWeather
+class PiWeather implements Serializable
 {
-    // Novato
-    private int mLocationURL = 0;
-    private String[][] mLocations = {
+
+
+    private static final String[][] mLocations = {
         {"Novato", "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
 //        {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
 //        {"Escondido", "http://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
@@ -42,8 +42,11 @@ class PiWeather
 //        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
-    private String[] mSupportedSensors = {"DHT11", "DHT22", "mac"};
+    private static final String[] mSupportedSensors = {"DHT11", "DHT22", "mac"};
+    private static final String sTrendDataFile = "cache/trend_data.txt";
     
+    private int mLocationURL = 0;
+        
     private boolean mSaveXMLFile = true;
     private double mCurrTemp = 0.0;
     private double mInsideTemp = 0.0;
@@ -53,6 +56,8 @@ class PiWeather
     private double mCurrSpeed = 0.0;
     private double mCurrDir = 0.0;
     private String mCurrConditionIconURL;
+    
+    private ArrayList<TrendData> mTrendData;
 
     private ArrayList<DataValue> mValues;
     private ArrayList<ForecastDataValue> mForecastValues;
@@ -82,6 +87,12 @@ class PiWeather
     PiWeather(String args[])
     {
         ProcessArgs(args);
+        
+        mTrendData = new ArrayList<TrendData>();
+        File f = new File(sTrendDataFile);
+        if (f.exists() && f.canRead()) {
+            ReadTrendData();
+        }
 
         
         if (System.getProperty("os.name").equals("Mac OS X")) {
@@ -649,6 +660,15 @@ class PiWeather
             mCurrPres = ReadValueFromDoc(doc, "pressure");
             mValues.get(3).setValue(mCurrPres);
             
+            mTrendData.add(new TrendData(LocalDateTime.now(), mCurrTemp, mCurrHumidity));
+            SaveTrendData();
+/*
+            for (TrendData td : mTrendData) {
+                System.out.println(td.toString());
+            }
+            System.out.println("----");
+*/
+
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
             mLastUpdateLabel.setForeground(Color.red);
@@ -657,6 +677,48 @@ class PiWeather
         return true;
     }
     
+    private void SaveTrendData()
+    {
+                // Let's serialize an Object
+        try {
+            FileOutputStream fileOut = new FileOutputStream(sTrendDataFile);
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(mTrendData);
+            out.close();
+            fileOut.close();
+            //System.out.println("\nSerialization Successful... Checkout your specified output file..\n");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void ReadTrendData()
+    {
+        // Let's deserialize an Object
+        
+        try {
+            FileInputStream fileIn = new FileInputStream(sTrendDataFile);
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            mTrendData = (ArrayList<TrendData>) in.readObject();
+/*
+            for (TrendData td : mTrendData) {
+                System.out.println(td.toString());
+            }
+            System.out.println("----");
+*/
+            in.close();
+            fileIn.close();
+        } catch(ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     
    
     private boolean UpdateForecastValues(Document doc)
