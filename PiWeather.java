@@ -2,17 +2,15 @@
  * Main for PiWeather
  * 
  * @author Charles Thaeler <cst@soar-high.com>
- * @version 0.1
+ * @version 0.2
  */
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
-import java.io.*;
+
 import java.util.ArrayList;
 
-import java.awt.Image;
 import java.net.*;
-
 import java.net.URL;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.*;
@@ -57,7 +55,7 @@ class PiWeather implements Serializable
     private double mCurrDir = 0.0;
     private String mCurrConditionIconURL;
     
-    private ArrayList<TrendData> mTrendData;
+
 
     private ArrayList<DataValue> mValues;
     private ArrayList<ForecastDataValue> mForecastValues;
@@ -65,9 +63,12 @@ class PiWeather implements Serializable
     private ArrayList<String> mSatURLs;
     private int mCurMap = 0;
     private int mCurSat = 0;
+    private ArrayList<TrendData> mTrendData;
 
     private JLabel mWxImageLabel;
     private JLabel mSatImageLabel;
+    
+    private TrendDisplayPanel mTrendGraph;
     
     private JLabel mTimeLabel;
     private JLabel mLocationLabel;
@@ -201,7 +202,7 @@ class PiWeather implements Serializable
         leftPanel.setLayout(leftBox);
         leftPanel.setBackground(Color.BLACK);
        
-        mTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
+        mTimeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now()));
         mTimeLabel.setForeground(Color.white);
         mTimeLabel.setFont(new Font("Monospaced", Font.PLAIN, 36));
         
@@ -312,11 +313,18 @@ class PiWeather implements Serializable
             mForecastValues.add(fv);
         }
         
-        // right panel for the forcast info
         JPanel rightMainPanel = new JPanel();
-        BoxLayout rightMainBox = new BoxLayout(rightMainPanel, BoxLayout.X_AXIS);
+        BoxLayout rightMainBox = new BoxLayout(rightMainPanel, BoxLayout.Y_AXIS);
         rightMainPanel.setLayout(rightMainBox);
         rightMainPanel.setBackground(Color.BLACK);
+        
+        // right panel for the forcast info
+        JPanel forcastPanel = new JPanel();
+        BoxLayout forcastBox = new BoxLayout(forcastPanel, BoxLayout.X_AXIS);
+        forcastPanel.setLayout(forcastBox);
+        forcastPanel.setBackground(Color.BLACK);
+        
+
         
         JPanel leftListPanel = new JPanel();
         leftListPanel.setBackground(Color.BLACK);
@@ -329,7 +337,7 @@ class PiWeather implements Serializable
         rightListPanel.setLayout(rightListPanelBox);
         
         // only show 12 for now
-        for (int i = 0; i < 12; i+=2) {
+        for (int i = 0; i < 10; i+=2) {
             // left one
             ForecastDataValue lfv = mForecastValues.get(i);
             // a forecast panel contains an info panel with temp and info and the image
@@ -395,10 +403,16 @@ class PiWeather implements Serializable
             rightListPanel.add(rightFP);
             rightListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
-        rightMainPanel.add(leftListPanel);
-        rightMainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-        rightMainPanel.add(rightListPanel);
-
+        forcastPanel.add(leftListPanel);
+        forcastPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        forcastPanel.add(rightListPanel);
+        
+        rightMainPanel.add(forcastPanel);
+        
+        mTrendGraph = new TrendDisplayPanel();
+        
+        rightMainPanel.add(mTrendGraph);
+ 
         return rightMainPanel;
     }
         
@@ -660,17 +674,32 @@ class PiWeather implements Serializable
             mCurrPres = ReadValueFromDoc(doc, "pressure");
             mValues.get(3).setValue(mCurrPres);
             
-            mTrendData.add(new TrendData(LocalDateTime.now(), mCurrTemp, mCurrHumidity));
-            SaveTrendData();
-/*
-            for (TrendData td : mTrendData) {
-                System.out.println(td.toString());
+            mTrendData.add(new TrendData(LocalDateTime.now(), mCurrTemp, mCurrHumidity, mCurrPres));
+            
+            // cull out "old" data, save only 24 hours
+            while (mTrendData.size() > 2 &&
+                    Duration.between(mTrendData.get(0).GetDateTime(),
+                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24) { 
+                mTrendData.remove(0);
             }
-            System.out.println("----");
-*/
+            SaveTrendData();
+            int size = mTrendData.size();
+            mTrendGraph.UpdateData(mTrendData);
+
+            // dump it for testing
+            if (true) {
+                int i = 0;
+                for (TrendData td : mTrendData) {
+                    System.out.print(Integer.toString(i++) + " ");
+                    System.out.println(td.toString());
+                }
+                System.out.println("----");
+            }
+
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
+            e.printStackTrace();
             mLastUpdateLabel.setForeground(Color.red);
             return false;
         }
@@ -679,7 +708,7 @@ class PiWeather implements Serializable
     
     private void SaveTrendData()
     {
-                // Let's serialize an Object
+        // Let's serialize an Object
         try {
             FileOutputStream fileOut = new FileOutputStream(sTrendDataFile);
             ObjectOutputStream out = new ObjectOutputStream(fileOut);
@@ -810,7 +839,7 @@ class PiWeather implements Serializable
             public void run() {
                 PiWeather piWXMain = new PiWeather(args);
                 piWXMain.UpdateFromWeb();
-                new UpdateUITimer(30, piWXMain);
+                new UpdateUITimer(10 * 60, piWXMain); // update every 10 minutes
                 new MapUpdateTimer(5, piWXMain);
                 if (piWXMain.HasSensor()) new UpdateSensorTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
