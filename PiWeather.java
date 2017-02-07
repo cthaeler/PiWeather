@@ -53,6 +53,7 @@ class PiWeather implements Serializable
     private double mCurrPres = 0.0;
     private double mCurrSpeed = 0.0;
     private double mCurrDir = 0.0;
+    private String mCurrObsTime = "";
     private String mCurrConditionIconURL;
     
 
@@ -73,12 +74,14 @@ class PiWeather implements Serializable
     private JLabel mTimeLabel;
     private JLabel mLocationLabel;
     private JLabel mLastUpdateLabel;
+    private JLabel mLastObsLabel;
     private JButton mQuitButton;
     
     private boolean mIsPi = true;
     private boolean mHasSensor = false;
     private String mSensor = "";
     private boolean mFullFrame = false;
+    private boolean mGenFakeTrendData = false;
     
 
     
@@ -90,9 +93,14 @@ class PiWeather implements Serializable
         ProcessArgs(args);
         
         mTrendData = new ArrayList<TrendData>();
-        File f = new File(sTrendDataFile);
-        if (f.exists() && f.canRead()) {
-            ReadTrendData();
+        if (mGenFakeTrendData) {
+            GenFakeTrendData();
+        } else {
+            File f = new File(sTrendDataFile);
+            if (f.exists() && f.canRead()) {
+                ReadTrendData();
+                DumpTrendData("---- Initial Read ----");
+            }
         }
 
         
@@ -176,6 +184,9 @@ class PiWeather implements Serializable
             case "-f": // full frame
                 mFullFrame = true;
                 break;
+            case "-td": // generate take Trend Data
+                mGenFakeTrendData = true;
+                break;
             case "-h": // help
                 PrintUsage();
                 System.exit(1);
@@ -246,6 +257,11 @@ class PiWeather implements Serializable
         SetLastUpdateTime();
         
         leftPanel.add(mLastUpdateLabel);
+        
+        mLastObsLabel = new JLabel("Now");
+        mLastObsLabel.setForeground(Color.white);
+        mLastObsLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        leftPanel.add(mLastObsLabel);
         
         mQuitButton = new JButton("Quit");
         mQuitButton.setActionCommand("quit");
@@ -491,6 +507,25 @@ class PiWeather implements Serializable
         return 0;
     }
     
+    private static String ReadStringFromDoc(Document doc, String e)
+    {
+        NodeList dataNodes = doc.getElementsByTagName("data");
+        for (int n = 0; n < dataNodes.getLength(); n++) {
+            Element element = (Element) dataNodes.item(n);
+            String typeString = element.getAttribute("type");
+            if (typeString.equals("current observations")) {
+                NodeList nodes = element.getElementsByTagName(e);
+                
+                for (int i = 0; i < nodes.getLength(); i++) {
+                   // just the first
+                   return getCharacterDataFromElement((Element) nodes.item(i));
+                }
+            }
+        }
+        
+        return "";
+    }
+    
     private String ReadCurrentConditionsIconFromDocument(Document doc)
     {
         NodeList dataNodes = doc.getElementsByTagName("data");
@@ -643,11 +678,42 @@ class PiWeather implements Serializable
         }
     }
     
+    private void DumpTrendData(String header)
+    {
+        System.out.println(header);
+        int i = 0;
+        for (TrendData td : mTrendData) {
+            System.out.print(Integer.toString(i++) + " ");
+            System.out.println(td.toString());
+        }
+        System.out.println("----");
+    }
+    
+    private void GenFakeTrendData()
+    {
+        // Generate 3 days worth
+        for (int i = 24*6*3; i > 0; i--) {
+            LocalDateTime n = LocalDateTime.now();
+            LocalDateTime t = n.minusMinutes(i*10);
+            // 2017-02-07T07:55:00
+            String obstime = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(t) +"T" + DateTimeFormatter.ofPattern("HH:mm:ss").format(t);
+            // -20 to 120
+            double temp = -20 + i % 140;
+            // 0 to 100
+            double humidity = i % 100;
+            // 27 to 32
+            double press = 27 + (i%500)/100.0;
+            mTrendData.add(new TrendData(t, obstime, temp, humidity, press));
+        }
+    }
+    
     private boolean UpdateDataValues(Document doc)
     {
         try {
             mCurrTemp = ReadValueFromDoc(doc, "temperature");
             mCurrHumidity = ReadValueFromDoc(doc, "humidity");
+            mCurrObsTime = ReadStringFromDoc(doc, "start-valid-time");
+            mLastObsLabel.setText(mCurrObsTime);
             
             if (mHasSensor) {
                 mValues.get(0).setValue(mCurrTemp, mInsideTemp);
@@ -674,12 +740,15 @@ class PiWeather implements Serializable
             mCurrPres = ReadValueFromDoc(doc, "pressure");
             mValues.get(3).setValue(mCurrPres);
             
-            mTrendData.add(new TrendData(LocalDateTime.now(), mCurrTemp, mCurrHumidity, mCurrPres));
+            // sparce after we have 10
+            if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
+                mTrendData.add(new TrendData(LocalDateTime.now(), mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres));
+            }
             
-            // cull out "old" data, save only 24 hours
+            // cull out "old" data, save 3 days worth
             while (mTrendData.size() > 2 &&
                     Duration.between(mTrendData.get(0).GetDateTime(),
-                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24) { 
+                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24*3) { 
                 mTrendData.remove(0);
             }
             SaveTrendData();
@@ -687,14 +756,7 @@ class PiWeather implements Serializable
             mTrendGraph.UpdateData(mTrendData);
 
             // dump it for testing
-            if (true) {
-                int i = 0;
-                for (TrendData td : mTrendData) {
-                    System.out.print(Integer.toString(i++) + " ");
-                    System.out.println(td.toString());
-                }
-                System.out.println("----");
-            }
+            DumpTrendData("---- at " + mCurrObsTime);
 
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);

@@ -16,6 +16,7 @@ public class TrendData implements Serializable
     private double mTemp;
     private double mHumidity;
     private double mBarometer;
+    private String mObsTime;
 
     /**
      * Constructor for objects of class TrendData
@@ -27,14 +28,16 @@ public class TrendData implements Serializable
         mTemp = 0.0;
         mHumidity = 0.0;
         mBarometer = 0.0;
+        mObsTime = "";
     }
     
-    public TrendData(LocalDateTime time, double temp, double humidity, double barometer)
+    public TrendData(LocalDateTime time, String obstime, double temp, double humidity, double barometer)
     {
         mDateTime = time;
         mTemp = temp;
         mHumidity = humidity;
         mBarometer = barometer;
+        mObsTime = obstime;
     }
     
     /*
@@ -104,13 +107,32 @@ public class TrendData implements Serializable
     {
         mBarometer = barometer;
     }
+
+        
+    /*
+     * @return obs time
+     */
+    public String GetObsTime()
+    {
+        return mObsTime;
+    }
+    
+    /*
+     * @param obstime
+     *      set the obs time
+     */
+    public void SetObsTime(String obstime)
+    {
+        mObsTime = obstime;
+    }
     
     public String toString()
     {
-        return "TrendData [mDateTime=" + DateTimeFormatter.ofPattern("yyyy MM dd HH:mm:ss").format(mDateTime) +
-                          ", mTemp=" + mTemp +
-                          ", mHumidity=" + mHumidity +
-                          ", mBarometer=" + mBarometer +
+        return "TrendData[dt=" + DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(mDateTime) +
+                          ", temp=" + mTemp +
+                          ", hum=" + mHumidity +
+                          ", pres=" + mBarometer +
+                          ", obs=" + mObsTime +
                           "]";
             
     }
