@@ -82,6 +82,7 @@ class PiWeather implements Serializable
     private String mSensor = "";
     private boolean mFullFrame = false;
     private boolean mGenFakeTrendData = false;
+    private boolean mVerbose = false;
     
 
     
@@ -99,7 +100,7 @@ class PiWeather implements Serializable
             File f = new File(sTrendDataFile);
             if (f.exists() && f.canRead()) {
                 ReadTrendData();
-                DumpTrendData("---- Initial Read ----");
+                if (mVerbose) DumpTrendData("---- Initial Read ----");
             }
         }
 
@@ -190,6 +191,9 @@ class PiWeather implements Serializable
             case "-h": // help
                 PrintUsage();
                 System.exit(1);
+            case "-v":
+                mVerbose = true;
+                break;
             default: // nothing else matches
                 System.err.println("Unknown switch");
                 PrintUsage();
@@ -201,8 +205,10 @@ class PiWeather implements Serializable
     private void PrintUsage()
     {
         System.out.println("Usage: PiWeather -s [DHT11, DHT22, mac] -f");
-        System.out.println("  -s sensor type, one of DHT11, DHT22 or mac The mac sensor is a simulatored sensor for testing");
-        System.out.println("  -f Full frame");
+        System.out.println("  -s   sensor type, one of DHT11, DHT22 or mac The mac sensor is a simulatored sensor for testing");
+        System.out.println("  -f   Full frame");
+        System.out.println("  -td  Generate Fake Trend Data");
+        System.out.println("  -v   Verbose");
     }
     
     private JPanel SetupLeftPanel()
@@ -740,9 +746,11 @@ class PiWeather implements Serializable
             mCurrPres = ReadValueFromDoc(doc, "pressure");
             mValues.get(3).setValue(mCurrPres);
             
+            boolean addOrRemoved = false;
             // sparce after we have 10
             if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
                 mTrendData.add(new TrendData(LocalDateTime.now(), mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres));
+                addOrRemoved = true;
             }
             
             // cull out "old" data, save 3 days worth
@@ -750,14 +758,16 @@ class PiWeather implements Serializable
                     Duration.between(mTrendData.get(0).GetDateTime(),
                                      mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24*3) { 
                 mTrendData.remove(0);
+                addOrRemoved = true;
             }
-            SaveTrendData();
+            
+            if (addOrRemoved) {
+                SaveTrendData();
+                if (mVerbose) DumpTrendData("---- at " + mCurrObsTime);
+            }
+            
             int size = mTrendData.size();
-            mTrendGraph.UpdateData(mTrendData);
-
-            // dump it for testing
-            DumpTrendData("---- at " + mCurrObsTime);
-
+            mTrendGraph.UpdateData(mTrendData, mVerbose);
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
@@ -777,7 +787,7 @@ class PiWeather implements Serializable
             out.writeObject(mTrendData);
             out.close();
             fileOut.close();
-            //System.out.println("\nSerialization Successful... Checkout your specified output file..\n");
+            if (mVerbose) System.out.println("\nSerialization Successful... Checkout your specified output file..\n");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -794,12 +804,6 @@ class PiWeather implements Serializable
             FileInputStream fileIn = new FileInputStream(sTrendDataFile);
             ObjectInputStream in = new ObjectInputStream(fileIn);
             mTrendData = (ArrayList<TrendData>) in.readObject();
-/*
-            for (TrendData td : mTrendData) {
-                System.out.println(td.toString());
-            }
-            System.out.println("----");
-*/
             in.close();
             fileIn.close();
         } catch(ClassNotFoundException e) {

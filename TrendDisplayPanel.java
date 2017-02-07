@@ -17,11 +17,14 @@ import java.time.LocalDateTime;
 public class TrendDisplayPanel extends JPanel
 {
     private int[][] mData;
+    private boolean mVerbose = false;
     
-    public void UpdateData(ArrayList<TrendData> list)
+    public void UpdateData(ArrayList<TrendData> list, boolean verbose)
     {
         if (list.size() < 2) return;
-
+        
+        mVerbose = verbose;
+        
         Dimension dim = getSize();
         int height = (int)dim.getHeight() - 10; // allow a bourder
         int width = (int)dim.getWidth() - 30;
@@ -63,7 +66,7 @@ public class TrendDisplayPanel extends JPanel
             return;
         }
 
-        boolean usePolyline = false;
+        boolean usePolyline = !mVerbose;
         g2d.setColor(Color.red);
         g2d.drawString("Temp", 10, (int)getSize().getHeight()-5);
         if (usePolyline) {
@@ -101,8 +104,11 @@ public class TrendDisplayPanel extends JPanel
             }
         }
         
-        g2d.setColor(Color.WHITE);
-        g2d.drawString(Integer.toString(mData[0].length), (int)getSize().getWidth() - 50, (int)getSize().getHeight()-5);
+        if (mVerbose) {
+            g2d.setColor(Color.WHITE);
+            g2d.drawString(Integer.toString(mData[0].length), (int)getSize().getWidth() - 50, (int)getSize().getHeight()-5);
+    
+        }
     }
 
     @Override
