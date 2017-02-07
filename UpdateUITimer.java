@@ -23,7 +23,9 @@ public class UpdateUITimer {
     timer = new Timer();
     LocalDateTime dt = LocalDateTime.now();
     // line up on an even minute (or close)
-    timer.schedule(new RemindTask(), (60 - dt.getSecond())*1000, seconds * 1000);
+    int firstwait = (60 - dt.getSecond())*1000;
+    if (firstwait < 5000) firstwait += 60000; // wait for the next minute
+    timer.schedule(new RemindTask(), firstwait, seconds * 1000);
   }
 
   class RemindTask extends TimerTask {

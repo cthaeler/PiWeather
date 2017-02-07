@@ -16,6 +16,8 @@ public class TrendData implements Serializable
     private double mTemp;
     private double mHumidity;
     private double mBarometer;
+    private double mSensorTemp;
+    private double mSensorHumidity;
     private String mObsTime;
 
     /**
@@ -29,15 +31,21 @@ public class TrendData implements Serializable
         mHumidity = 0.0;
         mBarometer = 0.0;
         mObsTime = "";
+        mSensorTemp = 0.0;
+        mSensorHumidity = 0.0;
     }
     
-    public TrendData(LocalDateTime time, String obstime, double temp, double humidity, double barometer)
+    
+    public TrendData(LocalDateTime time, String obstime, double temp, double humidity, double barometer,
+                    double sensorTemp, double sensorHumidity)
     {
         mDateTime = time;
         mTemp = temp;
         mHumidity = humidity;
         mBarometer = barometer;
         mObsTime = obstime;
+        mSensorTemp = sensorTemp;
+        mSensorHumidity = sensorHumidity;
     }
     
     /*
@@ -126,12 +134,47 @@ public class TrendData implements Serializable
         mObsTime = obstime;
     }
     
+    
+    /*
+     * @return sensor temperature
+     */
+    public double GetSensorTemp()
+    {
+        return mSensorTemp;
+    }
+    
+    /*
+     * @param temp
+     *      set the sensor temp
+     */
+    public void SetSensorTemp(double temp)
+    {
+        mSensorTemp = temp;
+    }
+    
+    /*
+     * @return sensor humidity
+     */
+    public double GetSensorHumidity()
+    {
+        return mSensorHumidity;
+    }
+    
+    /*
+     * @param humidity
+     *      set the sensor humidity
+     */
+    public void SetSensorHumidity(double humidity)
+    {
+        mSensorHumidity = humidity;
+    }
+    
     public String toString()
     {
         return "TrendData[dt=" + DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(mDateTime) +
-                          ", temp=" + mTemp +
-                          ", hum=" + mHumidity +
-                          ", pres=" + mBarometer +
+                          ", temp=" + String.format("%.1f", mTemp) + "/" + String.format("%.1f", mSensorTemp) +
+                          ", hum=" + String.format("%.0f", mHumidity) + "/" + String.format("%.0f", mSensorHumidity) +
+                          ", pres=" + String.format("%.2f", mBarometer) +
                           ", obs=" + mObsTime +
                           "]";
             

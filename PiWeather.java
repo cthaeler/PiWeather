@@ -165,6 +165,7 @@ class PiWeather implements Serializable
     private void ProcessArgs(String[] args)
     {
         for (int i = 0; i < args.length; i++) {
+            String ar = args[i];
             switch(args[i]) {
             case "-s": // sensor
                 if (i+1 >= args.length) {
@@ -709,7 +710,7 @@ class PiWeather implements Serializable
             double humidity = i % 100;
             // 27 to 32
             double press = 27 + (i%500)/100.0;
-            mTrendData.add(new TrendData(t, obstime, temp, humidity, press));
+            mTrendData.add(new TrendData(t, obstime, temp, humidity, press, temp+3, humidity+3));
         }
     }
     
@@ -749,7 +750,13 @@ class PiWeather implements Serializable
             boolean addOrRemoved = false;
             // sparce after we have 10
             if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
-                mTrendData.add(new TrendData(LocalDateTime.now(), mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres));
+                if (mHasSensor) {
+                    mTrendData.add(new TrendData(LocalDateTime.now(),
+                                    mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
+                                    mInsideTemp, mInsideHumidity));
+                } else {
+                    mTrendData.add(new TrendData(LocalDateTime.now(), mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres, 0, 0));
+                }
                 addOrRemoved = true;
             }
             
@@ -767,7 +774,7 @@ class PiWeather implements Serializable
             }
             
             int size = mTrendData.size();
-            mTrendGraph.UpdateData(mTrendData, mVerbose);
+            mTrendGraph.UpdateData(mTrendData, mHasSensor, mVerbose);
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
@@ -905,7 +912,7 @@ class PiWeather implements Serializable
             public void run() {
                 PiWeather piWXMain = new PiWeather(args);
                 piWXMain.UpdateFromWeb();
-                new UpdateUITimer(10 * 60, piWXMain); // update every 10 minutes
+                new UpdateUITimer(5 * 60, piWXMain); // update every 5 minutes
                 new MapUpdateTimer(5, piWXMain);
                 if (piWXMain.HasSensor()) new UpdateSensorTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
