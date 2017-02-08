@@ -9,7 +9,7 @@
     <Filter/>
     <CTags_Support>0</CTags_Support>
     <Word_File/>
-    <Project_Directory>/Users/cst/git_repos/Synology/pi_projects/weather</Project_Directory>
+    <Project_Directory>/Users/cst/git_repos/piweather</Project_Directory>
     <Tag_File/>
   </Project_Information>
   <Tools>
@@ -30,13 +30,13 @@
   </Project_ID>
   <Files>
     <File>ForecastDataValue.java</File>
-    <File>UpdateUITimer.ctxt</File>
+    <File>UIUpdateTimer.ctxt</File>
     <File>TimeUpdateTimer.ctxt</File>
     <File>MapUpdateTimer.ctxt</File>
     <File>MapUpdateTimer.java</File>
     <File>TimeUpdateTimer.java</File>
     <File>PiWeather.java</File>
-    <File>UpdateUITimer.java</File>
+    <File>UIUpdateTimer.java</File>
     <File>README.TXT</File>
     <File>DataValue.ctxt</File>
     <File>ForecastDataValue.ctxt</File>

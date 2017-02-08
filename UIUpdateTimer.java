@@ -1,5 +1,5 @@
 /**
- * Write a description of class UpdateUITimer here.
+ * Write a description of class UIUpdateTimer here.
  * 
  * @author Charles Thaeler <cst@soar-high.com>
  * @version (a version number or a date)
@@ -13,12 +13,12 @@ import java.time.LocalDateTime;
  * seconds have passed.
  */
 
-public class UpdateUITimer {
+public class UIUpdateTimer {
   //Toolkit toolkit;
   Timer timer;
   PiWeather mMain;
 
-  public UpdateUITimer(int seconds, PiWeather main) {
+  public UIUpdateTimer(int seconds, PiWeather main) {
     mMain = main;
     timer = new Timer();
     LocalDateTime dt = LocalDateTime.now();
