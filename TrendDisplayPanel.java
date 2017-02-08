@@ -46,7 +46,7 @@ public class TrendDisplayPanel extends JPanel
         Dimension dim = getSize();
         int height = (int)dim.getHeight() - 10; // allow a bourder
         
-        return(height - (int)((press - 27.0) * 25.0));
+        return(height - (int)((press - 27.5) * 25.0));
     }
     
     private void drawDashedLine(Graphics g, int x1, int y1, int x2, int y2)
@@ -111,30 +111,36 @@ public class TrendDisplayPanel extends JPanel
         setBackground(Color.BLACK);
         
         Dimension dim = getSize();
+        int y;
         
         g2d.setColor(Color.red);
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
         g2d.drawString("Temp", 10, dim.height-5);
         g2d.setColor(new Color(128, 0, 0));
-        int y = GetTempY(32.0); // freezing level
-        drawDashedLine(g2d, 5, y, dim.width-30, y);
-        g2d.drawString("32", dim.width-30, y);
-        y = GetTempY(100.0);
-        drawDashedLine(g2d, 5, y, dim.width-30, y);
-        g2d.drawString("100", dim.width-30, y);
+        for (double t = 0; t < 120; t+=20) {
+            y = GetTempY(t); // freezing level
+            drawDashedLine(g2d, 15, y, dim.width-30, y);
+            g2d.drawString(String.format("%.0f", t), dim.width-30, y);
+        }
         
         g2d.setColor(new Color(128, 128, 255));
         g2d.drawString("Humidity", 50, dim.height-5);
-        y = GetTempY(50.0);
-        drawDashedLine(g2d, 5, y, dim.width-30, y);
-        g2d.drawString("50", dim.width-30, y);
+        /* Humidity share the same scale as temperature so don't do this */
+        if (false)
+        for (double h = 10; h < 100; h+=20) {
+            y = GetHumidityY(h);
+            drawDashedLine(g2d, 15, y, dim.width-20, y);
+            g2d.drawString(String.format("%.0f", h), dim.width-15, y);
+        }
         
         g2d.setColor(Color.green);
         g2d.drawString("Barometer", 120, dim.height-5);
         g2d.setColor(new Color(0, 128, 0));
-        y = GetBarometerY(30.00);
-        drawDashedLine(g2d, 5, y, dim.width-30, y);
-        g2d.drawString("30.0", dim.width-30, y);
+        for (double b = 28; b < 32; b+=1) {
+            y = GetBarometerY(b);
+            drawDashedLine(g2d, 15, y, dim.width-30, y);
+            g2d.drawString(String.format("%.0f", b), 0, y);
+        }
         
         setFont(new Font("Monospaced", Font.PLAIN, 12));
         
