@@ -82,6 +82,8 @@ class PiWeather implements Serializable
     private String mSensor = "";
     private boolean mFullFrame = false;
     private boolean mGenFakeTrendData = false;
+    private boolean mSaveWxFiles = false;
+    private int mTrendDataDays = 3; // default to 3 days of trend data displayed
     private boolean mVerbose = false;
     
 
@@ -186,14 +188,37 @@ class PiWeather implements Serializable
             case "-f": // full frame
                 mFullFrame = true;
                 break;
-            case "-td": // generate take Trend Data
+            case "-ftd": // generate take Trend Data
                 mGenFakeTrendData = true;
+                break;
+            case "-td": // set the number of trend data days to display
+                if (i+1 >= args.length) {
+                    PrintUsage();
+                    System.exit(1);
+                } else {
+                    try {
+                        mTrendDataDays = Integer.parseInt(args[i+1]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Invalid number of days for trend data");
+                        PrintUsage();
+                        System.exit(1);
+                    }
+                    if (mTrendDataDays < 1 || mTrendDataDays > 7) {
+                        System.err.println("Invalid number of days for trend data");
+                        PrintUsage();
+                        System.exit(1);
+                    }
+                    i++;
+                }
                 break;
             case "-h": // help
                 PrintUsage();
                 System.exit(1);
             case "-v":
                 mVerbose = true;
+                break;
+            case "-wx": // save wx files
+                mSaveWxFiles = true;
                 break;
             default: // nothing else matches
                 System.err.println("Unknown switch");
@@ -205,11 +230,13 @@ class PiWeather implements Serializable
     
     private void PrintUsage()
     {
-        System.out.println("Usage: PiWeather -s [DHT11, DHT22, mac] -f");
-        System.out.println("  -s   sensor type, one of DHT11, DHT22 or mac The mac sensor is a simulatored sensor for testing");
-        System.out.println("  -f   Full frame");
-        System.out.println("  -td  Generate Fake Trend Data");
-        System.out.println("  -v   Verbose");
+        System.out.println("Usage: PiWeather -s [DHT11, DHT22, mac] -td 4 -f");
+        System.out.println("  -s         Sensor type, one of DHT11, DHT22 or mac The mac sensor is a simulatored sensor for testing");
+        System.out.println("  -f         Full frame");
+        System.out.println("  -td <num>  Show num (1-7) days of trend data");
+        System.out.println("  -ftd       Generate Fake Trend Data");
+        System.out.println("  -wx        Save Wx files for later analysis");
+        System.out.println("  -v         Verbose");
     }
     
     private JPanel SetupLeftPanel()
@@ -658,7 +685,7 @@ class PiWeather implements Serializable
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             
-            if (false) {
+            if (mSaveWxFiles) {
                 LocalDateTime dt = LocalDateTime.now();
                 if (mSaveXMLFile && dt.getMinute()%20 == 0) {
                     SaveWxXMLFile();
@@ -760,10 +787,10 @@ class PiWeather implements Serializable
                 addOrRemoved = true;
             }
             
-            // cull out "old" data, save 3 days worth
+            // cull out "old" data, save 10 days worth, we can display less
             while (mTrendData.size() > 2 &&
                     Duration.between(mTrendData.get(0).GetDateTime(),
-                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24*3) { 
+                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24*10) { 
                 mTrendData.remove(0);
                 addOrRemoved = true;
             }
@@ -774,7 +801,7 @@ class PiWeather implements Serializable
             }
             
             int size = mTrendData.size();
-            mTrendGraph.UpdateData(mTrendData, mHasSensor, mVerbose);
+            mTrendGraph.UpdateData(mTrendData, mTrendDataDays, mHasSensor, mVerbose);
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
@@ -794,7 +821,7 @@ class PiWeather implements Serializable
             out.writeObject(mTrendData);
             out.close();
             fileOut.close();
-            if (mVerbose) System.out.println("\nSerialization Successful... Checkout your specified output file..\n");
+            if (mVerbose) System.out.println("\nSerialization Successful...\n");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
