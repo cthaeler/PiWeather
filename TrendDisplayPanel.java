@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 public class TrendDisplayPanel extends JPanel
 {
     private int[][] mData;
+    private int[] mVertGrid;
     private int mDisplayDays=3;
     private boolean mVerbose = false;
     private boolean mHasSensor = false;
@@ -51,7 +52,6 @@ public class TrendDisplayPanel extends JPanel
     
     private void drawDashedLine(Graphics g, int x1, int y1, int x2, int y2)
     {
-
         //creates a copy of the Graphics instance
         Graphics2D g2d = (Graphics2D) g.create();
 
@@ -62,6 +62,20 @@ public class TrendDisplayPanel extends JPanel
 
         //gets rid of the copy
         g2d.dispose();
+    }
+    
+    private LocalDateTime Find12(LocalDateTime t)
+    {
+        LocalDateTime f12;
+        if (t.getHour() > 11) {
+            f12 = LocalDateTime.of(t.getYear(), t.getMonthValue(), t.getDayOfMonth(), 0, 0);
+            f12 = f12.plusDays(1);
+        } else {
+            f12 = LocalDateTime.of(t.getYear(), t.getMonthValue(), t.getDayOfMonth(), 11, 0);
+        }
+        //System.out.println(t);
+        //System.out.println(f12);
+        return f12;
     }
     
     public void UpdateData(ArrayList<TrendData> list, int displayDays, boolean hasSensor, boolean verbose)
@@ -77,7 +91,7 @@ public class TrendDisplayPanel extends JPanel
         int width = dim.width - 40;
         
         
-        long totalTime = 24*60*60*displayDays;
+        long totalTime = 24*60*60*mDisplayDays;
         
         // we may have saved more than are going to be visible
         int firstVisible = 0;
@@ -89,11 +103,19 @@ public class TrendDisplayPanel extends JPanel
             }
         }
         
+        LocalDateTime first = list.get(firstVisible).GetDateTime();
+        LocalDateTime first12 = Find12(first);
+        mVertGrid = new int[mDisplayDays*2];
+        for (int i = 0; i < mDisplayDays*2; i++) {
+            long dt = Duration.between(first, first12.plusHours(i*12)).getSeconds();
+            mVertGrid[i] = 10 + (int)(width * dt / totalTime);
+        }
+        
         mData = new int[6][list.size()-firstVisible];
         
         for (int i=firstVisible; i < list.size(); i++)
         {
-            long dt = Duration.between(list.get(0).GetDateTime(), list.get(i).GetDateTime()).getSeconds();
+            long dt = Duration.between(first, list.get(i).GetDateTime()).getSeconds();
             mData[0][i] = 10 + (int)(width * dt / totalTime);
             mData[1][i] = GetTempY(list.get(i).GetTemp()); // 1 is the y temperature
             mData[2][i] = GetHumidityY(list.get(i).GetHumidity()); // 2 is the humidity
@@ -111,33 +133,41 @@ public class TrendDisplayPanel extends JPanel
         setBackground(Color.BLACK);
         
         Dimension dim = getSize();
-        int y;
         
+        g2d.setColor(new Color(100, 100, 100));
+        for (int vl = 0; vl < mVertGrid.length; vl++) {
+            drawDashedLine(g2d, mVertGrid[vl], 0, mVertGrid[vl], dim.height);
+        }
+        
+        // Draw legend and grid lines for Temperature (and Humidity)
         g2d.setColor(Color.red);
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
         g2d.drawString("Temp", 10, dim.height-5);
         g2d.setColor(new Color(128, 0, 0));
         for (double t = 0; t < 120; t+=20) {
-            y = GetTempY(t); // freezing level
+            int y = GetTempY(t); // freezing level
             drawDashedLine(g2d, 15, y, dim.width-30, y);
             g2d.drawString(String.format("%.0f", t), dim.width-30, y);
         }
         
+        // Draw legend for Humidity
         g2d.setColor(new Color(128, 128, 255));
         g2d.drawString("Humidity", 50, dim.height-5);
         /* Humidity share the same scale as temperature so don't do this */
-        if (false)
-        for (double h = 10; h < 100; h+=20) {
-            y = GetHumidityY(h);
-            drawDashedLine(g2d, 15, y, dim.width-20, y);
-            g2d.drawString(String.format("%.0f", h), dim.width-15, y);
+        if (false) {
+            for (double h = 10; h < 100; h+=20) {
+                int y = GetHumidityY(h);
+                drawDashedLine(g2d, 15, y, dim.width-20, y);
+                g2d.drawString(String.format("%.0f", h), dim.width-15, y);
+            }
         }
         
+        // Draw legend and grid lines for Barometer
         g2d.setColor(Color.green);
         g2d.drawString("Barometer", 120, dim.height-5);
         g2d.setColor(new Color(0, 128, 0));
         for (double b = 28; b < 32; b+=1) {
-            y = GetBarometerY(b);
+            int y = GetBarometerY(b);
             drawDashedLine(g2d, 15, y, dim.width-30, y);
             g2d.drawString(String.format("%.0f", b), 0, y);
         }
