@@ -174,7 +174,7 @@ public class TrendData implements Serializable
         return "TrendData[dt=" + DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(mDateTime) +
                           ", temp=" + String.format("%3.0f", mTemp) + "/" + String.format("%3.0f", mSensorTemp) +
                           ", hum=" + String.format("%3.0f", mHumidity) + "/" + String.format("%3.0f", mSensorHumidity) +
-                          ", pres=" + String.format("%.2f", mBarometer) +
+                          ", pres=" + String.format("%5.2f", mBarometer) +
                           ", obs=" + mObsTime +
                           "]";
             

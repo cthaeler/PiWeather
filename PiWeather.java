@@ -367,6 +367,7 @@ class PiWeather implements Serializable
         BoxLayout rightMainBox = new BoxLayout(rightMainPanel, BoxLayout.Y_AXIS);
         rightMainPanel.setLayout(rightMainBox);
         rightMainPanel.setBackground(Color.BLACK);
+        rightMainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         
         // right panel for the forcast info
         JPanel forcastPanel = new JPanel();
@@ -419,7 +420,7 @@ class PiWeather implements Serializable
             leftFP.add(leftImg);
             
             leftListPanel.add(leftFP);
-            leftListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            leftListPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 
             
             
@@ -451,10 +452,10 @@ class PiWeather implements Serializable
             rightFP.add(rightIP);
             
             rightListPanel.add(rightFP);
-            rightListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            rightListPanel.add(Box.createRigidArea(new Dimension(0, 2)));
         }
         forcastPanel.add(leftListPanel);
-        forcastPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        forcastPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         forcastPanel.add(rightListPanel);
         
         rightMainPanel.add(forcastPanel);
@@ -717,7 +718,7 @@ class PiWeather implements Serializable
         System.out.println(header);
         int i = 0;
         for (TrendData td : mTrendData) {
-            System.out.print(Integer.toString(i++) + " ");
+            System.out.print(String.format("%4d ", i++));
             System.out.println(td.toString());
         }
         System.out.println("----");

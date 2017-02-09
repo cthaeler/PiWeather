@@ -28,7 +28,7 @@ public class TrendDisplayPanel extends JPanel
     private int GetTempY(double temp)
     {
         Dimension dim = getSize();
-        int height = (int)dim.getHeight() - 10; // allow a bourder
+        int height = (int)dim.getHeight() - 15; // allow a bourder
         
         return(height - (int)temp);
     }
@@ -36,7 +36,7 @@ public class TrendDisplayPanel extends JPanel
     private int GetHumidityY(double humidity)
     {
         Dimension dim = getSize();
-        int height = (int)dim.getHeight() - 10; // allow a bourder
+        int height = (int)dim.getHeight() - 15; // allow a bourder
         
         return(height - (int)humidity);
     }
@@ -87,7 +87,7 @@ public class TrendDisplayPanel extends JPanel
         mDisplayDays = displayDays;
         
         Dimension dim = getSize();
-        int height = dim.height - 10; // allow a bourder
+        int height = dim.height - 20; // allow a bourder
         int width = dim.width - 40;
         
         
@@ -96,7 +96,7 @@ public class TrendDisplayPanel extends JPanel
         // we may have saved more than are going to be visible
         int firstVisible = 0;
         for (int i=0; i < list.size(); i++) {
-            long dt = Duration.between(list.get(0).GetDateTime(), list.get(i).GetDateTime()).getSeconds();
+            long dt = Duration.between(list.get(i).GetDateTime(), list.get(list.size()-1).GetDateTime()).getSeconds();
             if (dt <= totalTime) {
                 firstVisible = i;
                 break;
@@ -108,20 +108,20 @@ public class TrendDisplayPanel extends JPanel
         mVertGrid = new int[mDisplayDays*2];
         for (int i = 0; i < mDisplayDays*2; i++) {
             long dt = Duration.between(first, first12.plusHours(i*12)).getSeconds();
-            mVertGrid[i] = 10 + (int)(width * dt / totalTime);
+            mVertGrid[i] = 15 + (int)(width * dt / totalTime);
         }
         
         mData = new int[6][list.size()-firstVisible];
-        
-        for (int i=firstVisible; i < list.size(); i++)
+        //System.out.println(firstVisible);
+        for (int i=firstVisible, di=0; i < list.size(); i++, di++)
         {
             long dt = Duration.between(first, list.get(i).GetDateTime()).getSeconds();
-            mData[0][i] = 10 + (int)(width * dt / totalTime);
-            mData[1][i] = GetTempY(list.get(i).GetTemp()); // 1 is the y temperature
-            mData[2][i] = GetHumidityY(list.get(i).GetHumidity()); // 2 is the humidity
-            mData[3][i] = GetBarometerY(list.get(i).GetBarometer()); // 3 is the barometer
-            mData[4][i] = GetTempY(list.get(i).GetSensorTemp()); // 4 is the y sensor temperature
-            mData[5][i] = GetHumidityY(list.get(i).GetSensorHumidity()); // 5 is the sensor humidity
+            mData[0][di] = 15 + (int)(width * dt / totalTime);
+            mData[1][di] = GetTempY(list.get(i).GetTemp()); // 1 is the y temperature
+            mData[2][di] = GetHumidityY(list.get(i).GetHumidity()); // 2 is the humidity
+            mData[3][di] = GetBarometerY(list.get(i).GetBarometer()); // 3 is the barometer
+            mData[4][di] = GetTempY(list.get(i).GetSensorTemp()); // 4 is the y sensor temperature
+            mData[5][di] = GetHumidityY(list.get(i).GetSensorHumidity()); // 5 is the sensor humidity
         }
         repaint();
     }
@@ -134,42 +134,36 @@ public class TrendDisplayPanel extends JPanel
         
         Dimension dim = getSize();
         
+        // draw the vertical grid lines
         g2d.setColor(new Color(100, 100, 100));
         for (int vl = 0; vl < mVertGrid.length; vl++) {
-            drawDashedLine(g2d, mVertGrid[vl], 0, mVertGrid[vl], dim.height);
+            if (mVertGrid[vl] < dim.width - 30)
+                drawDashedLine(g2d, mVertGrid[vl], 0, mVertGrid[vl], dim.height-10);
         }
         
         // Draw legend and grid lines for Temperature (and Humidity)
         g2d.setColor(Color.red);
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        g2d.drawString("Temp", 10, dim.height-5);
+        g2d.drawString("Temp", 0, dim.height-5);
         g2d.setColor(new Color(128, 0, 0));
         for (double t = 0; t < 120; t+=20) {
             int y = GetTempY(t); // freezing level
-            drawDashedLine(g2d, 15, y, dim.width-30, y);
-            g2d.drawString(String.format("%.0f", t), dim.width-30, y);
+            drawDashedLine(g2d, 15, y, dim.width-25, y);
+            g2d.drawString(String.format("%.0f", t), dim.width-25, y+5);
         }
         
         // Draw legend for Humidity
         g2d.setColor(new Color(128, 128, 255));
-        g2d.drawString("Humidity", 50, dim.height-5);
-        /* Humidity share the same scale as temperature so don't do this */
-        if (false) {
-            for (double h = 10; h < 100; h+=20) {
-                int y = GetHumidityY(h);
-                drawDashedLine(g2d, 15, y, dim.width-20, y);
-                g2d.drawString(String.format("%.0f", h), dim.width-15, y);
-            }
-        }
+        g2d.drawString("Humidity", 40, dim.height-5);
         
         // Draw legend and grid lines for Barometer
         g2d.setColor(Color.green);
-        g2d.drawString("Barometer", 120, dim.height-5);
+        g2d.drawString("Barometer", 110, dim.height-5);
         g2d.setColor(new Color(0, 128, 0));
         for (double b = 28; b < 32; b+=1) {
             int y = GetBarometerY(b);
-            drawDashedLine(g2d, 15, y, dim.width-30, y);
-            g2d.drawString(String.format("%.0f", b), 0, y);
+            drawDashedLine(g2d, 15, y, dim.width-25, y);
+            g2d.drawString(String.format("%.0f", b), 0, y+5);
         }
         
         setFont(new Font("Monospaced", Font.PLAIN, 12));
@@ -190,20 +184,10 @@ public class TrendDisplayPanel extends JPanel
         }
 
         g2d.setColor(Color.red);
-        if (true) {
-            g2d.drawPolyline(mData[0], mData[1], mData[0].length);
-        } else {
-            for (int i = 0; i < mData[0].length-2; i++) {
-                int r = 255;
-                if (i%2 == 0) r = 128;
-                g2d.setColor(new Color(r , 0, 0));
-                g2d.drawLine(mData[0][i], mData[1][i], mData[0][i+1], mData[1][i+1]);
-            }
-        }
+        g2d.drawPolyline(mData[0], mData[1], mData[0].length);
 
         g2d.setColor(new Color(128, 128, 255));
         g2d.drawPolyline(mData[0], mData[2], mData[0].length);
-
         
         g2d.setColor(Color.green);
         g2d.drawPolyline(mData[0], mData[3], mData[0].length);
@@ -219,7 +203,7 @@ public class TrendDisplayPanel extends JPanel
         
         if (mVerbose) {
             g2d.setColor(Color.WHITE);
-            g2d.drawString(Integer.toString(mData[0].length), dim.width - 50, dim.height-5);
+            g2d.drawString(String.format("%4d", mData[0].length), dim.width - 35, dim.height);
     
         }
     }
