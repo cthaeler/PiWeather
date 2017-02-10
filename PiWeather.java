@@ -102,6 +102,7 @@ class PiWeather implements Serializable
             File f = new File(sTrendDataFile);
             if (f.exists() && f.canRead()) {
                 ReadTrendData();
+                CleanTrendData();
                 if (mVerbose) DumpTrendData("---- Initial Read ----");
             }
         }
@@ -724,6 +725,22 @@ class PiWeather implements Serializable
         System.out.println("----");
     }
     
+    private void CleanTrendData()
+    {
+        // look for humidity zeros and ...  First one better be good...
+        for (int i = 1; i < mTrendData.size(); i++)
+        {
+            if (mTrendData.get(i).GetBarometer() < 25 || mTrendData.get(i).GetBarometer() > 32)
+                mTrendData.get(i).SetBarometer(mTrendData.get(i-1).GetBarometer());
+            if (mTrendData.get(i).GetHumidity() < 0 || mTrendData.get(i).GetHumidity() > 100)
+                mTrendData.get(i).SetHumidity(mTrendData.get(i-1).GetHumidity());
+            if (mTrendData.get(i).GetSensorHumidity() < 0 || mTrendData.get(i).GetSensorHumidity() > 100)
+                mTrendData.get(i).SetSensorHumidity(mTrendData.get(i-1).GetSensorHumidity());
+            if (mTrendData.get(i).GetSensorTemp() < -20 || mTrendData.get(i).GetSensorTemp() > 120)
+                mTrendData.get(i).SetSensorTemp(mTrendData.get(i-1).GetSensorTemp());
+        }
+    }
+    
     private void GenFakeTrendData()
     {
         // Generate 3 days worth
@@ -797,11 +814,11 @@ class PiWeather implements Serializable
             }
             
             if (addOrRemoved) {
+                CleanTrendData();
                 SaveTrendData();
                 if (mVerbose) DumpTrendData("---- at " + mCurrObsTime);
             }
             
-            int size = mTrendData.size();
             mTrendGraph.UpdateData(mTrendData, mTrendDataDays, mHasSensor, mVerbose);
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);

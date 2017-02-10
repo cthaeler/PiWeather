@@ -24,6 +24,9 @@ public class TrendDisplayPanel extends JPanel
     private int mDisplayDays=3;
     private boolean mVerbose = false;
     private boolean mHasSensor = false;
+    private static int mGraphStartX = 25;
+    private static int mGraphEndX = 25;
+    private static int mGraphStartY = 25;
     
     private int GetTempY(double temp)
     {
@@ -47,7 +50,7 @@ public class TrendDisplayPanel extends JPanel
         Dimension dim = getSize();
         int height = (int)dim.getHeight() - 10; // allow a bourder
         
-        return(height - (int)((press - 27.5) * 25.0));
+        return(height - (int)((press - 29.25) * 80.0));
     }
     
     private void drawDashedLine(Graphics g, int x1, int y1, int x2, int y2)
@@ -87,8 +90,7 @@ public class TrendDisplayPanel extends JPanel
         mDisplayDays = displayDays;
         
         Dimension dim = getSize();
-        int height = dim.height - 20; // allow a bourder
-        int width = dim.width - 40;
+        int width = dim.width - (mGraphStartX + mGraphEndX);
         
         
         long totalTime = 24*60*60*mDisplayDays;
@@ -108,7 +110,7 @@ public class TrendDisplayPanel extends JPanel
         mVertGrid = new int[mDisplayDays*2];
         for (int i = 0; i < mDisplayDays*2; i++) {
             long dt = Duration.between(first, first12.plusHours(i*12)).getSeconds();
-            mVertGrid[i] = 15 + (int)(width * dt / totalTime);
+            mVertGrid[i] = mGraphStartX + (int)(width * dt / totalTime);
         }
         
         mData = new int[6][list.size()-firstVisible];
@@ -133,6 +135,7 @@ public class TrendDisplayPanel extends JPanel
         setBackground(Color.BLACK);
         
         Dimension dim = getSize();
+        //System.out.println(dim.toString());
         
         // draw the vertical grid lines
         g2d.setColor(new Color(100, 100, 100));
@@ -145,11 +148,12 @@ public class TrendDisplayPanel extends JPanel
         g2d.setColor(Color.red);
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
         g2d.drawString("Temp", 0, dim.height-5);
-        g2d.setColor(new Color(128, 0, 0));
-        for (double t = 0; t < 120; t+=20) {
+        g2d.setColor(new Color(165, 0, 0));
+
+        for (double t = 0; t < ((dim.height>135)?130:120); t+=20) {
             int y = GetTempY(t); // freezing level
-            drawDashedLine(g2d, 15, y, dim.width-25, y);
-            g2d.drawString(String.format("%.0f", t), dim.width-25, y+5);
+            drawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y);
+            g2d.drawString(String.format("%.0f", t), dim.width-mGraphEndX, y+5);
         }
         
         // Draw legend for Humidity
@@ -160,10 +164,10 @@ public class TrendDisplayPanel extends JPanel
         g2d.setColor(Color.green);
         g2d.drawString("Barometer", 110, dim.height-5);
         g2d.setColor(new Color(0, 128, 0));
-        for (double b = 28; b < 32; b+=1) {
+        for (double b = 29.5; b < 31; b+=0.5) {
             int y = GetBarometerY(b);
-            drawDashedLine(g2d, 15, y, dim.width-25, y);
-            g2d.drawString(String.format("%.0f", b), 0, y+5);
+            drawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y);
+            g2d.drawString(String.format("%.1f", b), 0, y+5);
         }
         
         setFont(new Font("Monospaced", Font.PLAIN, 12));
