@@ -958,7 +958,7 @@ class PiWeather implements Serializable
                 PiWeather piWXMain = new PiWeather(args);
                 piWXMain.UpdateFromWeb();
                 new UIUpdateTimer(5 * 60, piWXMain); // update every 5 minutes
-                new MapUpdateTimer(5, piWXMain);
+                new MapUpdateTimer(10, piWXMain);
                 if (piWXMain.HasSensor()) new SensorUpdateTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
             }
