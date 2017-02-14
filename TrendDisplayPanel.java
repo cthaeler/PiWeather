@@ -28,6 +28,7 @@ public class TrendDisplayPanel extends JPanel
     private static int mGraphEndX = 25;
     private static int mGraphStartY = 25;
     
+    
     private int GetTempY(double temp)
     {
         Dimension dim = getSize();

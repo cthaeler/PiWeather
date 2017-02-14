@@ -204,7 +204,7 @@ class PiWeather implements Serializable
                         PrintUsage();
                         System.exit(1);
                     }
-                    if (mTrendDataDays < 1 || mTrendDataDays > 7) {
+                    if (mTrendDataDays < 1 || mTrendDataDays > 30) {
                         System.err.println("Invalid number of days for trend data");
                         PrintUsage();
                         System.exit(1);
@@ -805,10 +805,10 @@ class PiWeather implements Serializable
                 addOrRemoved = true;
             }
             
-            // cull out "old" data, save 10 days worth, we can display less
+            // cull out "old" data, save 30 days worth, we can display less
             while (mTrendData.size() > 2 &&
                     Duration.between(mTrendData.get(0).GetDateTime(),
-                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24*10) { 
+                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24*30) { 
                 mTrendData.remove(0);
                 addOrRemoved = true;
             }
