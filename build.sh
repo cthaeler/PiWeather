@@ -9,4 +9,4 @@ javac UIUpdateTimer.java
 javac SensorUpdateTimer.java
 javac TrendDisplayPanel.java
 javac PiWeather.java
-#jar cmvf MANIFEST.MF PiWeather.jar *.class *.MF
+jar vcfm PiWeather.jar MANIFEST.MF *.class
