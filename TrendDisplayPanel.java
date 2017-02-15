@@ -1,21 +1,14 @@
 import javax.swing.*;
-//import javax.swing.JPanel;
 import java.awt.*;
-//import java.awt.Color;
-//import java.awt.Graphics;
-//import java.awt.Graphics2D;
-//import java.awt.Dimension;
-//import java.awt.Stroke;
-//import java.awt.BasicStroke;
 import java.util.ArrayList;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
 /**
- * Write a description of class TrendDisplayPanel here.
+ * TrendDisplayPanel is a JPanel used to display a line graph of historical observation data.
  * 
- * @author (your name) 
- * @version (a version number or a date)
+ * @author Charles Thaeler
+ * @version Feb 15, 2017
  */
 public class TrendDisplayPanel extends JPanel
 {
@@ -29,6 +22,19 @@ public class TrendDisplayPanel extends JPanel
     private static int mGraphStartY = 25;
     
     
+    public TrendDisplayPanel(int displayDays, boolean hasSensor, boolean verbose)
+    {
+        super();
+        mDisplayDays = displayDays;
+        mHasSensor = hasSensor;
+        mVerbose = verbose;
+        if (mVerbose) System.out.println(String.format("Constructor %d", mDisplayDays) + " has Sensor = " + mHasSensor);
+    }
+    
+    /**
+     * 
+     * 
+     */
     private int GetTempY(double temp)
     {
         Dimension dim = getSize();
@@ -37,6 +43,12 @@ public class TrendDisplayPanel extends JPanel
         return(height - (int)temp);
     }
     
+    
+    
+    /**
+     * 
+     * 
+     */
     private int GetHumidityY(double humidity)
     {
         Dimension dim = getSize();
@@ -46,6 +58,11 @@ public class TrendDisplayPanel extends JPanel
     }
     
     
+    
+    /**
+     * 
+     * 
+     */
     private int GetBarometerY(double press)
     {
         Dimension dim = getSize();
@@ -54,6 +71,11 @@ public class TrendDisplayPanel extends JPanel
         return(height - (int)((press - 29.25) * 80.0));
     }
     
+    
+    /**
+     * 
+     * 
+     */
     private void drawDashedLine(Graphics g, int x1, int y1, int x2, int y2, int dash)
     {
         //creates a copy of the Graphics instance
@@ -70,20 +92,12 @@ public class TrendDisplayPanel extends JPanel
         g2d.dispose();
     }
     
-    private LocalDateTime Find12After(LocalDateTime t)
-    {
-        LocalDateTime f12;
-        if (t.getHour() > 11) {
-            f12 = LocalDateTime.of(t.getYear(), t.getMonthValue(), t.getDayOfMonth(), 0, 0);
-            f12 = f12.plusDays(1);
-        } else {
-            f12 = LocalDateTime.of(t.getYear(), t.getMonthValue(), t.getDayOfMonth(), 11, 0);
-        }
 
-        return f12;
-    }
     
-    
+    /**
+     * 
+     * 
+     */
     private int GetX(LocalDateTime toShow)
     {
         LocalDateTime now = LocalDateTime.now();
@@ -96,13 +110,63 @@ public class TrendDisplayPanel extends JPanel
         return dim.width - mGraphEndX - (int)(width * (dispTime/totalTime));
     }
     
-    public void UpdateData(ArrayList<TrendData> list, int displayDays, boolean hasSensor, boolean verbose)
+    
+    /**
+     * 
+     * 
+     */
+    private LocalDateTime FindNext12(LocalDateTime t)
+    {
+        if (mVerbose) {
+            System.out.println("----");
+            System.out.println("now       = " + LocalDateTime.now().toString());
+            System.out.println("t hour    = " + t.getHour());
+        }
+        LocalDateTime f12;
+        if (t.getHour() > 12) {
+            // midnight before then add a day
+            f12 = LocalDateTime.of(t.getYear(), t.getMonthValue(), t.getDayOfMonth(), 0, 0);
+            f12 = f12.plusDays(1);
+        } else {
+            // use the next noon
+            f12 = LocalDateTime.of(t.getYear(), t.getMonthValue(), t.getDayOfMonth(), 12, 0);
+        }
+        if (mVerbose) {
+            System.out.println("12 after  = " + f12.toString());
+            System.out.println("----");
+        }
+        return f12;
+    }
+    
+    /**
+     * 
+     * 
+     */
+    private LocalDateTime FindNextHour(LocalDateTime t)
+    {
+        if (mVerbose) {
+            System.out.println("----");
+            System.out.println("now       = " + LocalDateTime.now().toString());
+            System.out.println("t minute    = " + t.getMinute());
+        }
+        LocalDateTime fHour;
+        fHour = LocalDateTime.of(t.getYear(), t.getMonthValue(), t.getDayOfMonth(), t.getHour(), 0).plusHours(1);
+
+        if (mVerbose) {
+            System.out.println("hour after  = " + fHour.toString());
+            System.out.println("----");
+        }
+        return fHour;
+    }
+    
+    
+    /**
+     * 
+     * 
+     */
+    public void UpdateData(ArrayList<TrendData> list)
     {
         if (list.size() < 2) return;
-        
-        mVerbose = verbose;
-        mHasSensor = hasSensor;
-        mDisplayDays = displayDays;
         
         Dimension dim = getSize();
         int width = dim.width - (mGraphStartX + mGraphEndX);
@@ -110,7 +174,7 @@ public class TrendDisplayPanel extends JPanel
         
         long totalTime = 24*60*60*mDisplayDays;
         
-        // we may have saved more than are going to be visible
+        // we may have saved more than are going to be visible so find the first visible one
         int firstVisible = 0;
         for (int i=0; i < list.size(); i++) {
             long dt = Duration.between(list.get(i).GetDateTime(), list.get(list.size()-1).GetDateTime()).getSeconds();
@@ -121,14 +185,35 @@ public class TrendDisplayPanel extends JPanel
         }
         
 
-        LocalDateTime first12 = Find12After(LocalDateTime.now()).minusDays(mDisplayDays);
-        mVertGrid = new int[mDisplayDays*2][2];
-        for (int i = 0; i < mDisplayDays*2; i++) {
-            LocalDateTime disp = first12.plusHours(i*12);
-            mVertGrid[i][0] = GetX(disp);
-            mVertGrid[i][1] = (disp.getHour() > 11) ? 3 : 0;
+        if (mDisplayDays > 2) {
+            // the first bar is mDisplay days before the next 12 hour mark
+            LocalDateTime first12 = FindNext12(LocalDateTime.now()).minusDays(mDisplayDays);
+            if (mVerbose) System.out.println("---- first bar " + first12.toString() + " ----");
+            mVertGrid = new int[mDisplayDays*2][2];
+            for (int i = 0; i < mDisplayDays*2; i++) {
+                LocalDateTime disp = first12.plusHours(i*12);
+                mVertGrid[i][0] = GetX(disp);
+                mVertGrid[i][1] = (disp.getHour() >= 12) ? 3 : 0;
+            }
+        } else {
+            LocalDateTime firstHour = FindNextHour(LocalDateTime.now()).minusHours(mDisplayDays*24);
+            mVertGrid = new int[mDisplayDays*24][2];
+            for (int i = 0; i < mDisplayDays*24; i++) {
+                LocalDateTime disp = firstHour.plusHours(i);
+                mVertGrid[i][0] = GetX(disp);
+                switch(disp.getHour()) {
+                case 0:
+                    mVertGrid[i][1] = 0;
+                    break;
+                case 12:
+                    mVertGrid[i][1] = 3;
+                    break;
+                default:
+                    mVertGrid[i][1] = 1;
+                    break;
+                }
+            }
         }
-        
         mData = new int[6][list.size()-firstVisible];
 
         for (int i=firstVisible, di=0; i < list.size(); i++, di++)
@@ -144,6 +229,10 @@ public class TrendDisplayPanel extends JPanel
     }
     
     
+    /**
+     * 
+     * 
+     */
     private void doDrawing(Graphics graphics)
     {
         Graphics2D g2d = (Graphics2D) graphics;
@@ -225,6 +314,10 @@ public class TrendDisplayPanel extends JPanel
         }
     }
 
+    /**
+     * 
+     * 
+     */
     @Override
     public void paintComponent(Graphics g)
     {

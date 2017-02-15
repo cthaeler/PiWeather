@@ -6,8 +6,8 @@ import java.time.format.DateTimeFormatter;
 /**
  * Write a description of class TrendData here.
  * 
- * @author (your name) 
- * @version (a version number or a date)
+ * @author Charles Thaeler
+ * @version 15 Feb 2017
  */
 public class TrendData implements Serializable
 {

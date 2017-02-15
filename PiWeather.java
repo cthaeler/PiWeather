@@ -55,17 +55,18 @@ class PiWeather implements Serializable
     private double mCurrDir = 0.0;
     private String mCurrObsTime = "";
     private String mCurrConditionIconURL;
-    
+    private int mCurMap = 0;
+    private int mCurSat = 0;
 
-
+    // Data and UI state
     private ArrayList<DataValue> mValues;
     private ArrayList<ForecastDataValue> mForecastValues;
     private ArrayList<String> mMapURLs;
     private ArrayList<String> mSatURLs;
-    private int mCurMap = 0;
-    private int mCurSat = 0;
     private ArrayList<TrendData> mTrendData;
 
+    
+    // UI components that need periodic update based on timer events
     private JLabel mWxImageLabel;
     private JLabel mSatImageLabel;
     
@@ -77,6 +78,8 @@ class PiWeather implements Serializable
     private JLabel mLastObsLabel;
     private JButton mQuitButton;
     
+    
+    // Variables from command line switches
     private boolean mIsPi = true;
     private boolean mHasSensor = false;
     private String mSensor = "";
@@ -155,6 +158,9 @@ class PiWeather implements Serializable
         jfrm.setVisible(true);
     }
     
+    /**
+     * 
+     */
     private boolean isSupportedSensor(String sensor)
     {
         for (String s: mSupportedSensors) {
@@ -165,10 +171,13 @@ class PiWeather implements Serializable
         return false;
     }
     
+    /**
+     * 
+     * 
+     */
     private void ProcessArgs(String[] args)
     {
         for (int i = 0; i < args.length; i++) {
-            String ar = args[i];
             switch(args[i]) {
             case "-s": // sensor
                 if (i+1 >= args.length) {
@@ -186,12 +195,15 @@ class PiWeather implements Serializable
                     }
                 }
                 break;
+                
             case "-f": // full frame
                 mFullFrame = true;
                 break;
+                
             case "-ftd": // generate take Trend Data
                 mGenFakeTrendData = true;
                 break;
+                
             case "-td": // set the number of trend data days to display
                 if (i+1 >= args.length) {
                     PrintUsage();
@@ -212,15 +224,19 @@ class PiWeather implements Serializable
                     i++;
                 }
                 break;
+                
             case "-h": // help
                 PrintUsage();
                 System.exit(1);
+                
             case "-v":
                 mVerbose = true;
                 break;
+                
             case "-wx": // save wx files
                 mSaveWxFiles = true;
                 break;
+                
             default: // nothing else matches
                 System.err.println("Unknown switch");
                 PrintUsage();
@@ -229,6 +245,9 @@ class PiWeather implements Serializable
         }
     }
     
+    /**
+     * 
+     */
     private void PrintUsage()
     {
         System.out.println("Usage: PiWeather -s [DHT11, DHT22, mac] -td 4 -f");
@@ -240,6 +259,9 @@ class PiWeather implements Serializable
         System.out.println("  -v         Verbose");
     }
     
+    /**
+     * 
+     */
     private JPanel SetupLeftPanel()
     {
         // Left Panel for the local current observations
@@ -312,6 +334,10 @@ class PiWeather implements Serializable
         return leftPanel;
     }
     
+    
+    /**
+     * 
+     */
     private JPanel SetupCenterPanel()
     {
         mMapURLs = new ArrayList<String>();
@@ -355,6 +381,10 @@ class PiWeather implements Serializable
         return centerPanel;
      }
     
+     
+     /**
+      * 
+      */
     private JPanel SetupRightPanel()
     {
         // allow 18 slots
@@ -461,14 +491,17 @@ class PiWeather implements Serializable
         
         rightMainPanel.add(forcastPanel);
         
-        mTrendGraph = new TrendDisplayPanel();
+        mTrendGraph = new TrendDisplayPanel(mTrendDataDays, mHasSensor, mVerbose);
         
         rightMainPanel.add(mTrendGraph);
  
         return rightMainPanel;
     }
-        
+  
     
+    /**
+     * 
+     */
     private void ReadInsideSensor()
     {
         try {
@@ -506,7 +539,9 @@ class PiWeather implements Serializable
     }
     
     
-    
+    /**
+     * 
+     */
     private static String getCharacterDataFromElement(Element e) {
         Node child = e.getFirstChild();
         if (child instanceof CharacterData) {
@@ -517,7 +552,9 @@ class PiWeather implements Serializable
     }
 
     
-    
+    /**
+     * 
+     */
     private static double ReadValueFromDoc(Document doc, String e)
     {
         NodeList dataNodes = doc.getElementsByTagName("data");
@@ -543,6 +580,11 @@ class PiWeather implements Serializable
         return 0;
     }
     
+    
+    
+    /**
+     * 
+     */
     private static String ReadStringFromDoc(Document doc, String e)
     {
         NodeList dataNodes = doc.getElementsByTagName("data");
@@ -562,6 +604,11 @@ class PiWeather implements Serializable
         return "";
     }
     
+    
+    
+    /**
+     * 
+     */
     private String ReadCurrentConditionsIconFromDocument(Document doc)
     {
         NodeList dataNodes = doc.getElementsByTagName("data");
@@ -585,7 +632,9 @@ class PiWeather implements Serializable
     }
     
     
-    
+    /**
+     * 
+     */
     public void UpdateWxMap()
     {
         int imageSize = 275;
@@ -616,6 +665,10 @@ class PiWeather implements Serializable
         }
     }
     
+    
+    /**
+     * 
+     */
     public void UpdateClock()
     {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -624,11 +677,19 @@ class PiWeather implements Serializable
         mTimeLabel.setText(tstr);
     }
     
+    
+    /**
+     * 
+     */
     public boolean HasSensor()
     {
         return mHasSensor;
     }
     
+    
+    /**
+     * 
+     */
     public void UpdateFromSensor()
     {
         if (mHasSensor) {
@@ -638,6 +699,9 @@ class PiWeather implements Serializable
     }
     
     
+    /**
+     * 
+     */
     private void SetLastUpdateTime()
     {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm:ss");
@@ -647,6 +711,10 @@ class PiWeather implements Serializable
     }
     
     
+    
+    /**
+     * 
+     */
     private void SaveWxXMLFile()
     {
         LocalDateTime dt = LocalDateTime.now();
@@ -671,6 +739,11 @@ class PiWeather implements Serializable
         }
     }
     
+    
+    
+    /**
+     * 
+     */
     public void UpdateFromWeb()
     {
         if (mHasSensor) {
@@ -714,6 +787,11 @@ class PiWeather implements Serializable
         }
     }
     
+    
+    
+    /**
+     * 
+     */
     private void DumpTrendData(String header)
     {
         System.out.println(header);
@@ -725,6 +803,10 @@ class PiWeather implements Serializable
         System.out.println("----");
     }
     
+    
+    /**
+     * 
+     */
     private void CleanTrendData()
     {
         // look for humidity zeros and ...  First one better be good...
@@ -741,6 +823,10 @@ class PiWeather implements Serializable
         }
     }
     
+    
+    /**
+     * 
+     */
     private void GenFakeTrendData()
     {
         // Generate 3 days worth
@@ -759,6 +845,11 @@ class PiWeather implements Serializable
         }
     }
     
+    
+    
+    /**
+     * 
+     */
     private boolean UpdateDataValues(Document doc)
     {
         try {
@@ -819,7 +910,7 @@ class PiWeather implements Serializable
                 if (mVerbose) DumpTrendData("---- at " + mCurrObsTime);
             }
             
-            mTrendGraph.UpdateData(mTrendData, mTrendDataDays, mHasSensor, mVerbose);
+            mTrendGraph.UpdateData(mTrendData);
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
@@ -830,6 +921,10 @@ class PiWeather implements Serializable
         return true;
     }
     
+    
+    /**
+     * 
+     */
     private void SaveTrendData()
     {
         // Let's serialize an Object
@@ -847,6 +942,11 @@ class PiWeather implements Serializable
         }
     }
     
+    
+    /**
+     * 
+     *
+     */
     @SuppressWarnings("unchecked")
     private void ReadTrendData()
     {
@@ -867,7 +967,12 @@ class PiWeather implements Serializable
         }
     }
     
-   
+    
+    
+    /**
+     * 
+     * 
+     */
     private boolean UpdateForecastValues(Document doc)
     {
         try {
@@ -951,6 +1056,10 @@ class PiWeather implements Serializable
     
     
     
+    /**
+     * 
+     * 
+     */
     public static void main(String args[])
     {
         SwingUtilities.invokeLater(new Runnable() {
