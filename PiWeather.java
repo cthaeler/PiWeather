@@ -70,7 +70,7 @@ class PiWeather implements Serializable
     private JLabel mWxImageLabel;
     private JLabel mSatImageLabel;
     
-    private TrendDisplayPanel mTrendGraph;
+    private TrendDisplayPanel mTrendDisplayPanel;
     
     private JLabel mTimeLabel;
     private JLabel mLocationLabel;
@@ -329,7 +329,43 @@ class PiWeather implements Serializable
              }          
           });
           
-        leftPanel.add(mQuitButton);
+        
+        if (!mIsPi) {
+            JComboBox<String> chooser = new JComboBox<String>(new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9"}) {
+                /** 
+                 * @inherited <p>
+                 */
+                @Override
+                public Dimension getMaximumSize() {
+                    Dimension max = super.getMaximumSize();
+                    max.width = getPreferredSize().width;
+                    max.height = getPreferredSize().height;
+                    return max;
+                }
+            };
+            chooser.setSelectedIndex(mTrendDataDays - 1);
+            chooser.setPrototypeDisplayValue("X");
+            chooser.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    JComboBox jcmbType = (JComboBox) e.getSource();
+                    int selected = jcmbType.getSelectedIndex();
+                    mTrendDisplayPanel.UpdateNumDays(mTrendData, selected+1);
+                }
+            });
+
+            JPanel ctlPanel = new JPanel();
+            BoxLayout ctlBox = new BoxLayout(ctlPanel, BoxLayout.X_AXIS);
+            ctlPanel.setLayout(ctlBox);
+            ctlPanel.setBackground(Color.BLACK);
+            
+            ctlPanel.add(mQuitButton);
+            ctlPanel.add(chooser);
+            
+            ctlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            leftPanel.add(ctlPanel);
+        } else {
+            leftPanel.add(mQuitButton);
+        }
         
         return leftPanel;
     }
@@ -491,9 +527,9 @@ class PiWeather implements Serializable
         
         rightMainPanel.add(forcastPanel);
         
-        mTrendGraph = new TrendDisplayPanel(mTrendDataDays, mHasSensor, mVerbose);
+        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mHasSensor, mVerbose);
         
-        rightMainPanel.add(mTrendGraph);
+        rightMainPanel.add(mTrendDisplayPanel);
  
         return rightMainPanel;
     }
@@ -800,6 +836,9 @@ class PiWeather implements Serializable
             System.out.print(String.format("%4d ", i++));
             System.out.println(td.toString());
         }
+        if (mTrendData.size() > 1)
+            System.out.println("First: " + mTrendData.get(0).GetDateTime());
+            System.out.println("Last:  " + mTrendData.get(mTrendData.size()-1).GetDateTime());
         System.out.println("----");
     }
     
@@ -891,7 +930,9 @@ class PiWeather implements Serializable
                                     mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
                                     mInsideTemp, mInsideHumidity));
                 } else {
-                    mTrendData.add(new TrendData(LocalDateTime.now(), mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres, 0, 0));
+                    mTrendData.add(new TrendData(LocalDateTime.now(),
+                                    mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
+                                    0, 0));
                 }
                 addOrRemoved = true;
             }
@@ -910,7 +951,7 @@ class PiWeather implements Serializable
                 if (mVerbose) DumpTrendData("---- at " + mCurrObsTime);
             }
             
-            mTrendGraph.UpdateData(mTrendData);
+            mTrendDisplayPanel.UpdateData(mTrendData);
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {

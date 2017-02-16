@@ -28,7 +28,7 @@ public class TrendDisplayPanel extends JPanel
         mDisplayDays = displayDays;
         mHasSensor = hasSensor;
         mVerbose = verbose;
-        if (mVerbose) System.out.println(String.format("Constructor %d", mDisplayDays) + " has Sensor = " + mHasSensor);
+        if (mVerbose) System.out.println(String.format("TrendDisplayPanel Constructor %d", mDisplayDays) + " has Sensor = " + mHasSensor);
     }
     
     /**
@@ -228,13 +228,21 @@ public class TrendDisplayPanel extends JPanel
         repaint();
     }
     
+    /**
+     * 
+     */
+    public void UpdateNumDays(ArrayList<TrendData> list, int numDays)
+    {
+        mDisplayDays = numDays;
+        UpdateData(list);
+    }
     
     /**
      * 
      * 
      */
     private void doDrawing(Graphics graphics)
-    {
+    {      
         Graphics2D g2d = (Graphics2D) graphics;
         setBackground(Color.BLACK);
         
@@ -252,8 +260,9 @@ public class TrendDisplayPanel extends JPanel
         g2d.drawString("Temp", 0, dim.height-5);
         g2d.setColor(new Color(165, 0, 0));
 
+        // draw the Temperature grid lines
         for (double t = 0; t < ((dim.height>135)?130:120); t+=20) {
-            int y = GetTempY(t); // freezing level
+            int y = GetTempY(t);
             drawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 3);
             g2d.drawString(String.format("%.0f", t), dim.width-mGraphEndX, y+5);
         }
@@ -272,7 +281,7 @@ public class TrendDisplayPanel extends JPanel
             g2d.drawString(String.format("%.1f", b), 0, y+5);
         }
         
-        setFont(new Font("Monospaced", Font.PLAIN, 12));
+        g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
         
         if (mHasSensor) {
             g2d.setColor(Color.magenta);
@@ -310,9 +319,9 @@ public class TrendDisplayPanel extends JPanel
         if (mVerbose) {
             g2d.setColor(Color.WHITE);
             g2d.drawString(String.format("%4d", mData[0].length), dim.width - 35, dim.height);
-    
         }
     }
+
 
     /**
      * 
