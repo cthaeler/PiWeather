@@ -331,7 +331,7 @@ class PiWeather implements Serializable
           
         
         if (!mIsPi) {
-            JComboBox<String> chooser = new JComboBox<String>(new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9"}) {
+            JComboBox<String> chooser = new JComboBox<String>(new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "20", "30"}) {
                 /** 
                  * @inherited <p>
                  */
@@ -344,12 +344,13 @@ class PiWeather implements Serializable
                 }
             };
             chooser.setSelectedIndex(mTrendDataDays - 1);
-            chooser.setPrototypeDisplayValue("X");
+            chooser.setPrototypeDisplayValue("XX");
             chooser.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     JComboBox jcmbType = (JComboBox) e.getSource();
-                    int selected = jcmbType.getSelectedIndex();
-                    mTrendDisplayPanel.UpdateNumDays(mTrendData, selected+1);
+                    String selStr = jcmbType.getSelectedItem().toString();
+                    mTrendDataDays = Integer.parseInt(selStr);
+                    mTrendDisplayPanel.UpdateNumDays(mTrendData, mTrendDataDays);
                 }
             });
 
