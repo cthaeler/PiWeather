@@ -40,8 +40,9 @@ class PiWeather implements Serializable
 //        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
-    private static final String[] mSupportedSensors = {"DHT11", "DHT22", "mac"};
+    private static final String[] mSupportedSensors = {"DHT11", "DHT22", "BME280", "mac"};
     private static final String sTrendDataFile = "cache/trend_data.txt";
+    private static final String sParseableTrendDataFile = "p_trend_data.txt";
     
     private int mLocationURL = 0;
         
@@ -51,6 +52,7 @@ class PiWeather implements Serializable
     private double mCurrHumidity = 0.0;
     private double mInsideHumidity = 0.0;
     private double mCurrPres = 0.0;
+    private double mInsidePressure = 0.0;
     private double mCurrSpeed = 0.0;
     private double mCurrDir = 0.0;
     private String mCurrObsTime = "";
@@ -88,6 +90,8 @@ class PiWeather implements Serializable
     private boolean mSaveWxFiles = false;
     private int mTrendDataDays = 3; // default to 3 days of trend data displayed
     private boolean mVerbose = false;
+    private boolean mDumpParsableTrendData = false;
+    private boolean mReadAndSaveParsableTrendData = false;
     
 
     
@@ -102,13 +106,25 @@ class PiWeather implements Serializable
         if (mGenFakeTrendData) {
             GenFakeTrendData();
         } else {
-            File f = new File(sTrendDataFile);
-            if (f.exists() && f.canRead()) {
-                ReadTrendData();
-                CleanTrendData();
-                if (mVerbose) DumpTrendData("---- Initial Read ----");
+            if (mReadAndSaveParsableTrendData) {
+                ReadTextTrendData();
+                System.exit(1);
+            } else {
+                // read the standar file
+                File f = new File(sTrendDataFile);
+                if (f.exists() && f.canRead()) {
+                    ReadTrendData();
+                    CleanTrendData();
+                    if (mVerbose) DumpTrendData("---- Initial Read ----");
+                }
             }
         }
+        
+        if (mDumpParsableTrendData) {
+            SaveTextTrendData();
+            System.exit(1);
+        }
+
 
         
         if (System.getProperty("os.name").equals("Mac OS X")) {
@@ -158,6 +174,8 @@ class PiWeather implements Serializable
         jfrm.setVisible(true);
     }
     
+    
+    
     /**
      * 
      */
@@ -202,6 +220,14 @@ class PiWeather implements Serializable
                 
             case "-ftd": // generate take Trend Data
                 mGenFakeTrendData = true;
+                break;
+                
+            case "-dtd": // dump trend data as a parsable set as p_trend_data.txt
+                mDumpParsableTrendData = true;
+                break;
+                
+            case "-rtd": // read parsable trend data from p_trend_data.txt
+                mReadAndSaveParsableTrendData = true;
                 break;
                 
             case "-td": // set the number of trend data days to display
@@ -250,11 +276,13 @@ class PiWeather implements Serializable
      */
     private void PrintUsage()
     {
-        System.out.println("Usage: PiWeather -s [DHT11, DHT22, mac] -td 4 -f");
-        System.out.println("  -s         Sensor type, one of DHT11, DHT22 or mac The mac sensor is a simulatored sensor for testing");
+        System.out.println("Usage: PiWeather -s [DHT11, DHT22, BME280, mac] -td 4 -f");
+        System.out.println("  -s         Sensor type, one of DHT11, DHT22, BME280 or mac The mac sensor is a simulatored sensor for testing");
         System.out.println("  -f         Full frame");
         System.out.println("  -td <num>  Show num (1-30) days of trend data.  0 == cycle through # of days");
-        System.out.println("  -ftd       Generate Fake Trend Data");
+        System.out.println("  -ftd       Generate Fake Trend Data and exit");
+        System.out.println("  -dtd       Dump trend data as a parsable set as trend_data.txt and exit");
+        System.out.println("  -rtd       Read parsable trend data from trend_data.txt and exit");
         System.out.println("  -wx        Save Wx files for later analysis");
         System.out.println("  -v         Verbose");
     }
@@ -293,8 +321,14 @@ class PiWeather implements Serializable
             mValues.add(new DataValue(0, "Temperature"));
             mValues.add(new DataValue(0, "Humidity"));
         }
+        
         mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
-        mValues.add(new DataValue(0, "Barometer", "%.2f"));
+        
+        if (mHasSensor && mSensor.equals("BME280"))
+            mValues.add(new DataValue(0, "Barometer (out|in)", "%.2f|%.2f"));
+        else
+            mValues.add(new DataValue(0, "Barometer", "%.2f"));
+
         for (int i = 0; i < mValues.size(); i++) {
             DataValue dv = mValues.get(i);
             leftPanel.add(dv.getValueLabel());
@@ -556,14 +590,19 @@ class PiWeather implements Serializable
             Runtime rt = Runtime.getRuntime();
             String line;
             String[] data;
-            String cmdStr;
+            String cmdStr = "python ./dht_mac.py";
             if (mIsPi) {
-                if (mSensor.equals("DHT11"))
+                switch (mSensor) {
+                case "DHT11":
                     cmdStr = "python ./dht11.py";
-                else
+                    break;
+                case "DHT22":
                     cmdStr = "python ./dht.py";
-            } else {
-                cmdStr = "python ./dht_mac.py";
+                    break;
+                case "BME280":
+                    cmdStr = "python ./bme280.py";
+                    break;
+                }
             }
             Process proc = rt.exec(cmdStr);
             BufferedReader bri = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -572,9 +611,15 @@ class PiWeather implements Serializable
                     data=line.split("\\|");
                     mInsideTemp = Double.parseDouble(data[0]);
                     mInsideHumidity = Double.parseDouble(data[1]);
+                    if (mSensor.equals("BME280")) {
+                        mInsidePressure = Double.parseDouble(data[2]);
+                    } else {
+                        mInsidePressure = 0.0;
+                    }
                 } else {
                     mInsideTemp = 0.0;
                     mInsideHumidity = 0.0;
+                    mInsidePressure = 0.0;
                 }
             }
           
@@ -583,6 +628,7 @@ class PiWeather implements Serializable
         } catch  (Exception e) {
             mInsideTemp = 0.0;
             mInsideHumidity = 0.0;
+            mInsidePressure = 0.0;
         }
     }
     
@@ -904,11 +950,10 @@ class PiWeather implements Serializable
     private boolean UpdateDataValues(Document doc)
     {
         try {
-            mCurrTemp = ReadValueFromDoc(doc, "temperature");
-            mCurrHumidity = ReadValueFromDoc(doc, "humidity");
             mCurrObsTime = ReadStringFromDoc(doc, "start-valid-time");
             mLastObsLabel.setText(mCurrObsTime);
             
+            mCurrTemp = ReadValueFromDoc(doc, "temperature");
             if (mHasSensor) {
                 mValues.get(0).setValue(mCurrTemp, mInsideTemp);
                 // match the width
@@ -919,25 +964,36 @@ class PiWeather implements Serializable
                     mValues.get(0).setFormat("%2.0f|%.0f");
                     mValues.get(1).setFormat("%2.0f|%.0f");
                 }
+                
             } else {
                 mValues.get(0).setValue(mCurrTemp);
             }
             
-            if (mHasSensor)
+            mCurrHumidity = ReadValueFromDoc(doc, "humidity");
+            if (mHasSensor) {
                 mValues.get(1).setValue(mCurrHumidity, mInsideHumidity);
-            else
+            } else {
                 mValues.get(1).setValue(mCurrHumidity);
+            }
+            
+            
             
             mCurrDir = ReadValueFromDoc(doc, "direction");
             mCurrSpeed = ReadValueFromDoc(doc, "wind-speed");
             mValues.get(2).setValue(mCurrDir, mCurrSpeed);
+            
             mCurrPres = ReadValueFromDoc(doc, "pressure");
-            mValues.get(3).setValue(mCurrPres);
+            if (mHasSensor && mSensor.equals("BME280")) {
+                mValues.get(3).setValue(mCurrPres, mInsidePressure);
+            } else {
+                mValues.get(3).setValue(mCurrPres);
+            }
             
             boolean addOrRemoved = false;
             // sparce after we have 10
             if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
                 if (mHasSensor) {
+                    // TODO -- add inside Pressure
                     mTrendData.add(new TrendData(LocalDateTime.now(),
                                     mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
                                     mInsideTemp, mInsideHumidity));
@@ -960,6 +1016,7 @@ class PiWeather implements Serializable
             if (addOrRemoved) {
                 CleanTrendData();
                 SaveTrendData();
+                SaveTextTrendData();
                 if (mVerbose) DumpTrendData("---- at " + mCurrObsTime);
             }
             
@@ -976,7 +1033,7 @@ class PiWeather implements Serializable
     
     
     /**
-     * 
+     * Save TrendData in binary format
      */
     private void SaveTrendData()
     {
@@ -995,16 +1052,31 @@ class PiWeather implements Serializable
         }
     }
     
-    
     /**
-     * 
+     * Save TrendData in text format
+     */
+    private void SaveTextTrendData()
+    {
+        try {
+            PrintWriter writer = new PrintWriter(sParseableTrendDataFile, "UTF-8");
+            writer.println("1"); //version number
+            for (TrendData td : mTrendData) {
+                writer.println(ParsableDump(td));
+            }
+            writer.close();
+        } catch (IOException e) {
+           System.err.println("error writing parsable trend data file");
+        }
+    }
+     
+    /**
+     * Read Trend Data in binary format
      *
      */
     @SuppressWarnings("unchecked")
     private void ReadTrendData()
     {
         // Let's deserialize an Object
-        
         try {
             FileInputStream fileIn = new FileInputStream(sTrendDataFile);
             ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -1020,7 +1092,80 @@ class PiWeather implements Serializable
         }
     }
     
-    
+    /**
+     * ParseableDump is an ugly hack to revision Trend Data
+     * 
+     */
+    private String ParsableDump(TrendData td)
+    {
+        String s =  td.GetDateTime().toString() + "|" +
+                    td.GetObsTime() + "|" +
+                    String.format("%f", td.GetTemp()) + "|" +
+                    String.format("%f", td.GetHumidity()) + "|" +
+                    String.format("%f", td.GetBarometer()) + "|" +
+                    String.format("%f", td.GetSensorTemp()) + "|" +
+                    String.format("%f", td.GetSensorHumidity()); // + "|" +
+                    //String.format("%f", td.GetSensorBarometer());
+        return s;
+    }
+
+    /**
+     * SetDataFromParseableString is the other side of the ugly hack to rev Trend Data
+     * 
+     */
+    private void SetDataFromParseableString(int version, String s, TrendData td)
+    {
+        String[] data = s.split("\\|");
+        switch(version) {
+        case 1:
+            td.SetDateTime(LocalDateTime.parse(data[0]));
+            td.SetObsTime(data[1]);
+            td.SetTemp(Double.parseDouble(data[2]));
+            td.SetHumidity(Double.parseDouble(data[3]));
+            td.SetBarometer(Double.parseDouble(data[4]));
+            td.SetSensorTemp(Double.parseDouble(data[5]));
+            td.SetSensorHumidity(Double.parseDouble(data[6]));
+            break;
+        case 2:
+            td.SetDateTime(LocalDateTime.parse(data[0]));
+            td.SetObsTime(data[1]);
+            td.SetTemp(Double.parseDouble(data[2]));
+            td.SetHumidity(Double.parseDouble(data[3]));
+            td.SetBarometer(Double.parseDouble(data[4]));
+            td.SetSensorTemp(Double.parseDouble(data[5]));
+            td.SetSensorHumidity(Double.parseDouble(data[6]));
+            //td.SetSensorBarometer(Double.parseDouble(data[7]));
+            break;
+        }
+    }
+
+    /**
+     * Read Trend Data in text format
+     */
+    private void ReadTextTrendData()
+    {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(sParseableTrendDataFile));
+            String line;
+            int version = 1;
+            if ((line = reader.readLine()) != null) {
+                // the first line is the version number
+                version = Integer.parseInt(line);
+            }
+
+            while ((line = reader.readLine()) != null)
+            {
+              TrendData td = new TrendData();
+              SetDataFromParseableString(version, line, td);
+              mTrendData.add(td);
+            }
+            reader.close();
+            DumpTrendData("---- Dump Of Parsable Read ----");
+        } catch (Exception e) {
+            System.err.format("Exception occurred trying to read '%s'.", sParseableTrendDataFile);
+            e.printStackTrace();
+        }
+    }
     
     /**
      * 

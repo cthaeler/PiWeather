@@ -45,7 +45,7 @@ public class TrendDisplayPanel extends JPanel
     private int GetTempY(double temp)
     {
         Dimension dim = getSize();
-        int height = (int)dim.getHeight() - 15; // allow a bourder
+        int height = (int)dim.getHeight() - 20; // allow a bourder
         
         return(height - (int)temp);
     }
@@ -59,7 +59,7 @@ public class TrendDisplayPanel extends JPanel
     private int GetHumidityY(double humidity)
     {
         Dimension dim = getSize();
-        int height = (int)dim.getHeight() - 15; // allow a bourder
+        int height = (int)dim.getHeight() - 20; // allow a bourder
         
         return(height - (int)humidity);
     }
@@ -73,9 +73,9 @@ public class TrendDisplayPanel extends JPanel
     private int GetBarometerY(double press)
     {
         Dimension dim = getSize();
-        int height = (int)dim.getHeight() - 10; // allow a bourder
+        int height = (int)dim.getHeight() - 20; // allow a bourder
         
-        return(height - (int)((press - 29.25) * 80.0));
+        return(height - (int)((press - 29.00) * 70.0));
     }
     
     
@@ -270,7 +270,7 @@ public class TrendDisplayPanel extends JPanel
         // draw the vertical grid lines
         g2d.setColor(new Color(100, 100, 100));
         for (int vl = 0; vl < mVertGrid.length; vl++) {
-            drawDashedLine(g2d, mVertGrid[vl][0], 0, mVertGrid[vl][0], dim.height-10, mVertGrid[vl][1]);
+            drawDashedLine(g2d, mVertGrid[vl][0], 0, mVertGrid[vl][0], dim.height-20, mVertGrid[vl][1]);
         }
         
         // Draw legend and grid lines for Temperature (and Humidity)
@@ -294,7 +294,7 @@ public class TrendDisplayPanel extends JPanel
         g2d.setColor(Color.green);
         g2d.drawString("Barometer", 110, dim.height-5);
         g2d.setColor(new Color(0, 128, 0));
-        for (double b = 29.5; b < 31; b+=0.5) {
+        for (double b = 29.0; b < 31; b+=0.5) {
             int y = GetBarometerY(b);
             drawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 3);
             g2d.drawString(String.format("%.1f", b), 0, y+5);
@@ -337,9 +337,9 @@ public class TrendDisplayPanel extends JPanel
         
         g2d.setColor(Color.WHITE);
         if (mCycleDisplayDays) {
-            g2d.drawString(String.format("Cyc %2d %4d", mDisplayDays, mData[0].length), dim.width - 90, dim.height);
+            g2d.drawString(String.format("Cyc %2d %4d", mDisplayDays, mData[0].length), dim.width - 90, dim.height-5);
         } else {
-            g2d.drawString(String.format("%4d", mData[0].length), dim.width - 35, dim.height);
+            g2d.drawString(String.format("%4d", mData[0].length), dim.width - 35, dim.height-5);
         }
     }
 

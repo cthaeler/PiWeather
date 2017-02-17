@@ -18,6 +18,7 @@ public class TrendData implements Serializable
     private double mBarometer;
     private double mSensorTemp;
     private double mSensorHumidity;
+    //private double mSensorBarometer;
     private String mObsTime;
 
     /**
@@ -33,11 +34,14 @@ public class TrendData implements Serializable
         mObsTime = "";
         mSensorTemp = 0.0;
         mSensorHumidity = 0.0;
+        // mSensorBarometer = 0.0;
     }
     
-    
+    /**
+     * Constructor that takes data
+     */
     public TrendData(LocalDateTime time, String obstime, double temp, double humidity, double barometer,
-                    double sensorTemp, double sensorHumidity)
+                    double sensorTemp, double sensorHumidity) //, double sensorBarometer
     {
         mDateTime = time;
         mTemp = temp;
@@ -46,9 +50,10 @@ public class TrendData implements Serializable
         mObsTime = obstime;
         mSensorTemp = sensorTemp;
         mSensorHumidity = sensorHumidity;
+        //mSensorBarometer = sensorBarometer;
     }
     
-    /*
+    /**
      * @return date time info
      */
     public LocalDateTime GetDateTime()
@@ -56,7 +61,7 @@ public class TrendData implements Serializable
         return mDateTime;
     }
     
-    /*
+    /**
      * @param time
      *      set the time
      */
@@ -65,7 +70,7 @@ public class TrendData implements Serializable
         mDateTime = time;
     }
     
-    /*
+    /**
      * @return temperature
      */
     public double GetTemp()
@@ -73,7 +78,7 @@ public class TrendData implements Serializable
         return mTemp;
     }
     
-    /*
+    /**
      * @param temp
      *      set the temp
      */
@@ -82,7 +87,7 @@ public class TrendData implements Serializable
         mTemp = temp;
     }
     
-    /*
+    /**
      * @return humidity
      */
     public double GetHumidity()
@@ -90,7 +95,7 @@ public class TrendData implements Serializable
         return mHumidity;
     }
     
-    /*
+    /**
      * @param humidity
      *      set the humidity
      */
@@ -99,7 +104,7 @@ public class TrendData implements Serializable
         mHumidity = humidity;
     }
     
-    /*
+    /**
      * @return barometer
      */
     public double GetBarometer()
@@ -107,7 +112,7 @@ public class TrendData implements Serializable
         return mBarometer;
     }
     
-    /*
+    /**
      * @param barometer
      *      set the barometer
      */
@@ -117,7 +122,7 @@ public class TrendData implements Serializable
     }
 
         
-    /*
+    /**
      * @return obs time
      */
     public String GetObsTime()
@@ -125,7 +130,7 @@ public class TrendData implements Serializable
         return mObsTime;
     }
     
-    /*
+    /**
      * @param obstime
      *      set the obs time
      */
@@ -135,7 +140,7 @@ public class TrendData implements Serializable
     }
     
     
-    /*
+    /**
      * @return sensor temperature
      */
     public double GetSensorTemp()
@@ -143,7 +148,7 @@ public class TrendData implements Serializable
         return mSensorTemp;
     }
     
-    /*
+    /**
      * @param temp
      *      set the sensor temp
      */
@@ -152,7 +157,7 @@ public class TrendData implements Serializable
         mSensorTemp = temp;
     }
     
-    /*
+    /**
      * @return sensor humidity
      */
     public double GetSensorHumidity()
@@ -160,7 +165,7 @@ public class TrendData implements Serializable
         return mSensorHumidity;
     }
     
-    /*
+    /**
      * @param humidity
      *      set the sensor humidity
      */
@@ -169,14 +174,34 @@ public class TrendData implements Serializable
         mSensorHumidity = humidity;
     }
     
+    /**
+     * @return sensor barometer
+     *
+    public double GetSensorBarometer()
+    {
+        return mSensorBarometer;
+    }
+    */
+    
+    /**
+     * @param sensor barometer
+     *      set the sensor barometer
+     *
+    public void SetSensorBarometer(double barometer)
+    {
+        mSensorBarometer = barometer;
+    }
+    */
+    
     public String toString()
     {
         return "TrendData[dt=" + DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(mDateTime) +
                           ", temp=" + String.format("%3.0f", mTemp) + "/" + String.format("%3.0f", mSensorTemp) +
                           ", hum=" + String.format("%3.0f", mHumidity) + "/" + String.format("%3.0f", mSensorHumidity) +
-                          ", pres=" + String.format("%5.2f", mBarometer) +
+                          ", pres=" + String.format("%5.2f", mBarometer) + //"/" + String.format("%5.2f", mSensorBarometer) +
                           ", obs=" + mObsTime +
                           "]";
             
     }
+
 }
