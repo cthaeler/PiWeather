@@ -15,6 +15,7 @@ public class TrendDisplayPanel extends JPanel
     private int[][] mData;
     private int[][] mVertGrid;
     private int mDisplayDays=3;
+    private boolean mCycleDisplayDays = false;
     private boolean mVerbose = false;
     private boolean mHasSensor = false;
     private static int mGraphStartX = 25;
@@ -25,7 +26,13 @@ public class TrendDisplayPanel extends JPanel
     public TrendDisplayPanel(int displayDays, boolean hasSensor, boolean verbose)
     {
         super();
-        mDisplayDays = displayDays;
+        if (displayDays == 0) {
+            mCycleDisplayDays = true;
+            mDisplayDays = 1;
+        } else {
+            mCycleDisplayDays = false;
+            mDisplayDays = displayDays;
+        }
         mHasSensor = hasSensor;
         mVerbose = verbose;
         if (mVerbose) System.out.println(String.format("TrendDisplayPanel Constructor %d", mDisplayDays) + " has Sensor = " + mHasSensor);
@@ -168,6 +175,11 @@ public class TrendDisplayPanel extends JPanel
     {
         if (list.size() < 2) return;
         
+        if (mCycleDisplayDays) {
+            mDisplayDays++;
+            if (mDisplayDays > 10) mDisplayDays = 1;
+        }
+        
         Dimension dim = getSize();
         int width = dim.width - (mGraphStartX + mGraphEndX);
         
@@ -231,9 +243,16 @@ public class TrendDisplayPanel extends JPanel
     /**
      * 
      */
-    public void UpdateNumDays(ArrayList<TrendData> list, int numDays)
+    public void UpdateNumDays(ArrayList<TrendData> list, int displayDays)
     {
-        mDisplayDays = numDays;
+        if (displayDays == 0) {
+            mCycleDisplayDays = true;
+            mDisplayDays = 1;
+        } else {
+            mCycleDisplayDays = false;
+            mDisplayDays = displayDays;
+        }
+
         UpdateData(list);
     }
     
@@ -316,8 +335,10 @@ public class TrendDisplayPanel extends JPanel
             g2d.drawPolyline(mData[0], mData[5], mData[0].length);
         }
         
-        if (mVerbose) {
-            g2d.setColor(Color.WHITE);
+        g2d.setColor(Color.WHITE);
+        if (mCycleDisplayDays) {
+            g2d.drawString(String.format("Cyc %2d %4d", mDisplayDays, mData[0].length), dim.width - 90, dim.height);
+        } else {
             g2d.drawString(String.format("%4d", mData[0].length), dim.width - 35, dim.height);
         }
     }

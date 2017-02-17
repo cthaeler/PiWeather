@@ -216,7 +216,7 @@ class PiWeather implements Serializable
                         PrintUsage();
                         System.exit(1);
                     }
-                    if (mTrendDataDays < 1 || mTrendDataDays > 30) {
+                    if (mTrendDataDays < 0 || mTrendDataDays > 30) {
                         System.err.println("Invalid number of days for trend data");
                         PrintUsage();
                         System.exit(1);
@@ -253,7 +253,7 @@ class PiWeather implements Serializable
         System.out.println("Usage: PiWeather -s [DHT11, DHT22, mac] -td 4 -f");
         System.out.println("  -s         Sensor type, one of DHT11, DHT22 or mac The mac sensor is a simulatored sensor for testing");
         System.out.println("  -f         Full frame");
-        System.out.println("  -td <num>  Show num (1-7) days of trend data");
+        System.out.println("  -td <num>  Show num (1-30) days of trend data.  0 == cycle through # of days");
         System.out.println("  -ftd       Generate Fake Trend Data");
         System.out.println("  -wx        Save Wx files for later analysis");
         System.out.println("  -v         Verbose");
@@ -331,7 +331,7 @@ class PiWeather implements Serializable
           
         
         if (!mIsPi) {
-            JComboBox<String> chooser = new JComboBox<String>(new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "20", "30"}) {
+            JComboBox<String> chooser = new JComboBox<String>(new String[]{"Cycle", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "20", "30"}) {
                 /** 
                  * @inherited <p>
                  */
@@ -343,13 +343,24 @@ class PiWeather implements Serializable
                     return max;
                 }
             };
-            chooser.setSelectedIndex(mTrendDataDays - 1);
-            chooser.setPrototypeDisplayValue("XX");
+            if (mTrendDataDays >= 0 && mTrendDataDays <=10) {
+                chooser.setSelectedIndex(mTrendDataDays);
+            } else if (mTrendDataDays > 10 && mTrendDataDays <= 20) {
+                chooser.setSelectedIndex(11);
+            } if (mTrendDataDays > 20 && mTrendDataDays <= 30) {
+                chooser.setSelectedIndex(12);
+            }
+            chooser.setSelectedIndex(mTrendDataDays);
+            chooser.setPrototypeDisplayValue("XXXXX");
             chooser.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     JComboBox jcmbType = (JComboBox) e.getSource();
                     String selStr = jcmbType.getSelectedItem().toString();
-                    mTrendDataDays = Integer.parseInt(selStr);
+                    if (selStr.equals("Cycle")) {
+                        mTrendDataDays = 0; // cycle
+                    } else {
+                        mTrendDataDays = Integer.parseInt(selStr);
+                    }
                     mTrendDisplayPanel.UpdateNumDays(mTrendData, mTrendDataDays);
                 }
             });
