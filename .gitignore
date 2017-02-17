@@ -7,3 +7,4 @@ doc
 *.ctxt
 PiWeather.jar
 java.hprof.txt
+*.pyc
