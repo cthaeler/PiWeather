@@ -83,7 +83,7 @@ public class DataValue
         mValue = value;
         mInsideValue = insideValue;
         mLegend = legend;
-        mFormatStr = "%.0f | %.0f";
+        mFormatStr = "<html>%.0f (out)<br>%.0f (in)";
         CreateLabels();
     }
     
@@ -110,7 +110,10 @@ public class DataValue
     private void CreateLabels()
     {
         mDataLabel = new JLabel(Double.toString(mValue));
-        mDataLabel.setFont(new Font("Monospaced", Font.PLAIN, 48));
+        if (mFormatStr.contains("<br>"))
+            mDataLabel.setFont(new Font("Monospaced", Font.PLAIN, 30));
+        else
+            mDataLabel.setFont(new Font("Monospaced", Font.PLAIN, 48));
         mDataLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mDataLabel.setForeground(Color.white);
         
@@ -138,6 +141,9 @@ public class DataValue
     public void setFormat(String format)
     {
         mFormatStr = format;
+        if (mFormatStr.contains("<br>")) {
+            mDataLabel.setFont(new Font("Monospaced", Font.PLAIN, 30));
+        }
         String str = String.format(mFormatStr, mValue, mInsideValue);
         mDataLabel.setText(str);
     }

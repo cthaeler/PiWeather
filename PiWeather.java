@@ -42,7 +42,7 @@ class PiWeather implements Serializable
     
     private static final String[] mSupportedSensors = {"DHT11", "DHT22", "BME280", "mac"};
     private static final String sTrendDataFile = "cache/trend_data.txt";
-    private static final String sParseableTrendDataFile = "p_trend_data.txt";
+    private static final String sParseableTrendDataFile = "cache/p_trend_data.txt";
     
     private int mLocationURL = 0;
         
@@ -325,7 +325,7 @@ class PiWeather implements Serializable
         mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
         
         if (mHasSensor && mSensor.equals("BME280"))
-            mValues.add(new DataValue(0, "Barometer (out|in)", "%.2f|%.2f"));
+            mValues.add(new DataValue(0, "Barometer (out|in)", "<html>%.2f (out)<br>%.2f (in)</html>"));
         else
             mValues.add(new DataValue(0, "Barometer", "%.2f"));
 
@@ -573,7 +573,7 @@ class PiWeather implements Serializable
         
         rightMainPanel.add(forcastPanel);
         
-        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mHasSensor, mVerbose);
+        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mHasSensor, mSensor, mVerbose);
         
         rightMainPanel.add(mTrendDisplayPanel);
  

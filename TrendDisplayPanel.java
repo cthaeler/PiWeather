@@ -18,12 +18,13 @@ public class TrendDisplayPanel extends JPanel
     private boolean mCycleDisplayDays = false;
     private boolean mVerbose = false;
     private boolean mHasSensor = false;
+    private String mSensor = "";
     private static int mGraphStartX = 25;
     private static int mGraphEndX = 25;
     private static int mGraphStartY = 25;
     
     
-    public TrendDisplayPanel(int displayDays, boolean hasSensor, boolean verbose)
+    public TrendDisplayPanel(int displayDays, boolean hasSensor, String sensor, boolean verbose)
     {
         super();
         if (displayDays == 0) {
@@ -34,8 +35,8 @@ public class TrendDisplayPanel extends JPanel
             mDisplayDays = displayDays;
         }
         mHasSensor = hasSensor;
+        mSensor = sensor;
         mVerbose = verbose;
-        if (mVerbose) System.out.println(String.format("TrendDisplayPanel Constructor %d", mDisplayDays) + " has Sensor = " + mHasSensor);
     }
     
     /**
@@ -226,7 +227,7 @@ public class TrendDisplayPanel extends JPanel
                 }
             }
         }
-        mData = new int[6][list.size()-firstVisible];
+        mData = new int[7][list.size()-firstVisible];
 
         for (int i=firstVisible, di=0; i < list.size(); i++, di++)
         {
@@ -236,6 +237,7 @@ public class TrendDisplayPanel extends JPanel
             mData[3][di] = GetBarometerY(list.get(i).GetBarometer()); // 3 is the barometer
             mData[4][di] = GetTempY(list.get(i).GetSensorTemp()); // 4 is the y sensor temperature
             mData[5][di] = GetHumidityY(list.get(i).GetSensorHumidity()); // 5 is the sensor humidity
+            mData[5][di] = GetHumidityY(list.get(i).GetBarometer()+0.1); // 6 is the sensor barometer - faked for now
         }
         repaint();
     }
@@ -304,10 +306,15 @@ public class TrendDisplayPanel extends JPanel
         
         if (mHasSensor) {
             g2d.setColor(Color.magenta);
-            g2d.drawString("s-Temp", 200, dim.height-5);
+            g2d.drawString("s-Temp", 180, dim.height-5);
             
             g2d.setColor(Color.cyan);
-            g2d.drawString("s-Humidity", 260, dim.height-5);
+            g2d.drawString("s-Humidity", 230, dim.height-5);
+            
+            if (mSensor.equals("BME280")) {
+                g2d.setColor(new Color(128, 255, 128));
+                g2d.drawString("s-Barometer", 350, dim.height-5);
+            }
         }
         
         
@@ -333,6 +340,11 @@ public class TrendDisplayPanel extends JPanel
     
             g2d.setColor(Color.cyan);
             g2d.drawPolyline(mData[0], mData[5], mData[0].length);
+            
+            if (mSensor.equals("BME280")) {
+                g2d.setColor(new Color(128, 128, 255));
+                g2d.drawPolyline(mData[0], mData[6], mData[0].length);
+            }
         }
         
         g2d.setColor(Color.WHITE);
