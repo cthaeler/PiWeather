@@ -155,15 +155,19 @@ class PiWeather implements Serializable
         BoxLayout frameBox = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
         mainPanel.setLayout(frameBox);
         
+        
         mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        
 
         mainPanel.add(SetupLeftPanel());
 
-        mainPanel.add(Box.createRigidArea(new Dimension(30, 0)));
+        //mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        mainPanel.add(Box.createHorizontalGlue());
   
         mainPanel.add(SetupCenterPanel());
 
-        mainPanel.add(Box.createRigidArea(new Dimension(30, 0)));
+        //mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        mainPanel.add(Box.createHorizontalGlue());
 
         mainPanel.add(SetupRightPanel());
         
@@ -310,7 +314,7 @@ class PiWeather implements Serializable
         mLocationLabel.setFont(new Font("Monospaced", Font.PLAIN, 28));
         leftPanel.add(mLocationLabel);
         
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        leftPanel.add(Box.createVerticalGlue());
         
         // create the Current Conditions values list
         mValues = new ArrayList<DataValue>();
@@ -325,7 +329,7 @@ class PiWeather implements Serializable
         mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
         
         if (mHasSensor && mSensor.equals("BME280"))
-            mValues.add(new DataValue(0, "Barometer (out|in)", "<html>%.2f (out)<br>%.2f (in)</html>"));
+            mValues.add(new DataValue(0, "Barometer", "<html>%.2f (out)<br>%.2f (in)</html>"));
         else
             mValues.add(new DataValue(0, "Barometer", "%.2f"));
 
@@ -333,8 +337,7 @@ class PiWeather implements Serializable
             DataValue dv = mValues.get(i);
             leftPanel.add(dv.getValueLabel());
             leftPanel.add(dv.getLegendLabel());
-            
-            leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+            leftPanel.add(Box.createVerticalGlue());
         }
 
         JLabel lu = new JLabel("Last Update");
@@ -364,7 +367,7 @@ class PiWeather implements Serializable
           });
           
         
-        if (!mIsPi) {
+        if (!mFullFrame) {
             JComboBox<String> chooser = new JComboBox<String>(new String[]{"Cycle", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "20", "30"}) {
                 /** 
                  * @inherited <p>
@@ -455,16 +458,18 @@ class PiWeather implements Serializable
         mWxImageLabel = new JLabel("");
         centerPanel.add(mWxImageLabel);
         
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        centerPanel.add(Box.createVerticalGlue());
         
         mSatImageLabel = new JLabel("");
         centerPanel.add(mSatImageLabel);
+        centerPanel.add(Box.createVerticalGlue());
         
         return centerPanel;
      }
     
      
      /**
+      * SetupRightPanel setup the right section of the window
       * 
       */
     private JPanel SetupRightPanel()
@@ -568,7 +573,9 @@ class PiWeather implements Serializable
             rightListPanel.add(Box.createRigidArea(new Dimension(0, 2)));
         }
         forcastPanel.add(leftListPanel);
-        forcastPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        forcastPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        
         forcastPanel.add(rightListPanel);
         
         rightMainPanel.add(forcastPanel);

@@ -304,16 +304,16 @@ public class TrendDisplayPanel extends JPanel
         
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
         
-        if (mHasSensor) {
+        if (mHasSensor || mVerbose) {
             g2d.setColor(Color.magenta);
             g2d.drawString("s-Temp", 180, dim.height-5);
             
             g2d.setColor(Color.cyan);
             g2d.drawString("s-Humidity", 230, dim.height-5);
             
-            if (mSensor.equals("BME280")) {
+            if (mSensor.equals("BME280") || mVerbose) {
                 g2d.setColor(new Color(128, 255, 128));
-                g2d.drawString("s-Barometer", 350, dim.height-5);
+                g2d.drawString("s-Barometer", 310, dim.height-5);
             }
         }
         
