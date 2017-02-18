@@ -161,13 +161,11 @@ class PiWeather implements Serializable
 
         mainPanel.add(SetupLeftPanel());
 
-        //mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        mainPanel.add(Box.createHorizontalGlue());
+        mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
   
         mainPanel.add(SetupCenterPanel());
 
-        //mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        mainPanel.add(Box.createHorizontalGlue());
+        mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
 
         mainPanel.add(SetupRightPanel());
         
