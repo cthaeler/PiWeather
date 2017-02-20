@@ -256,7 +256,7 @@ public class TrendDisplayPanel extends JPanel
             mData[3][di] = GetBarometerY(list.get(i).GetBarometer()); // 3 is the barometer
             mData[4][di] = GetTempY(list.get(i).GetSensorTemp()); // 4 is the y sensor temperature
             mData[5][di] = GetHumidityY(list.get(i).GetSensorHumidity()); // 5 is the sensor humidity
-            mData[5][di] = GetHumidityY(list.get(i).GetBarometer()+0.1); // 6 is the sensor barometer - faked for now
+            mData[6][di] = GetBarometerY(list.get(i).GetSensorBarometer()); // 6 is the sensor barometer
         }
         repaint();
     }
