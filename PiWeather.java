@@ -28,7 +28,7 @@ import java.time.*;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-class PiWeather implements Serializable
+class PiWeather
 {
 
 
@@ -41,7 +41,7 @@ class PiWeather implements Serializable
     };
     
     private static final String[] mSupportedSensors = {"DHT11", "DHT22", "BME280", "mac"};
-    private static final String sTrendDataFile = "cache/trend_data.txt";
+    private static final String sTrendDataFile = "cache/trend_data.txt";  // obsolete
     private static final String sParseableTrendDataFile = "cache/p_trend_data.txt";
     
     private int mLocationURL = 0;
@@ -52,7 +52,7 @@ class PiWeather implements Serializable
     private double mCurrHumidity = 0.0;
     private double mInsideHumidity = 0.0;
     private double mCurrPres = 0.0;
-    private double mInsidePressure = 0.0;
+    private double mInsidePres = 0.0;
     private double mCurrSpeed = 0.0;
     private double mCurrDir = 0.0;
     private String mCurrObsTime = "";
@@ -90,8 +90,6 @@ class PiWeather implements Serializable
     private boolean mSaveWxFiles = false;
     private int mTrendDataDays = 3; // default to 3 days of trend data displayed
     private boolean mVerbose = false;
-    private boolean mDumpParsableTrendData = false;
-    private boolean mReadAndSaveParsableTrendData = false;
     
 
     
@@ -106,24 +104,11 @@ class PiWeather implements Serializable
         if (mGenFakeTrendData) {
             GenFakeTrendData();
         } else {
-            if (mReadAndSaveParsableTrendData) {
-                ReadTextTrendData();
-            } else {
-                // read the standard file
-                File f = new File(sTrendDataFile);
-                if (f.exists() && f.canRead()) {
-                    ReadTrendData();
-                }
-            }
+            ReadTextTrendData();
             CleanTrendData();
         }
         if (mVerbose)
             DumpTrendData("---- Initial Read ----");
-        
-        if (mDumpParsableTrendData) {
-            SaveTextTrendData();
-            System.exit(1);
-        }
 
 
         
@@ -224,14 +209,6 @@ class PiWeather implements Serializable
                 mGenFakeTrendData = true;
                 break;
                 
-            case "-dtd": // dump trend data as a parsable set as p_trend_data.txt
-                mDumpParsableTrendData = true;
-                break;
-                
-            case "-rtd": // read parsable trend data from p_trend_data.txt
-                mReadAndSaveParsableTrendData = true;
-                break;
-                
             case "-td": // set the number of trend data days to display
                 if (i+1 >= args.length) {
                     PrintUsage();
@@ -283,8 +260,6 @@ class PiWeather implements Serializable
         System.out.println("  -f         Full frame");
         System.out.println("  -td <num>  Show num (1-30) days of trend data.  0 == cycle through # of days");
         System.out.println("  -ftd       Generate Fake Trend Data and exit");
-        System.out.println("  -dtd       Dump trend data as a parsable set as trend_data.txt and exit");
-        System.out.println("  -rtd       Read parsable trend data from trend_data.txt and exit");
         System.out.println("  -wx        Save Wx files for later analysis");
         System.out.println("  -v         Verbose");
     }
@@ -365,53 +340,50 @@ class PiWeather implements Serializable
           });
           
         
-        if (!mFullFrame) {
-            JComboBox<String> chooser = new JComboBox<String>(new String[]{"Cycle", "1", "2", "3", "4", "5", "6", "7", "10", "15", "20", "30"}) {
-                /** 
-                 * @inherited <p>
-                 */
-                @Override
-                public Dimension getMaximumSize() {
-                    Dimension max = super.getMaximumSize();
-                    max.width = getPreferredSize().width;
-                    max.height = getPreferredSize().height;
-                    return max;
-                }
-            };
-            if (mTrendDataDays >= 0 && mTrendDataDays <=10) {
-                chooser.setSelectedItem(Integer.toString(mTrendDataDays));
-            } else if (mTrendDataDays > 10 && mTrendDataDays <= 20) {
-                chooser.setSelectedItem("15");
-            } if (mTrendDataDays > 20) {
-                chooser.setSelectedItem("20");
+        JComboBox<String> chooser = new JComboBox<String>(new String[]{"Cycle", "1", "2", "3", "4", "5", "6", "7", "10", "15", "20", "30"}) {
+            /** 
+             * @inherited <p>
+             */
+            @Override
+            public Dimension getMaximumSize() {
+                Dimension max = super.getMaximumSize();
+                max.width = getPreferredSize().width;
+                max.height = getPreferredSize().height;
+                return max;
             }
-            chooser.setPrototypeDisplayValue("XXXXX");
-            chooser.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    JComboBox jcmbType = (JComboBox) e.getSource();
-                    String selStr = jcmbType.getSelectedItem().toString();
-                    if (selStr.equals("Cycle")) {
-                        mTrendDataDays = 0; // cycle
-                    } else {
-                        mTrendDataDays = Integer.parseInt(selStr);
-                    }
-                    mTrendDisplayPanel.UpdateNumDays(mTrendData, mTrendDataDays);
-                }
-            });
-
-            JPanel ctlPanel = new JPanel();
-            BoxLayout ctlBox = new BoxLayout(ctlPanel, BoxLayout.X_AXIS);
-            ctlPanel.setLayout(ctlBox);
-            ctlPanel.setBackground(Color.BLACK);
-            
-            ctlPanel.add(mQuitButton);
-            ctlPanel.add(chooser);
-            
-            ctlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            leftPanel.add(ctlPanel);
-        } else {
-            leftPanel.add(mQuitButton);
+        };
+        if (mTrendDataDays >= 0 && mTrendDataDays <=10) {
+            chooser.setSelectedItem(Integer.toString(mTrendDataDays));
+        } else if (mTrendDataDays > 10 && mTrendDataDays <= 20) {
+            chooser.setSelectedItem("15");
+        } if (mTrendDataDays > 20) {
+            chooser.setSelectedItem("20");
         }
+        chooser.setPrototypeDisplayValue("XXXXX");
+        chooser.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JComboBox jcmbType = (JComboBox) e.getSource();
+                String selStr = jcmbType.getSelectedItem().toString();
+                if (selStr.equals("Cycle")) {
+                    mTrendDataDays = 0; // cycle
+                } else {
+                    mTrendDataDays = Integer.parseInt(selStr);
+                }
+                mTrendDisplayPanel.UpdateNumDays(mTrendData, mTrendDataDays);
+            }
+        });
+
+        JPanel ctlPanel = new JPanel();
+        BoxLayout ctlBox = new BoxLayout(ctlPanel, BoxLayout.X_AXIS);
+        ctlPanel.setLayout(ctlBox);
+        ctlPanel.setBackground(Color.BLACK);
+        
+        ctlPanel.add(mQuitButton);
+        ctlPanel.add(chooser);
+        
+        ctlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leftPanel.add(ctlPanel);
+
         
         return leftPanel;
     }
@@ -616,14 +588,14 @@ class PiWeather implements Serializable
                     mInsideTemp = Double.parseDouble(data[0]);
                     mInsideHumidity = Double.parseDouble(data[1]);
                     if (mSensor.equals("BME280")) {
-                        mInsidePressure = Double.parseDouble(data[2]);
+                        mInsidePres = Double.parseDouble(data[2]);
                     } else {
-                        mInsidePressure = 0.0;
+                        mInsidePres = 0.0;
                     }
                 } else {
                     mInsideTemp = 0.0;
                     mInsideHumidity = 0.0;
-                    mInsidePressure = 0.0;
+                    mInsidePres = 0.0;
                 }
             }
           
@@ -632,7 +604,7 @@ class PiWeather implements Serializable
         } catch  (Exception e) {
             mInsideTemp = 0.0;
             mInsideHumidity = 0.0;
-            mInsidePressure = 0.0;
+            mInsidePres = 0.0;
         }
     }
     
@@ -942,7 +914,7 @@ class PiWeather implements Serializable
             double humidity = i % 100;
             // 27 to 32
             double press = 27 + (i%500)/100.0;
-            mTrendData.add(new TrendData(t, obstime, temp, humidity, press, temp+3, humidity+3));
+            mTrendData.add(new TrendData(t, obstime, temp, humidity, press, temp+3, humidity+3, press + 0.2));
         }
     }
     
@@ -988,7 +960,7 @@ class PiWeather implements Serializable
             
             mCurrPres = ReadValueFromDoc(doc, "pressure");
             if (mHasSensor && mSensor.equals("BME280")) {
-                mValues.get(3).setValue(mCurrPres, mInsidePressure);
+                mValues.get(3).setValue(mCurrPres, mInsidePres);
             } else {
                 mValues.get(3).setValue(mCurrPres);
             }
@@ -1000,11 +972,11 @@ class PiWeather implements Serializable
                     // TODO -- add inside Pressure
                     mTrendData.add(new TrendData(LocalDateTime.now(),
                                     mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
-                                    mInsideTemp, mInsideHumidity));
+                                    mInsideTemp, mInsideHumidity, mInsidePres));
                 } else {
                     mTrendData.add(new TrendData(LocalDateTime.now(),
                                     mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
-                                    0, 0));
+                                    0, 0, 0));
                 }
                 addOrRemoved = true;
             }
@@ -1019,9 +991,9 @@ class PiWeather implements Serializable
             
             if (addOrRemoved) {
                 CleanTrendData();
-                SaveTrendData();
                 SaveTextTrendData();
-                if (mVerbose) DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----");
+                if (mVerbose)
+                    DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----");
             }
             
             mTrendDisplayPanel.UpdateData(mTrendData);
@@ -1036,35 +1008,16 @@ class PiWeather implements Serializable
     }
     
     
-    /**
-     * Save TrendData in binary format
-     */
-    private void SaveTrendData()
-    {
-        // Let's serialize an Object
-        try {
-            FileOutputStream fileOut = new FileOutputStream(sTrendDataFile);
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(mTrendData);
-            out.close();
-            fileOut.close();
-            if (mVerbose) System.out.println("\nSerialization Successful...\n");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
     
     
     /**
-     * Save TrendData in text format
+     * Save Trend Data in text format
      */
     private void SaveTextTrendData()
     {
         try {
             PrintWriter writer = new PrintWriter(sParseableTrendDataFile, "UTF-8");
-            writer.println("1"); //version number
+            writer.println("2"); //version number
             for (TrendData td : mTrendData) {
                 String s =  td.GetDateTime().toString() + "|" +
                             td.GetObsTime() + "|" +
@@ -1072,8 +1025,8 @@ class PiWeather implements Serializable
                             String.format("%f", td.GetHumidity()) + "|" +
                             String.format("%f", td.GetBarometer()) + "|" +
                             String.format("%f", td.GetSensorTemp()) + "|" +
-                            String.format("%f", td.GetSensorHumidity()); // + "|" +
-                            //String.format("%f", td.GetSensorBarometer());
+                            String.format("%f", td.GetSensorHumidity()) + "|" +
+                            String.format("%f", td.GetSensorBarometer());
                 writer.println(s);
             }
             writer.close();
@@ -1082,35 +1035,13 @@ class PiWeather implements Serializable
         }
     }
      
-    /**
-     * Read Trend Data in binary format
-     *
-     */
-    @SuppressWarnings("unchecked")
-    private void ReadTrendData()
-    {
-        // Let's deserialize an Object
-        try {
-            FileInputStream fileIn = new FileInputStream(sTrendDataFile);
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            mTrendData = (ArrayList<TrendData>) in.readObject();
-            in.close();
-            fileIn.close();
-        } catch(ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
 
     /**
-     * SetDataFromParseableString is the other side of the ugly hack to rev Trend Data
+     * SetDataFromString set a TrendData from a saved string
      * 
      */
-    private void SetDataFromParseableString(int version, String s, TrendData td)
+    private void SetDataFromString(int version, String s, TrendData td)
     {
         String[] data = s.split("\\|");
         switch(version) {
@@ -1131,7 +1062,7 @@ class PiWeather implements Serializable
             td.SetBarometer(Double.parseDouble(data[4]));
             td.SetSensorTemp(Double.parseDouble(data[5]));
             td.SetSensorHumidity(Double.parseDouble(data[6]));
-            //td.SetSensorBarometer(Double.parseDouble(data[7]));
+            td.SetSensorBarometer(Double.parseDouble(data[7]));
             break;
         }
     }
@@ -1153,7 +1084,7 @@ class PiWeather implements Serializable
             while ((line = reader.readLine()) != null)
             {
               TrendData td = new TrendData();
-              SetDataFromParseableString(version, line, td);
+              SetDataFromString(version, line, td);
               mTrendData.add(td);
             }
             reader.close();

@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
  * @author Charles Thaeler
  * @version 15 Feb 2017
  */
-public class TrendData implements Serializable
+public class TrendData
 {
     // instance variables - replace the example below with your own
     private LocalDateTime mDateTime;
@@ -18,7 +18,7 @@ public class TrendData implements Serializable
     private double mBarometer;
     private double mSensorTemp;
     private double mSensorHumidity;
-    //private double mSensorBarometer;
+    private double mSensorBarometer;
     private String mObsTime;
 
     /**
@@ -34,14 +34,14 @@ public class TrendData implements Serializable
         mObsTime = "";
         mSensorTemp = 0.0;
         mSensorHumidity = 0.0;
-        // mSensorBarometer = 0.0;
+        mSensorBarometer = 0.0;
     }
     
     /**
      * Constructor that takes data
      */
     public TrendData(LocalDateTime time, String obstime, double temp, double humidity, double barometer,
-                    double sensorTemp, double sensorHumidity) //, double sensorBarometer
+                    double sensorTemp, double sensorHumidity, double sensorBarometer)
     {
         mDateTime = time;
         mTemp = temp;
@@ -50,7 +50,7 @@ public class TrendData implements Serializable
         mObsTime = obstime;
         mSensorTemp = sensorTemp;
         mSensorHumidity = sensorHumidity;
-        //mSensorBarometer = sensorBarometer;
+        mSensorBarometer = sensorBarometer;
     }
     
     /**
@@ -177,29 +177,31 @@ public class TrendData implements Serializable
     /**
      * @return sensor barometer
      *
+     */
     public double GetSensorBarometer()
     {
         return mSensorBarometer;
     }
-    */
+
     
     /**
      * @param sensor barometer
      *      set the sensor barometer
      *
+     */
     public void SetSensorBarometer(double barometer)
     {
         mSensorBarometer = barometer;
     }
-    */
+
     
     public String toString()
     {
         return "TrendData[dt=" + DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(mDateTime) +
+                          ", obs=" + mObsTime +
                           ", temp=" + String.format("%3.0f", mTemp) + "/" + String.format("%3.0f", mSensorTemp) +
                           ", hum=" + String.format("%3.0f", mHumidity) + "/" + String.format("%3.0f", mSensorHumidity) +
-                          ", pres=" + String.format("%5.2f", mBarometer) + //"/" + String.format("%5.2f", mSensorBarometer) +
-                          ", obs=" + mObsTime +
+                          ", pres=" + String.format("%5.2f", mBarometer) + "/" + String.format("%5.2f", mSensorBarometer) +
                           "]";
             
     }
