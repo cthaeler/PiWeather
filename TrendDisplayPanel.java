@@ -293,27 +293,38 @@ public class TrendDisplayPanel extends JPanel
             DrawDashedLine(g2d, mVertGrid[vl][0], 0, mVertGrid[vl][0], dim.height-20, 1);
         }
         
+        
+        Color tempColor = Color.red;
+        Color tempGridColor = new Color(165, 0, 0);
+        Color humidityColor = new Color(128, 128, 255);
+        Color pressureColor = Color.green;
+        Color pressureGridColor = new Color(0, 128, 0);
+        
         // Draw legend and grid lines for Temperature (and Humidity)
-        g2d.setColor(Color.red);
+        g2d.setColor(tempColor);
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
         g2d.drawString("Temp", 0, dim.height-5);
-        g2d.setColor(new Color(165, 0, 0));
-
+        
         // draw the Temperature grid lines
+        g2d.setColor(tempGridColor);
         for (double t = 0; t < ((dim.height>135)?130:120); t+=20) {
             int y = GetTempY(t);
             DrawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 1);
             g2d.drawString(String.format("%.0f", t), dim.width-mGraphEndX, y+5);
         }
         
+        
         // Draw legend for Humidity
-        g2d.setColor(new Color(128, 128, 255));
+        g2d.setColor(humidityColor);
         g2d.drawString("Humidity", 40, dim.height-5);
         
-        // Draw legend and grid lines for Barometer
-        g2d.setColor(Color.green);
+        
+        // Draw legend for Barometric Pressure
+        g2d.setColor(pressureColor);
         g2d.drawString("Barometer", 110, dim.height-5);
-        g2d.setColor(new Color(0, 128, 0));
+        
+        // Draw the Barometric Pressure Grid Lines
+        g2d.setColor(pressureGridColor);
         for (double b = 29.0; b < 31; b+=0.5) {
             int y = GetBarometerY(b);
             DrawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 1);
@@ -323,14 +334,14 @@ public class TrendDisplayPanel extends JPanel
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
         
         if (mHasSensor || mVerbose) {
-            g2d.setColor(Color.magenta);
+            g2d.setColor(tempColor);
             g2d.drawString("s-Temp", 180, dim.height-5);
             
-            g2d.setColor(Color.cyan);
+            g2d.setColor(humidityColor);
             g2d.drawString("s-Humidity", 230, dim.height-5);
             
             if (mSensor.equals("BME280") || mVerbose) {
-                g2d.setColor(new Color(128, 255, 128));
+                g2d.setColor(pressureColor);
                 g2d.drawString("s-Barometer", 310, dim.height-5);
             }
         }
@@ -342,25 +353,31 @@ public class TrendDisplayPanel extends JPanel
             return;
         }
 
-        g2d.setColor(Color.red);
+        // Temperature
+        g2d.setColor(tempColor);
         g2d.drawPolyline(mData[0], mData[1], mData[0].length);
 
-        g2d.setColor(new Color(128, 128, 255));
+        // Humidity
+        g2d.setColor(humidityColor);
         g2d.drawPolyline(mData[0], mData[2], mData[0].length);
         
-        g2d.setColor(Color.green);
+        // Barometric Pressure
+        g2d.setColor(pressureColor);
         g2d.drawPolyline(mData[0], mData[3], mData[0].length);
 
         
         if (mHasSensor) {
-            g2d.setColor(Color.magenta);
+            // Temperature from a sensor
+            g2d.setColor(tempColor);
             DrawDashedPolyline(g2d, mData[0], mData[4], new float[] {4, 2});
     
-            g2d.setColor(Color.cyan);
+            // Humidity from a sensor
+            g2d.setColor(humidityColor);
             DrawDashedPolyline(g2d, mData[0], mData[5], new float[] {4, 2});
             
             if (mSensor.equals("BME280")) {
-                g2d.setColor(new Color(128, 128, 255));
+                // Barometric Pressure from a sensor
+                g2d.setColor(pressureColor);
                 DrawDashedPolyline(g2d, mData[0], mData[6], new float[] {4, 2});
             }
         }
