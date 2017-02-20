@@ -249,7 +249,6 @@ public class TrendDisplayPanel extends JPanel
     {
         if (displayDays == 0) {
             mCycleDisplayDays = true;
-            mDisplayDays = 1;
         } else {
             mCycleDisplayDays = false;
             mDisplayDays = displayDays;

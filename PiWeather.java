@@ -108,17 +108,17 @@ class PiWeather implements Serializable
         } else {
             if (mReadAndSaveParsableTrendData) {
                 ReadTextTrendData();
-                System.exit(1);
             } else {
-                // read the standar file
+                // read the standard file
                 File f = new File(sTrendDataFile);
                 if (f.exists() && f.canRead()) {
                     ReadTrendData();
-                    CleanTrendData();
-                    if (mVerbose) DumpTrendData("---- Initial Read ----");
                 }
             }
+            CleanTrendData();
         }
+        if (mVerbose)
+            DumpTrendData("---- Initial Read ----");
         
         if (mDumpParsableTrendData) {
             SaveTextTrendData();
@@ -192,7 +192,7 @@ class PiWeather implements Serializable
     }
     
     /**
-     * 
+     * Parse the command line arguments
      * 
      */
     private void ProcessArgs(String[] args)
@@ -366,7 +366,7 @@ class PiWeather implements Serializable
           
         
         if (!mFullFrame) {
-            JComboBox<String> chooser = new JComboBox<String>(new String[]{"Cycle", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "20", "30"}) {
+            JComboBox<String> chooser = new JComboBox<String>(new String[]{"Cycle", "1", "2", "3", "4", "5", "6", "7", "10", "15", "20", "30"}) {
                 /** 
                  * @inherited <p>
                  */
@@ -379,13 +379,12 @@ class PiWeather implements Serializable
                 }
             };
             if (mTrendDataDays >= 0 && mTrendDataDays <=10) {
-                chooser.setSelectedIndex(mTrendDataDays);
+                chooser.setSelectedItem(Integer.toString(mTrendDataDays));
             } else if (mTrendDataDays > 10 && mTrendDataDays <= 20) {
-                chooser.setSelectedIndex(11);
-            } if (mTrendDataDays > 20 && mTrendDataDays <= 30) {
-                chooser.setSelectedIndex(12);
+                chooser.setSelectedItem("15");
+            } if (mTrendDataDays > 20) {
+                chooser.setSelectedItem("20");
             }
-            chooser.setSelectedIndex(mTrendDataDays);
             chooser.setPrototypeDisplayValue("XXXXX");
             chooser.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -1022,7 +1021,7 @@ class PiWeather implements Serializable
                 CleanTrendData();
                 SaveTrendData();
                 SaveTextTrendData();
-                if (mVerbose) DumpTrendData("---- at " + mCurrObsTime);
+                if (mVerbose) DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----");
             }
             
             mTrendDisplayPanel.UpdateData(mTrendData);
@@ -1057,6 +1056,7 @@ class PiWeather implements Serializable
         }
     }
     
+    
     /**
      * Save TrendData in text format
      */
@@ -1066,7 +1066,15 @@ class PiWeather implements Serializable
             PrintWriter writer = new PrintWriter(sParseableTrendDataFile, "UTF-8");
             writer.println("1"); //version number
             for (TrendData td : mTrendData) {
-                writer.println(ParsableDump(td));
+                String s =  td.GetDateTime().toString() + "|" +
+                            td.GetObsTime() + "|" +
+                            String.format("%f", td.GetTemp()) + "|" +
+                            String.format("%f", td.GetHumidity()) + "|" +
+                            String.format("%f", td.GetBarometer()) + "|" +
+                            String.format("%f", td.GetSensorTemp()) + "|" +
+                            String.format("%f", td.GetSensorHumidity()); // + "|" +
+                            //String.format("%f", td.GetSensorBarometer());
+                writer.println(s);
             }
             writer.close();
         } catch (IOException e) {
@@ -1096,23 +1104,7 @@ class PiWeather implements Serializable
             e.printStackTrace();
         }
     }
-    
-    /**
-     * ParseableDump is an ugly hack to revision Trend Data
-     * 
-     */
-    private String ParsableDump(TrendData td)
-    {
-        String s =  td.GetDateTime().toString() + "|" +
-                    td.GetObsTime() + "|" +
-                    String.format("%f", td.GetTemp()) + "|" +
-                    String.format("%f", td.GetHumidity()) + "|" +
-                    String.format("%f", td.GetBarometer()) + "|" +
-                    String.format("%f", td.GetSensorTemp()) + "|" +
-                    String.format("%f", td.GetSensorHumidity()); // + "|" +
-                    //String.format("%f", td.GetSensorBarometer());
-        return s;
-    }
+
 
     /**
      * SetDataFromParseableString is the other side of the ugly hack to rev Trend Data
@@ -1165,7 +1157,6 @@ class PiWeather implements Serializable
               mTrendData.add(td);
             }
             reader.close();
-            DumpTrendData("---- Dump Of Parsable Read ----");
         } catch (Exception e) {
             System.err.format("Exception occurred trying to read '%s'.", sParseableTrendDataFile);
             e.printStackTrace();
