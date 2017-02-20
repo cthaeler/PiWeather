@@ -84,7 +84,7 @@ public class TrendDisplayPanel extends JPanel
      * 
      * 
      */
-    private void drawDashedLine(Graphics g, int x1, int y1, int x2, int y2, int dash)
+    private void DrawDashedLine(Graphics g, int x1, int y1, int x2, int y2, int dash)
     {
         //creates a copy of the Graphics instance
         Graphics2D g2d = (Graphics2D) g.create();
@@ -95,6 +95,25 @@ public class TrendDisplayPanel extends JPanel
             g2d.setStroke(dashed);
         }
         g2d.drawLine(x1, y1, x2, y2);
+
+        //gets rid of the copy
+        g2d.dispose();
+    }
+    
+    /**
+     * Draw dashed polyline
+     */
+    private void DrawDashedPolyline(Graphics g, int[] x, int[] y, int dash)
+    {
+        //creates a copy of the Graphics instance
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        if (dash != 0) {
+            //set the stroke of the copy, not the original 
+            Stroke dashed = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{dash}, 0);
+            g2d.setStroke(dashed);
+        }
+        g2d.drawPolyline(x, y, x.length);
 
         //gets rid of the copy
         g2d.dispose();
@@ -271,7 +290,7 @@ public class TrendDisplayPanel extends JPanel
         // draw the vertical grid lines
         g2d.setColor(new Color(100, 100, 100));
         for (int vl = 0; vl < mVertGrid.length; vl++) {
-            drawDashedLine(g2d, mVertGrid[vl][0], 0, mVertGrid[vl][0], dim.height-20, mVertGrid[vl][1]);
+            DrawDashedLine(g2d, mVertGrid[vl][0], 0, mVertGrid[vl][0], dim.height-20, mVertGrid[vl][1]);
         }
         
         // Draw legend and grid lines for Temperature (and Humidity)
@@ -283,7 +302,7 @@ public class TrendDisplayPanel extends JPanel
         // draw the Temperature grid lines
         for (double t = 0; t < ((dim.height>135)?130:120); t+=20) {
             int y = GetTempY(t);
-            drawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 3);
+            DrawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 3);
             g2d.drawString(String.format("%.0f", t), dim.width-mGraphEndX, y+5);
         }
         
@@ -297,7 +316,7 @@ public class TrendDisplayPanel extends JPanel
         g2d.setColor(new Color(0, 128, 0));
         for (double b = 29.0; b < 31; b+=0.5) {
             int y = GetBarometerY(b);
-            drawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 3);
+            DrawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 3);
             g2d.drawString(String.format("%.1f", b), 0, y+5);
         }
         
@@ -335,14 +354,17 @@ public class TrendDisplayPanel extends JPanel
         
         if (mHasSensor) {
             g2d.setColor(Color.magenta);
-            g2d.drawPolyline(mData[0], mData[4], mData[0].length);
+            //g2d.drawPolyline(mData[0], mData[4], mData[0].length);
+            DrawDashedPolyline(g2d, mData[0], mData[4], 1);
     
             g2d.setColor(Color.cyan);
-            g2d.drawPolyline(mData[0], mData[5], mData[0].length);
+            //g2d.drawPolyline(mData[0], mData[5], mData[0].length);
+            DrawDashedPolyline(g2d, mData[0], mData[5], 1);
             
             if (mSensor.equals("BME280")) {
                 g2d.setColor(new Color(128, 128, 255));
-                g2d.drawPolyline(mData[0], mData[6], mData[0].length);
+                //g2d.drawPolyline(mData[0], mData[6], mData[0].length);
+                DrawDashedPolyline(g2d, mData[0], mData[6], 1);
             }
         }
         
