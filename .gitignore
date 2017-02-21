@@ -1,10 +1,9 @@
-*.class
-wxfiles
-wxfiles_fmt
-icons.zip
-cache
-doc
-*.ctxt
 PiWeather.jar
 java.hprof.txt
+*.class
+*.ctxt
 *.pyc
+wxfiles
+wxfiles_fmt
+cache
+doc

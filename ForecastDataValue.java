@@ -79,7 +79,7 @@ public class ForecastDataValue
     
     private String cachedImageFilename(String url)
     {
-        String cacheFile = "badURL.png";
+        String cacheFile = "icons/badURL.png";
         
         // the URL should look like one of the following
         // http://forecast.weather.gov/newimages/medium/nshra60.png

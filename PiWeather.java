@@ -32,7 +32,7 @@ class PiWeather
 {
 
 
-    private static final String[][] mLocations = {
+    private static final String[][] msLocations = {
         {"Novato", "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
 //        {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
 //        {"Escondido", "http://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
@@ -40,9 +40,8 @@ class PiWeather
 //        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
-    private static final String[] mSupportedSensors = {"DHT11", "DHT22", "BME280", "mac"};
-    private static final String sTrendDataFile = "cache/trend_data.txt";  // obsolete
-    private static final String sParseableTrendDataFile = "cache/p_trend_data.txt";
+    private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "mac"};
+    private static final String msParseableTrendDataFile = "cache/p_trend_data.txt";
     
     private int mLocationURL = 0;
         
@@ -168,7 +167,7 @@ class PiWeather
      */
     private boolean isSupportedSensor(String sensor)
     {
-        for (String s: mSupportedSensors) {
+        for (String s: msSupportedSensors) {
             if (s.equalsIgnoreCase(sensor)) {
                 return true;
             }
@@ -282,7 +281,7 @@ class PiWeather
         
         leftPanel.add(mTimeLabel);
         
-        mLocationLabel = new JLabel(mLocations[mLocationURL][0]);
+        mLocationLabel = new JLabel(msLocations[mLocationURL][0]);
         mLocationLabel.setForeground(Color.green);
         mLocationLabel.setFont(new Font("Monospaced", Font.PLAIN, 28));
         leftPanel.add(mLocationLabel);
@@ -566,20 +565,25 @@ class PiWeather
             Runtime rt = Runtime.getRuntime();
             String line;
             String[] data;
-            String cmdStr = "python ./dht_mac.py";
+            String cmdStr = null;
             if (mIsPi) {
                 switch (mSensor) {
                 case "DHT11":
-                    cmdStr = "python ./dht11.py";
+                    cmdStr = "python ./sensors/dht11.py";
                     break;
                 case "DHT22":
-                    cmdStr = "python ./dht.py";
+                    cmdStr = "python ./sensors/dht.py";
                     break;
                 case "BME280":
-                    cmdStr = "python ./bme280.py";
+                    cmdStr = "python ./sensors/bme280.py";
+                    break;
+                case "mac":
+                    cmdStr = "python ./sensors/dht_mac.py";
                     break;
                 }
             }
+            if (cmdStr == null)
+                return;
             Process proc = rt.exec(cmdStr);
             BufferedReader bri = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             if((line = bri.readLine()) != null){
@@ -791,9 +795,9 @@ class PiWeather
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH_mm");
         String tstr = dt.format(formatter);
         // save the xml
-        Path p = Paths.get("./wxfiles/wxfile_"+mLocations[mLocationURL][0]+"_"+tstr+".xml");
+        Path p = Paths.get("./wxfiles/wxfile_"+msLocations[mLocationURL][0]+"_"+tstr+".xml");
         try {
-            URL url = new URL(mLocations[mLocationURL][1]);
+            URL url = new URL(msLocations[mLocationURL][1]);
             InputStream in = url.openStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         
@@ -823,8 +827,8 @@ class PiWeather
         SetLastUpdateTime();
         
         mLocationURL++;
-        if (mLocationURL >= mLocations.length) mLocationURL = 0;
-        mLocationLabel.setText(mLocations[mLocationURL][0]);
+        if (mLocationURL >= msLocations.length) mLocationURL = 0;
+        mLocationLabel.setText(msLocations[mLocationURL][0]);
         
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -837,7 +841,7 @@ class PiWeather
                 }
             }
 
-            URL url = new URL(mLocations[mLocationURL][1]);
+            URL url = new URL(msLocations[mLocationURL][1]);
             InputStream stream = url.openStream();
             Document doc = factory.newDocumentBuilder().parse(stream);
             
@@ -1016,7 +1020,7 @@ class PiWeather
     private void SaveTextTrendData()
     {
         try {
-            PrintWriter writer = new PrintWriter(sParseableTrendDataFile, "UTF-8");
+            PrintWriter writer = new PrintWriter(msParseableTrendDataFile, "UTF-8");
             writer.println("2"); //version number
             for (TrendData td : mTrendData) {
                 String s =  td.GetDateTime().toString() + "|" +
@@ -1073,7 +1077,7 @@ class PiWeather
     private void ReadTextTrendData()
     {
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(sParseableTrendDataFile));
+            BufferedReader reader = new BufferedReader(new FileReader(msParseableTrendDataFile));
             String line;
             int version = 1;
             if ((line = reader.readLine()) != null) {
@@ -1089,7 +1093,7 @@ class PiWeather
             }
             reader.close();
         } catch (Exception e) {
-            System.err.format("Exception occurred trying to read '%s'.", sParseableTrendDataFile);
+            System.err.format("Exception occurred trying to read '%s'.", msParseableTrendDataFile);
             e.printStackTrace();
         }
     }
