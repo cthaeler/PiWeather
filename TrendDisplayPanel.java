@@ -340,7 +340,7 @@ public class TrendDisplayPanel extends JPanel
             g2d.setColor(humidityColor);
             g2d.drawString("s-Humidity", 230, dim.height-5);
             
-            if (mSensor.equals("BME280") || mVerbose) {
+            if (mSensor.equals("BME280") || mSensor.equals("MAC") || mVerbose) {
                 g2d.setColor(pressureColor);
                 g2d.drawString("s-Barometer", 310, dim.height-5);
             }
@@ -375,7 +375,7 @@ public class TrendDisplayPanel extends JPanel
             g2d.setColor(humidityColor);
             DrawDashedPolyline(g2d, mData[0], mData[5], new float[] {4, 2});
             
-            if (mSensor.equals("BME280")) {
+            if (mSensor.equals("BME280") || mSensor.equals("MAC")) {
                 // Barometric Pressure from a sensor
                 g2d.setColor(pressureColor);
                 DrawDashedPolyline(g2d, mData[0], mData[6], new float[] {4, 2});
