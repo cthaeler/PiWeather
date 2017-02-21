@@ -40,7 +40,7 @@ class PiWeather
 //        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
-    private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "mac"};
+    private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "MAC"};
     private static final String msParseableTrendDataFile = "cache/p_trend_data.txt";
     
     private int mLocationURL = 0;
@@ -108,7 +108,9 @@ class PiWeather
         }
         if (mVerbose)
             DumpTrendData("---- Initial Read ----");
-
+            
+        if (mHasSensor)
+            ReadInsideSensor();
 
         
         if (System.getProperty("os.name").equals("Mac OS X")) {
@@ -254,8 +256,8 @@ class PiWeather
      */
     private void PrintUsage()
     {
-        System.out.println("Usage: PiWeather -s [DHT11, DHT22, BME280, mac] -td 4 -f");
-        System.out.println("  -s         Sensor type, one of DHT11, DHT22, BME280 or mac The mac sensor is a simulatored sensor for testing");
+        System.out.println("Usage: PiWeather -s [DHT11, DHT22, BME280, MAC] -td 4 -f");
+        System.out.println("  -s         Sensor type, one of DHT11, DHT22, BME280 or MAC The MAC sensor is a simulatored sensor for testing");
         System.out.println("  -f         Full frame");
         System.out.println("  -td <num>  Show num (1-30) days of trend data.  0 == cycle through # of days");
         System.out.println("  -ftd       Generate Fake Trend Data and exit");
@@ -300,8 +302,8 @@ class PiWeather
         
         mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
         
-        if (mHasSensor && mSensor.equals("BME280"))
-            mValues.add(new DataValue(0, "Barometer", "<html>%.2f (out)<br>%.2f (in)</html>"));
+        if (mHasSensor && (mSensor.equals("BME280") || mSensor.equals("MAC")))
+            mValues.add(new DataValue(0, "Barometer (out/in)", "<html>%.2f<br>%.2f</html>"));
         else
             mValues.add(new DataValue(0, "Barometer", "%.2f"));
 
@@ -577,8 +579,8 @@ class PiWeather
                 case "BME280":
                     cmdStr = "python ./sensors/bme280.py";
                     break;
-                case "mac":
-                    cmdStr = "python ./sensors/dht_mac.py";
+                case "MAC":
+                    cmdStr = "python ./sensors/mac.py";
                     break;
                 }
             }
@@ -591,7 +593,7 @@ class PiWeather
                     data=line.split("\\|");
                     mInsideTemp = Double.parseDouble(data[0]);
                     mInsideHumidity = Double.parseDouble(data[1]);
-                    if (mSensor.equals("BME280")) {
+                    if (mSensor.equals("BME280") || mSensor.equals("MAC")) {
                         mInsidePres = Double.parseDouble(data[2]);
                     } else {
                         mInsidePres = 0.0;
@@ -963,7 +965,7 @@ class PiWeather
             mValues.get(2).setValue(mCurrDir, mCurrSpeed);
             
             mCurrPres = ReadValueFromDoc(doc, "pressure");
-            if (mHasSensor && mSensor.equals("BME280")) {
+            if (mHasSensor && (mSensor.equals("BME280") || mSensor.equals("MAC"))) {
                 mValues.get(3).setValue(mCurrPres, mInsidePres);
             } else {
                 mValues.get(3).setValue(mCurrPres);
@@ -973,7 +975,6 @@ class PiWeather
             // sparce after we have 10
             if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
                 if (mHasSensor) {
-                    // TODO -- add inside Pressure
                     mTrendData.add(new TrendData(LocalDateTime.now(),
                                     mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
                                     mInsideTemp, mInsideHumidity, mInsidePres));

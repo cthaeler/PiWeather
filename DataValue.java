@@ -109,18 +109,24 @@ public class DataValue
     
     private void CreateLabels()
     {
-        mDataLabel = new JLabel(Double.toString(mValue));
-        if (mFormatStr.contains("<br>"))
+        mDataLabel = new JLabel(Double.toString(mValue), JLabel.LEFT);
+        if (mFormatStr.contains("<br>")) {
             mDataLabel.setFont(new Font("Monospaced", Font.PLAIN, 30));
-        else
+            mDataLabel.setMaximumSize(new Dimension(120, 100));
+        } else {
             mDataLabel.setFont(new Font("Monospaced", Font.PLAIN, 48));
+        }
         mDataLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mDataLabel.setForeground(Color.white);
         
-        mLegendLabel = new JLabel(mLegend);
+        
+        mLegendLabel = new JLabel(mLegend, JLabel.LEFT);
         mLegendLabel.setFont(new Font("Monospaced", Font.PLAIN, 14));
         mLegendLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mLegendLabel.setForeground(Color.white);
+        
+        //System.out.println("label  " + mDataLabel.toString());
+        //System.out.println("legend " + mLegendLabel.toString());
     }
     
     public void setValue(double x)
