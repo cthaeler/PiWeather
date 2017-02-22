@@ -5,8 +5,8 @@ all he/she needs to know. The comments should usually include at least:
 ------------------------------------------------------------------------
 
 PROJECT TITLE: Weather
-PURPOSE OF PROJECT: Sing based weather for raspberry pi
-VERSION or DATE:
-HOW TO START THIS PROJECT: SwingMain
+PURPOSE OF PROJECT: Swing based weather for raspberry pi
+VERSION or DATE: 22 Feb 2017
+HOW TO START THIS PROJECT: PiWeather
 AUTHORS: Charles Thaeler
 USER INSTRUCTIONS:
