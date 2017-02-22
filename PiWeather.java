@@ -34,10 +34,11 @@ class PiWeather
 
     private static final String[][] msLocations = {
         {"Novato", "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
-//        {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
-//        {"Escondido", "http://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
-//        {"Chicago", "http://forecast.weather.gov/MapClick.php?lat=41.85&lon=-87.65&unit=0&lg=english&FcstType=dwml"},
-//        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
+        {"Petaluma", "http://forecast.weather.gov/MapClick.php?lat=38.2324&lon=-122.6366&unit=0&lg=english&FcstType=dwml"},
+        {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
+        {"Escondido", "http://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
+        {"Chicago", "http://forecast.weather.gov/MapClick.php?lat=41.85&lon=-87.65&unit=0&lg=english&FcstType=dwml"},
+        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
     private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "BMP280", "MAC"};
@@ -227,6 +228,34 @@ class PiWeather
                 mFullFrame = true;
                 break;
                 
+            case "-l": // specify location
+                if (i+1 >= args.length) {
+                    PrintUsage();
+                    System.exit(1);
+                } else {
+                    boolean found = false;
+                    for (int l = 0; l < msLocations.length; l++) {
+                        String locUC = args[i+1].toUpperCase();
+                        if (locUC.equals(msLocations[l][0].toUpperCase())) {
+                            mLocationURL = l;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        System.out.println("Location not found");
+                        System.exit(1);
+                    }
+                    i++;
+                }
+                break;
+                
+            case "-ll": // list locations and exit
+                for (String[] loc : msLocations) {
+                    System.out.println(loc[0]);
+                }
+                System.exit(1);
+                
             case "-ftd": // generate take Trend Data
                 mGenFakeTrendData = true;
                 break;
@@ -283,6 +312,8 @@ class PiWeather
         System.out.println("  -td <num>  Show num (1-30) days of trend data.  0 == cycle through # of days");
         System.out.println("  -ftd       Generate Fake Trend Data and exit");
         System.out.println("  -wx        Save Wx files for later analysis");
+        System.out.println("  -l         Specify a location");
+        System.out.println("  -ll        Show a list of known locations and exit");
         System.out.println("  -v         Verbose");
     }
     
@@ -811,9 +842,12 @@ class PiWeather
 
         SetLastUpdateTime();
         
-        mLocationURL++;
-        if (mLocationURL >= msLocations.length) mLocationURL = 0;
-        mLocationLabel.setText(msLocations[mLocationURL][0]);
+        if (false) { //mCycleLocations) {
+            mLocationURL++;
+            if (mLocationURL >= msLocations.length)
+                mLocationURL = 0;
+            mLocationLabel.setText(msLocations[mLocationURL][0]);
+        }
         
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
