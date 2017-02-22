@@ -217,6 +217,8 @@ class PiWeather
                         mSensor = args[i+1].toUpperCase();
                         mHasSensor = true;
                         mWxSensor = GetWxSensor();
+                        if (mVerbose && mWxSensor != null)
+                            System.out.println("Sensor: " + mWxSensor.GetName());
                         i++;
                     } else {
                         System.err.println("Bad Sensor type");
