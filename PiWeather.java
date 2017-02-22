@@ -109,7 +109,7 @@ class PiWeather
         if (mVerbose)
             DumpTrendData("---- Initial Read ----");
             
-        if (HasSensor())
+        if (HaveSensor())
             ReadInsideSensor();
 
         
@@ -173,7 +173,7 @@ class PiWeather
         return false;
     }
     
-    public boolean HasSensor()
+    public boolean HaveSensor()
     {
         return (mWxSensor != null);
     }
@@ -313,13 +313,13 @@ class PiWeather
         
         // create the Current Conditions values list
         mValues = new ArrayList<DataValue>();
-        if (HasSensor() && mWxSensor.HasTemperature())
+        if (HaveSensor() && mWxSensor.HasTemperature())
             mValues.add(new DataValue(0, 0, "Temperature (out|in)", "%2.0f|%.0f"));
         else
             mValues.add(new DataValue(0, "Temperature"));
 
         
-        if (HasSensor() && mWxSensor.HasHumidity()) 
+        if (HaveSensor() && mWxSensor.HasHumidity()) 
             mValues.add(new DataValue(0, 0, "Humidity    (out|in)", "%2.0f|%.0f"));
         else 
             mValues.add(new DataValue(0, "Humidity"));
@@ -327,7 +327,7 @@ class PiWeather
         // Someday wind will come :)
         mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
         
-        if (HasSensor() && mWxSensor.HasBarometricPressure())
+        if (HaveSensor() && mWxSensor.HasBarometricPressure())
             mValues.add(new DataValue(0, "Barometer (out/in)", "<html>%.2f<br>%.2f</html>"));
         else
             mValues.add(new DataValue(0, "Barometer", "%.2f"));
@@ -589,7 +589,7 @@ class PiWeather
      */
     private void ReadInsideSensor()
     {
-        if (mWxSensor != null) {
+        if (HaveSensor()) {
             mWxSensor.RefreshSensorData();
             mInsideTemp = mWxSensor.GetTemperature();
             mInsideHumidity = mWxSensor.GetHumidity();
@@ -747,7 +747,7 @@ class PiWeather
      */
     public void UpdateFromSensor()
     {
-        if (mWxSensor != null) {
+        if (HaveSensor()) {
             ReadInsideSensor();
             if (mWxSensor.HasTemperature())
                 mValues.get(0).setValue(mCurrTemp, mInsideTemp);
@@ -806,9 +806,8 @@ class PiWeather
      */
     public void UpdateFromWeb()
     {
-        if (mWxSensor != null) {
+        if (HaveSensor())
             ReadInsideSensor();
-        }
 
         SetLastUpdateTime();
         
@@ -881,7 +880,7 @@ class PiWeather
                 mTrendData.get(i).SetHumidity(mTrendData.get(i-1).GetHumidity());
             if (mTrendData.get(i).GetSensorHumidity() < 0 || mTrendData.get(i).GetSensorHumidity() > 100)
                 mTrendData.get(i).SetSensorHumidity(mTrendData.get(i-1).GetSensorHumidity());
-            if (mTrendData.get(i).GetSensorTemp() < -20 || mTrendData.get(i).GetSensorTemp() > 120)
+            if (mTrendData.get(i).GetSensorTemp() < -40 || mTrendData.get(i).GetSensorTemp() > 150)
                 mTrendData.get(i).SetSensorTemp(mTrendData.get(i-1).GetSensorTemp());
         }
     }
@@ -920,7 +919,7 @@ class PiWeather
             mLastObsLabel.setText(mCurrObsTime);
             
             mCurrTemp = ReadValueFromDoc(doc, "temperature");
-            if (HasSensor() && mWxSensor.HasTemperature()) {
+            if (HaveSensor() && mWxSensor.HasTemperature()) {
                 mValues.get(0).setValue(mCurrTemp, mInsideTemp);
                 // match the width
                 if (mCurrTemp >= 100) {
@@ -934,7 +933,7 @@ class PiWeather
             }
             
             mCurrHumidity = ReadValueFromDoc(doc, "humidity");
-            if (HasSensor() && mWxSensor.HasHumidity()) {
+            if (HaveSensor() && mWxSensor.HasHumidity()) {
                 mValues.get(1).setValue(mCurrHumidity, mInsideHumidity);
                 // match the width
                 if (mCurrHumidity >= 100) {
@@ -954,7 +953,7 @@ class PiWeather
             mValues.get(2).setValue(mCurrDir, mCurrSpeed);
             
             mCurrPres = ReadValueFromDoc(doc, "pressure");
-            if (HasSensor() && mWxSensor.HasBarometricPressure()) {
+            if (HaveSensor() && mWxSensor.HasBarometricPressure()) {
                 mValues.get(3).setValue(mCurrPres, mInsidePres);
             } else {
                 mValues.get(3).setValue(mCurrPres);
@@ -963,7 +962,7 @@ class PiWeather
             boolean addOrRemoved = false;
             // sparce after we have 10
             if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
-                if (HasSensor()) {
+                if (HaveSensor()) {
                     mTrendData.add(new TrendData(LocalDateTime.now(),
                                     mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
                                     mInsideTemp, mInsideHumidity, mInsidePres));
@@ -1187,7 +1186,7 @@ class PiWeather
                 piWXMain.UpdateFromWeb();
                 new UIUpdateTimer(5 * 60, piWXMain); // update every 5 minutes
                 new MapUpdateTimer(10, piWXMain);
-                if (piWXMain.HasSensor()) new SensorUpdateTimer(5, piWXMain);
+                if (piWXMain.HaveSensor()) new SensorUpdateTimer(5, piWXMain);
                 new TimeUpdateTimer(1, piWXMain);
             }
         });
