@@ -8,7 +8,7 @@ import java.io.*;
  */
 public class BMP280_Sensor extends WxSensor
 {
-    static private String msCmdStr = "python ./sensors/dmp280.py";
+    static private String msCmdStr = "python ./sensors/bmp280.py";
     private double mTemp = 0.0;
     private double mPressure = 0.0;
 
@@ -22,7 +22,7 @@ public class BMP280_Sensor extends WxSensor
     
     public String GetName()
     {
-        return "DMP280";
+        return "BMP280";
     }
     
     /**
