@@ -59,18 +59,18 @@ public abstract class WxSensor
 
     
     /**
-     * HasBarometerPressure()
+     * HasBarometricPressure()
      */
-    public boolean HasBarometerPressure()
+    public boolean HasBarometricPressure()
     {
         return false;
     }
  
     
     /**
-     * GetBarometerPressure()
+     * GetBarometricPressure()
      */
-    public double GetBarometerPressure()
+    public double GetBarometricPressure()
     {
         return 29.92;
     }

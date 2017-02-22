@@ -64,18 +64,18 @@ public class Dummy_Sensor extends WxSensor
 
     
     /**
-     * HasBarometerPressure()
+     * HasBarometricPressure()
      */
-    public boolean HasBarometerPressure()
+    public boolean HasBarometricPressure()
     {
         return true;
     }
  
     
     /**
-     * GetBarometerPressure()
+     * GetBarometricPressure()
      */
-    public double GetBarometerPressure()
+    public double GetBarometrucPressure()
     {
         return 29.92;
     }

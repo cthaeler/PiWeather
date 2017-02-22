@@ -17,14 +17,13 @@ public class TrendDisplayPanel extends JPanel
     private int mDisplayDays=3;
     private boolean mCycleDisplayDays = false;
     private boolean mVerbose = false;
-    private boolean mHasSensor = false;
-    private String mSensor = "";
+    private WxSensor mSensor = null;
     private static int mGraphStartX = 25;
     private static int mGraphEndX = 25;
     private static int mGraphStartY = 25;
     
     
-    public TrendDisplayPanel(int displayDays, boolean hasSensor, String sensor, boolean verbose)
+    public TrendDisplayPanel(int displayDays, WxSensor sensor, boolean verbose)
     {
         super();
         if (displayDays == 0) {
@@ -34,7 +33,7 @@ public class TrendDisplayPanel extends JPanel
             mCycleDisplayDays = false;
             mDisplayDays = displayDays;
         }
-        mHasSensor = hasSensor;
+
         mSensor = sensor;
         mVerbose = verbose;
     }
@@ -333,14 +332,18 @@ public class TrendDisplayPanel extends JPanel
         
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
         
-        if (mHasSensor || mVerbose) {
-            g2d.setColor(tempColor);
-            g2d.drawString("s-Temp", 180, dim.height-5);
+        if (mSensor != null || mVerbose) {
+            if (mSensor.HasTemperature()) {
+                g2d.setColor(tempColor);
+                g2d.drawString("s-Temp", 180, dim.height-5);
+            }
             
-            g2d.setColor(humidityColor);
-            g2d.drawString("s-Humidity", 230, dim.height-5);
+            if (mSensor.HasHumidity()) {
+                g2d.setColor(humidityColor);
+                g2d.drawString("s-Humidity", 230, dim.height-5);
+            }
             
-            if (mSensor.equals("BME280") || mSensor.equals("MAC") || mVerbose) {
+            if (mSensor.HasBarometricPressure()) {
                 g2d.setColor(pressureColor);
                 g2d.drawString("s-Barometer", 310, dim.height-5);
             }
@@ -366,16 +369,20 @@ public class TrendDisplayPanel extends JPanel
         g2d.drawPolyline(mData[0], mData[3], mData[0].length);
 
         
-        if (mHasSensor) {
-            // Temperature from a sensor
-            g2d.setColor(tempColor);
-            DrawDashedPolyline(g2d, mData[0], mData[4], new float[] {4, 2});
+        if (mSensor != null) {
+            if (mSensor.HasTemperature()) {
+                // Temperature from a sensor
+                g2d.setColor(tempColor);
+                DrawDashedPolyline(g2d, mData[0], mData[4], new float[] {4, 2});
+            }
     
-            // Humidity from a sensor
-            g2d.setColor(humidityColor);
-            DrawDashedPolyline(g2d, mData[0], mData[5], new float[] {4, 2});
+            if (mSensor.HasHumidity()) {
+                // Humidity from a sensor
+                g2d.setColor(humidityColor);
+                DrawDashedPolyline(g2d, mData[0], mData[5], new float[] {4, 2});
+            }
             
-            if (mSensor.equals("BME280") || mSensor.equals("MAC")) {
+            if (mSensor.HasBarometricPressure()) {
                 // Barometric Pressure from a sensor
                 g2d.setColor(pressureColor);
                 DrawDashedPolyline(g2d, mData[0], mData[6], new float[] {4, 2});

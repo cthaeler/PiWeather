@@ -82,8 +82,6 @@ class PiWeather
     
     // Variables from command line switches
     private boolean mIsPi = true;
-    private boolean mHasSensor = false;
-    private String mSensor = "";
     private boolean mFullFrame = false;
     private boolean mGenFakeTrendData = false;
     private boolean mSaveWxFiles = false;
@@ -111,7 +109,7 @@ class PiWeather
         if (mVerbose)
             DumpTrendData("---- Initial Read ----");
             
-        if (mHasSensor)
+        if (HasSensor())
             ReadInsideSensor();
 
         
@@ -131,10 +129,6 @@ class PiWeather
             jfrm.setUndecorated(true);
         } else {
             jfrm.setSize(1024, 600);
-        }
-        
-        if (mHasSensor) {
-            ReadInsideSensor();
         }
 
         // Main panel to add the sub panels too
@@ -179,24 +173,26 @@ class PiWeather
         return false;
     }
     
-    private WxSensor GetWxSensor()
+    public boolean HasSensor()
     {
-        if (mHasSensor) {
-            switch (mSensor) {
-            case "DHT11":
-                return new DHT11_Sensor();
-            case "DHT22":
-                return new DHT22_Sensor();
-            case "BME280":
-                return new BME280_Sensor();
-            case "BMP280":
-                return new BMP280_Sensor();
-            case "MAC":
-                return new Dummy_Sensor();
-            default:
-                return null;
-            }
+        return (mWxSensor != null);
+    }
+    
+    private WxSensor GetWxSensor(String sensor)
+    {
+        switch (sensor) {
+        case "DHT11":
+            return new DHT11_Sensor();
+        case "DHT22":
+            return new DHT22_Sensor();
+        case "BME280":
+            return new BME280_Sensor();
+        case "BMP280":
+            return new BMP280_Sensor();
+        case "MAC":
+            return new Dummy_Sensor();
         }
+        
         return null;
     }
     
@@ -214,9 +210,8 @@ class PiWeather
                     System.exit(1);
                 } else {
                     if (isSupportedSensor(args[i+1])) {
-                        mSensor = args[i+1].toUpperCase();
-                        mHasSensor = true;
-                        mWxSensor = GetWxSensor();
+                        String sensor = args[i+1].toUpperCase();
+                        mWxSensor = GetWxSensor(sensor);
                         if (mVerbose && mWxSensor != null)
                             System.out.println("Sensor: " + mWxSensor.GetName());
                         i++;
@@ -318,21 +313,26 @@ class PiWeather
         
         // create the Current Conditions values list
         mValues = new ArrayList<DataValue>();
-        if (mHasSensor) {
+        if (HasSensor() && mWxSensor.HasTemperature())
             mValues.add(new DataValue(0, 0, "Temperature (out|in)", "%2.0f|%.0f"));
-            mValues.add(new DataValue(0, 0, "Humidity    (out|in)", "%2.0f|%.0f"));
-        } else {
+        else
             mValues.add(new DataValue(0, "Temperature"));
-            mValues.add(new DataValue(0, "Humidity"));
-        }
+
         
+        if (HasSensor() && mWxSensor.HasHumidity()) 
+            mValues.add(new DataValue(0, 0, "Humidity    (out|in)", "%2.0f|%.0f"));
+        else 
+            mValues.add(new DataValue(0, "Humidity"));
+
+        // Someday wind will come :)
         mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
         
-        if (mHasSensor && (mSensor.equals("BME280") || mSensor.equals("MAC")))
+        if (HasSensor() && mWxSensor.HasBarometricPressure())
             mValues.add(new DataValue(0, "Barometer (out/in)", "<html>%.2f<br>%.2f</html>"));
         else
             mValues.add(new DataValue(0, "Barometer", "%.2f"));
 
+            
         for (int i = 0; i < mValues.size(); i++) {
             DataValue dv = mValues.get(i);
             leftPanel.add(dv.getValueLabel());
@@ -576,7 +576,7 @@ class PiWeather
         
         rightMainPanel.add(forcastPanel);
         
-        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mHasSensor, mSensor, mVerbose);
+        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, mVerbose);
         
         rightMainPanel.add(mTrendDisplayPanel);
  
@@ -589,51 +589,12 @@ class PiWeather
      */
     private void ReadInsideSensor()
     {
-        try {
-            Runtime rt = Runtime.getRuntime();
-            String line;
-            String[] data;
-            String cmdStr = null;
-            if (mIsPi) {
-                switch (mSensor) {
-                case "DHT11":
-                    cmdStr = "python ./sensors/dht11.py";
-                    break;
-                case "DHT22":
-                    cmdStr = "python ./sensors/dht.py";
-                    break;
-                case "BME280":
-                    cmdStr = "python ./sensors/bme280.py";
-                    break;
-                case "MAC":
-                    cmdStr = "python ./sensors/mac.py";
-                    break;
-                }
-            }
-            if (cmdStr == null)
-                return;
-            Process proc = rt.exec(cmdStr);
-            BufferedReader bri = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            if((line = bri.readLine()) != null){
-                if(!line.contains("ERRROR")) {
-                    data=line.split("\\|");
-                    mInsideTemp = Double.parseDouble(data[0]);
-                    mInsideHumidity = Double.parseDouble(data[1]);
-                    if (mSensor.equals("BME280") || mSensor.equals("MAC")) {
-                        mInsidePres = Double.parseDouble(data[2]);
-                    } else {
-                        mInsidePres = 0.0;
-                    }
-                } else {
-                    mInsideTemp = 0.0;
-                    mInsideHumidity = 0.0;
-                    mInsidePres = 0.0;
-                }
-            }
-          
-            bri.close();
-            proc.waitFor();
-        } catch  (Exception e) {
+        if (mWxSensor != null) {
+            mWxSensor.RefreshSensorData();
+            mInsideTemp = mWxSensor.GetTemperature();
+            mInsideHumidity = mWxSensor.GetHumidity();
+            mInsidePres = mWxSensor.GetBarometricPressure();
+        } else {
             mInsideTemp = 0.0;
             mInsideHumidity = 0.0;
             mInsidePres = 0.0;
@@ -780,23 +741,20 @@ class PiWeather
     }
     
     
-    /**
-     * 
-     */
-    public boolean HasSensor()
-    {
-        return mHasSensor;
-    }
-    
     
     /**
      * 
      */
     public void UpdateFromSensor()
     {
-        if (mHasSensor) {
+        if (mWxSensor != null) {
             ReadInsideSensor();
-            mValues.get(0).setValue(mCurrTemp, mInsideTemp);
+            if (mWxSensor.HasTemperature())
+                mValues.get(0).setValue(mCurrTemp, mInsideTemp);
+            if (mWxSensor.HasHumidity())
+                mValues.get(1).setValue(mCurrHumidity, mInsideHumidity);
+            if (mWxSensor.HasBarometricPressure())
+                mValues.get(3).setValue(mCurrPres, mInsidePres);
         }
     }
     
@@ -848,7 +806,7 @@ class PiWeather
      */
     public void UpdateFromWeb()
     {
-        if (mHasSensor) {
+        if (mWxSensor != null) {
             ReadInsideSensor();
         }
 
@@ -962,15 +920,13 @@ class PiWeather
             mLastObsLabel.setText(mCurrObsTime);
             
             mCurrTemp = ReadValueFromDoc(doc, "temperature");
-            if (mHasSensor) {
+            if (HasSensor() && mWxSensor.HasTemperature()) {
                 mValues.get(0).setValue(mCurrTemp, mInsideTemp);
                 // match the width
-                if (mCurrTemp >= 100 || mCurrHumidity >= 100) {
+                if (mCurrTemp >= 100) {
                     mValues.get(0).setFormat("%3.0f|%.0f");
-                    mValues.get(1).setFormat("%3.0f|%.0f");
                 } else {
                     mValues.get(0).setFormat("%2.0f|%.0f");
-                    mValues.get(1).setFormat("%2.0f|%.0f");
                 }
                 
             } else {
@@ -978,8 +934,15 @@ class PiWeather
             }
             
             mCurrHumidity = ReadValueFromDoc(doc, "humidity");
-            if (mHasSensor) {
+            if (HasSensor() && mWxSensor.HasHumidity()) {
                 mValues.get(1).setValue(mCurrHumidity, mInsideHumidity);
+                // match the width
+                if (mCurrHumidity >= 100) {
+                    mValues.get(1).setFormat("%3.0f|%.0f");
+                } else {
+                    mValues.get(1).setFormat("%2.0f|%.0f");
+                }
+                
             } else {
                 mValues.get(1).setValue(mCurrHumidity);
             }
@@ -991,7 +954,7 @@ class PiWeather
             mValues.get(2).setValue(mCurrDir, mCurrSpeed);
             
             mCurrPres = ReadValueFromDoc(doc, "pressure");
-            if (mHasSensor && (mSensor.equals("BME280") || mSensor.equals("MAC"))) {
+            if (HasSensor() && mWxSensor.HasBarometricPressure()) {
                 mValues.get(3).setValue(mCurrPres, mInsidePres);
             } else {
                 mValues.get(3).setValue(mCurrPres);
@@ -1000,7 +963,7 @@ class PiWeather
             boolean addOrRemoved = false;
             // sparce after we have 10
             if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
-                if (mHasSensor) {
+                if (HasSensor()) {
                     mTrendData.add(new TrendData(LocalDateTime.now(),
                                     mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
                                     mInsideTemp, mInsideHumidity, mInsidePres));

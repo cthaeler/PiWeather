@@ -78,7 +78,7 @@ public class BMP280_Sensor extends WxSensor
     /**
      * HasBarometerPressure()
      */
-    public boolean HasBarometerPressure()
+    public boolean HasBarometricPressure()
     {
         return true;
     }
@@ -87,7 +87,7 @@ public class BMP280_Sensor extends WxSensor
     /**
      * GetBarometerPressure()
      */
-    public double GetBarometerPressure()
+    public double GetBarometricPressure()
     {
         return mPressure;
     }
