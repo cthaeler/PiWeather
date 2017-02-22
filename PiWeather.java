@@ -40,7 +40,7 @@ class PiWeather
 //        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
-    private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "MAC"};
+    private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "BMP280", "MAC"};
     private static final String msParseableTrendDataFile = "cache/p_trend_data.txt";
     
     private int mLocationURL = 0;
@@ -89,6 +89,8 @@ class PiWeather
     private boolean mSaveWxFiles = false;
     private int mTrendDataDays = 3; // default to 3 days of trend data displayed
     private boolean mVerbose = false;
+    
+    private WxSensor mWxSensor;
     
 
     
@@ -177,6 +179,27 @@ class PiWeather
         return false;
     }
     
+    private WxSensor GetWxSensor()
+    {
+        if (mHasSensor) {
+            switch (mSensor) {
+            case "DHT11":
+                return new DHT11_Sensor();
+            case "DHT22":
+                return new DHT22_Sensor();
+            case "BME280":
+                return new BME280_Sensor();
+            case "BMP280":
+                return new BMP280_Sensor();
+            case "MAC":
+                return new Dummy_Sensor();
+            default:
+                return null;
+            }
+        }
+        return null;
+    }
+    
     /**
      * Parse the command line arguments
      * 
@@ -193,6 +216,7 @@ class PiWeather
                     if (isSupportedSensor(args[i+1])) {
                         mSensor = args[i+1].toUpperCase();
                         mHasSensor = true;
+                        mWxSensor = GetWxSensor();
                         i++;
                     } else {
                         System.err.println("Bad Sensor type");
