@@ -14,4 +14,4 @@ hectopascals = pascals / 100
 temp = degrees * 9 / 5 + 32;
 pressure = pascals * 0.0002953;
 
-print ('{0:0.1f}|{2:0.2f}').format(temp, pressure)
+print ('{0:0.1f}|{1:0.2f}').format(temp, pressure)
