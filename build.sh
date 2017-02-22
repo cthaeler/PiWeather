@@ -15,4 +15,4 @@ javac DHT11_Sensor.java
 javac DHT22_Sensor.java
 javac Dummy_Sensor.java
 javac PiWeather.java
-jar cfm PiWeather.jar MANIFEST.MF *.class
+jar cfm PiWeather.jar MANIFEST.MF *.class icons sensors

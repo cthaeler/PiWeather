@@ -192,7 +192,7 @@ public class TrendDisplayPanel extends JPanel
      */
     public void UpdateData(ArrayList<TrendData> list)
     {
-        if (list.size() < 2) return;
+        if (list == null || list.size() < 2) return;
         
         if (mCycleDisplayDays) {
             mDisplayDays++;
@@ -280,9 +280,12 @@ public class TrendDisplayPanel extends JPanel
      * 
      */
     private void doDrawing(Graphics graphics)
-    {      
-        Graphics2D g2d = (Graphics2D) graphics;
+    {
         setBackground(Color.BLACK);
+    
+        if (mVertGrid == null || mData == null) return;
+        
+        Graphics2D g2d = (Graphics2D) graphics;
         
         Dimension dim = getSize();
         

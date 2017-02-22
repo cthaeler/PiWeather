@@ -1009,7 +1009,10 @@ class PiWeather
     private void SaveTextTrendData()
     {
         try {
-            PrintWriter writer = new PrintWriter(msParseableTrendDataFile, "UTF-8");
+            File file = new File(msParseableTrendDataFile);
+            if (!file.getParentFile().exists())
+                file.getParentFile().mkdirs();
+            PrintWriter writer = new PrintWriter(file);
             writer.println("2"); //version number
             for (TrendData td : mTrendData) {
                 String s =  td.GetDateTime().toString() + "|" +
@@ -1024,7 +1027,8 @@ class PiWeather
             }
             writer.close();
         } catch (IOException e) {
-           System.err.println("error writing parsable trend data file");
+           System.err.println("error writing trend data file");
+           e.printStackTrace();
         }
     }
      
@@ -1065,25 +1069,28 @@ class PiWeather
      */
     private void ReadTextTrendData()
     {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(msParseableTrendDataFile));
-            String line;
-            int version = 1;
-            if ((line = reader.readLine()) != null) {
-                // the first line is the version number
-                version = Integer.parseInt(line);
+        File f = new File(msParseableTrendDataFile);
+        if (f.exists() && f.canRead()) {
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(msParseableTrendDataFile));
+                String line;
+                int version = 1;
+                if ((line = reader.readLine()) != null) {
+                    // the first line is the version number
+                    version = Integer.parseInt(line);
+                }
+    
+                while ((line = reader.readLine()) != null)
+                {
+                  TrendData td = new TrendData();
+                  SetDataFromString(version, line, td);
+                  mTrendData.add(td);
+                }
+                reader.close();
+            } catch (Exception e) {
+                System.err.format("Exception occurred trying to read '%s'.", msParseableTrendDataFile);
+                e.printStackTrace();
             }
-
-            while ((line = reader.readLine()) != null)
-            {
-              TrendData td = new TrendData();
-              SetDataFromString(version, line, td);
-              mTrendData.add(td);
-            }
-            reader.close();
-        } catch (Exception e) {
-            System.err.format("Exception occurred trying to read '%s'.", msParseableTrendDataFile);
-            e.printStackTrace();
         }
     }
     
