@@ -8,9 +8,16 @@ import java.io.*;
  */
 public class BME280_Sensor extends WxSensor
 {
+    /** the python command to run to query the bme280 sensor */
     static private String msCmdStr = "python ./sensors/bme280.py";
+    
+    /** the temperature cached at the last refresh */
     private double mTemp = 0.0;
+    
+    /** the humidity cached at the last refresh */
     private double mHumidity = 0.0;
+    
+    /** the pressure cached at the last refresh */
     private double mPressure = 0.0;
     
     /**
@@ -21,6 +28,11 @@ public class BME280_Sensor extends WxSensor
 
     }
     
+    /**
+     * GetName() name of the sensor - BME280
+     * 
+     * @return the sensor name
+     */
     public String GetName()
     {
         return "BME280";
@@ -28,7 +40,8 @@ public class BME280_Sensor extends WxSensor
     
     /**
      * RefreshSensorData()
-     * @return time in miliseconds till next safe refresh
+     * 
+     * @return time in miliseconds till next safe refresh - 1 second
      */
     public int RefreshSensorData()
     {
@@ -63,6 +76,8 @@ public class BME280_Sensor extends WxSensor
 
     /**
      * HasTemperature()
+     * 
+     * @return true
      */
     public boolean HasTemperature()
     {
@@ -72,6 +87,8 @@ public class BME280_Sensor extends WxSensor
     
     /**
      * GetTemperature()
+     * 
+     * @return the cached sensor value
      */
     public double GetTemperature()
     {
@@ -80,6 +97,8 @@ public class BME280_Sensor extends WxSensor
 
      /**
      * HasHumidity()
+     * 
+     * @return true
      */
     public boolean HasHumidity()
     {
@@ -89,6 +108,8 @@ public class BME280_Sensor extends WxSensor
     
     /**
      * GetHumidity()
+     * 
+     * @return the cached sensor value
      */
     public double GetHumidity()
     {
@@ -98,6 +119,8 @@ public class BME280_Sensor extends WxSensor
     
     /**
      * HasBarometerPressure()
+     * 
+     * @return true
      */
     public boolean HasBarometricPressure()
     {
@@ -107,6 +130,8 @@ public class BME280_Sensor extends WxSensor
     
     /**
      * GetBarometerPressure()
+     * 
+     * @return the cached sensor value
      */
     public double GetBarometricPressure()
     {

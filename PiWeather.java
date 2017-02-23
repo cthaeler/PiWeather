@@ -31,7 +31,7 @@ import java.time.format.DateTimeFormatter;
 class PiWeather
 {
 
-
+    /** locations we know about */
     private static final String[][] msLocations = {
         {"Novato", "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
         {"Petaluma", "http://forecast.weather.gov/MapClick.php?lat=38.2324&lon=-122.6366&unit=0&lg=english&FcstType=dwml"},
@@ -41,60 +41,105 @@ class PiWeather
         {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
-    private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "BMP280", "MAC"};
+    /** supported sensors */
+    private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "BMP280", "DUMMY"};
+    /** trend data file */
     private static final String msParseableTrendDataFile = "cache/p_trend_data.txt";
     
+    /** the location URL index we're getting */
     private int mLocationURL = 0;
-        
-    private boolean mSaveXMLFile = true;
+    
+    /** cached current temperature */
     private double mCurrTemp = 0.0;
+    /** cached sensor temperature */
     private double mInsideTemp = 0.0;
+    
+    /** cached current humidity */
     private double mCurrHumidity = 0.0;
+    /** cached sensor humidity */
     private double mInsideHumidity = 0.0;
+    
+    /** cached current barometric pressure */
     private double mCurrPres = 0.0;
+    /** cached sensor barometric pressure */
     private double mInsidePres = 0.0;
+    
+    /** cached current wind speed */
     private double mCurrSpeed = 0.0;
+    /** cached current wind direction */
     private double mCurrDir = 0.0;
+    
+    /** cached observation time */
     private String mCurrObsTime = "";
+    
+    /** cached current conditios URL */
     private String mCurrConditionIconURL;
+    
+    /** currentl map display index */
     private int mCurMap = 0;
+    
+    /** current satalite image */
     private int mCurSat = 0;
 
     // Data and UI state
+    /** the data values UI objects */
     private ArrayList<DataValue> mValues;
+    /** the forcast UI objects */
     private ArrayList<ForecastDataValue> mForecastValues;
+    /** the map URLs */
     private ArrayList<String> mMapURLs;
+    /** the sat URLs */
     private ArrayList<String> mSatURLs;
+    
+    /** the trend data */
     private ArrayList<TrendData> mTrendData;
 
     
     // UI components that need periodic update based on timer events
+    /** the center panel map image */
     private JLabel mWxImageLabel;
+    /** the center panel sat image */
     private JLabel mSatImageLabel;
     
+    /** the trend display panel */
     private TrendDisplayPanel mTrendDisplayPanel;
     
+    /** clock time label */
     private JLabel mTimeLabel;
+    /** location label */
     private JLabel mLocationLabel;
+    /** last update time label */
     private JLabel mLastUpdateLabel;
+    /** last web observation time label */
     private JLabel mLastObsLabel;
+    /** the quit button */
     private JButton mQuitButton;
     
     
     // Variables from command line switches
+    /** are we on a pi */
     private boolean mIsPi = true;
+    /** show full frame */
     private boolean mFullFrame = false;
+    /** generate fake data */
     private boolean mGenFakeTrendData = false;
+    /** save wx xml files */
     private boolean mSaveWxFiles = false;
-    private int mTrendDataDays = 3; // default to 3 days of trend data displayed
+    /** number of trend days to display - defaults to 3 days unless -td is specified on the command line */
+    private int mTrendDataDays = 3;
+    /** show verbose debugging data */
     private boolean mVerbose = false;
     
+    /** the weather sensor */
     private WxSensor mWxSensor;
     
 
     
     /**
      * Constructor for objects of class PiWeather
+     * 
+     * @param args the command line arguments
+     * 
      */
     PiWeather(String args[])
     {
@@ -114,57 +159,26 @@ class PiWeather
             ReadInsideSensor();
 
         
-        if (System.getProperty("os.name").equals("Mac OS X")) {
+        if (System.getProperty("os.name").equals("Mac OS X")) {  // should do better here, what about windows
             mIsPi = false;
         } else {
             mIsPi = true;
         }
-        // Create a new JFrame container.
-        JFrame jfrm = new JFrame("Pi Wx Display");
-
-        // Terminate the program when the user closes the application
-        jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        if (mFullFrame) {
-            // set properties
-            jfrm.setSize(Toolkit.getDefaultToolkit().getScreenSize());
-            jfrm.setUndecorated(true);
-        } else {
-            jfrm.setSize(1024, 600);
-        }
-
-        // Main panel to add the sub panels too
-        JPanel mainPanel = new JPanel();
-        mainPanel.setBackground(Color.BLACK);
-        BoxLayout frameBox = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
-        mainPanel.setLayout(frameBox);
         
-        
-        mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        
-
-        mainPanel.add(SetupLeftPanel());
-
-        mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-  
-        mainPanel.add(SetupCenterPanel());
-
-        mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-
-        mainPanel.add(SetupRightPanel());
-        
-        // Add the panel to the frame
-        jfrm.add(mainPanel);
-        
-        // Display the frame.
-        jfrm.setVisible(true);
+        SetupUI();
     }
     
     
     
     /**
+     * IsSupportedSensor() determine if the specified sensor is available
+     * 
+     * @param sensor name of the sensor to check
+     * 
+     * @return boolean true if the sensor is found
      * 
      */
-    private boolean isSupportedSensor(String sensor)
+    private boolean IsSupportedSensor(String sensor)
     {
         for (String s: msSupportedSensors) {
             if (s.equalsIgnoreCase(sensor)) {
@@ -174,11 +188,26 @@ class PiWeather
         return false;
     }
     
+    
+    /**
+     * 
+     * HaveSensor() determine if a sensor has been specified.  We can't actually determine if a sensor exists.
+     * 
+     * @return true if a valid sensor was specified.
+     * 
+     */
     public boolean HaveSensor()
     {
         return (mWxSensor != null);
     }
     
+    /**
+     * GetWxSensor() get the sensor class for the named sensor
+     * 
+     * @param sensor Name of the sensor
+     * 
+     * @return returns a new WxSensor of the matching type or null if no matching class is found
+     */
     private WxSensor GetWxSensor(String sensor)
     {
         switch (sensor) {
@@ -190,7 +219,7 @@ class PiWeather
             return new BME280_Sensor();
         case "BMP280":
             return new BMP280_Sensor();
-        case "MAC":
+        case "DUMMY":
             return new Dummy_Sensor();
         }
         
@@ -198,7 +227,10 @@ class PiWeather
     }
     
     /**
-     * Parse the command line arguments
+     * ProcessArgs()  Parse the command line arguments.  Sets variable to match arguments
+     * 
+     * @param args the arguments array
+     * 
      * 
      */
     private void ProcessArgs(String[] args)
@@ -210,7 +242,7 @@ class PiWeather
                     PrintUsage();
                     System.exit(1);
                 } else {
-                    if (isSupportedSensor(args[i+1])) {
+                    if (IsSupportedSensor(args[i+1])) {
                         String sensor = args[i+1].toUpperCase();
                         mWxSensor = GetWxSensor(sensor);
                         if (mVerbose && mWxSensor != null)
@@ -302,12 +334,12 @@ class PiWeather
     }
     
     /**
-     * 
+     * PrintUsate() prints a useage messge on how to use the application
      */
     private void PrintUsage()
     {
-        System.out.println("Usage: PiWeather -s [DHT11, DHT22, BME280, MAC] -td 4 -f");
-        System.out.println("  -s         Sensor type, one of DHT11, DHT22, BME280 or MAC The MAC sensor is a simulatored sensor for testing");
+        System.out.println("Usage: PiWeather -s [DHT11, DHT22, BME280, DUMMY] -td 4 -f");
+        System.out.println("  -s         Sensor type, one of DHT11, DHT22, BME280 or DUMMY The DUMMY sensor is a simulatored sensor for testing");
         System.out.println("  -f         Full frame");
         System.out.println("  -td <num>  Show num (1-30) days of trend data.  0 == cycle through # of days");
         System.out.println("  -ftd       Generate Fake Trend Data and exit");
@@ -317,8 +349,61 @@ class PiWeather
         System.out.println("  -v         Verbose");
     }
     
+    
+    
     /**
+     * SetupUI()  Setup the User Interface
      * 
+     */
+    private void SetupUI()
+    {
+        // Create a new JFrame container.
+        JFrame jfrm = new JFrame("Pi Wx Display");
+
+        // Terminate the program when the user closes the application
+        jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        if (mFullFrame) {
+            // set properties
+            jfrm.setSize(Toolkit.getDefaultToolkit().getScreenSize());
+            jfrm.setUndecorated(true);
+        } else {
+            jfrm.setSize(1024, 600);
+        }
+
+        // Main panel to add the sub panels too
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBackground(Color.BLACK);
+        BoxLayout frameBox = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
+        mainPanel.setLayout(frameBox);
+        
+        
+        mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        
+
+        mainPanel.add(SetupLeftPanel());
+
+        mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+  
+        mainPanel.add(SetupCenterPanel());
+
+        mainPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+
+        mainPanel.add(SetupRightPanel());
+        
+        // Add the panel to the frame
+        jfrm.add(mainPanel);
+        
+        // Display the frame.
+        jfrm.setVisible(true);
+    }
+    
+
+    /**
+     * SetupLeftPanel()  Sets up the UI on the left column of the application.
+     * 
+     * This shows the time, location, temps, humidity, wind, barometric pressure and update times
+     * 
+     * @return returns a JPanel for the left chunk of UI
      */
     private JPanel SetupLeftPanel()
     {
@@ -371,7 +456,9 @@ class PiWeather
             leftPanel.add(Box.createVerticalGlue());
         }
 
-        JLabel lu = new JLabel("Last Update");
+        String lustr = "Last Update";
+        if (HaveSensor()) lustr+= " - " + mWxSensor.GetName();
+        JLabel lu = new JLabel(lustr);
         lu.setForeground(Color.green);
         lu.setFont(new Font("Monospaced", Font.PLAIN, 12));
         leftPanel.add(lu);
@@ -448,7 +535,10 @@ class PiWeather
     
     
     /**
+     * SetupCenterPanel() contructs the center panel.
+     * This shows maps and satalite imagery for the western US.
      * 
+     * @return JPanel for the center of the UI
      */
     private JPanel SetupCenterPanel()
     {
@@ -496,7 +586,9 @@ class PiWeather
     
      
      /**
-      * SetupRightPanel setup the right section of the window
+      * SetupRightPanel() setup the right section of the window showing forecasts info and trend data from past queries of data
+      * 
+      * @return JPanel of the right side of the UI
       * 
       */
     private JPanel SetupRightPanel()
@@ -616,6 +708,7 @@ class PiWeather
   
     
     /**
+     * ReadInsideSensor()  Read the specified sensor if it is specified.
      * 
      */
     private void ReadInsideSensor()
@@ -634,9 +727,13 @@ class PiWeather
     
     
     /**
+     * GetCharacterDataFromElement()  Get data from the specified element of the Document
      * 
+     * @param e docuement element  to query data from
+     * 
+     * @return returns the string for the element e
      */
-    private static String getCharacterDataFromElement(Element e) {
+    private static String GetCharacterDataFromElement(Element e) {
         Node child = e.getFirstChild();
         if (child instanceof CharacterData) {
             CharacterData cd = (CharacterData) child;
@@ -647,7 +744,12 @@ class PiWeather
 
     
     /**
+     * ReadValueFromDoc()  Read a double value from the document
      * 
+     * @param doc the Document
+     * @param e the element to read
+     * 
+     * @return a double value for e or 0 if it fails
      */
     private static double ReadValueFromDoc(Document doc, String e)
     {
@@ -662,7 +764,7 @@ class PiWeather
                    Element childElement = (Element) nodes.item(i);
                    NodeList value = childElement.getElementsByTagName("value");
                    Element line = (Element) value.item(0);
-                   String strval = getCharacterDataFromElement(line);   
+                   String strval = GetCharacterDataFromElement(line);   
                    if (strval.equals("NA"))
                        continue;
                    double d = Double.parseDouble(strval);
@@ -677,7 +779,12 @@ class PiWeather
     
     
     /**
+     * ReadStringFromDoc()  Read a string value from the document
      * 
+     * @param doc the Document
+     * @param e the element to read
+     * 
+     * @return a string if found or the empty string (not null) if it isn't found
      */
     private static String ReadStringFromDoc(Document doc, String e)
     {
@@ -690,7 +797,7 @@ class PiWeather
                 
                 for (int i = 0; i < nodes.getLength(); i++) {
                    // just the first
-                   return getCharacterDataFromElement((Element) nodes.item(i));
+                   return GetCharacterDataFromElement((Element) nodes.item(i));
                 }
             }
         }
@@ -700,8 +807,13 @@ class PiWeather
     
     
     
+    
     /**
+     * ReadCurrentConditionsIconFromDocument() Get the URL for the current condtions icon
      * 
+     * @param doc Document to read from
+     * 
+     * @return the URL or an empty string
      */
     private String ReadCurrentConditionsIconFromDocument(Document doc)
     {
@@ -716,7 +828,7 @@ class PiWeather
                     Element e = (Element)nodes.item(0);
                     NodeList iconNodes = e.getElementsByTagName("icon-link");
                     Element line = (Element) iconNodes.item(0);
-                    String strval = getCharacterDataFromElement(line);
+                    String strval = GetCharacterDataFromElement(line);
                     return strval;
                 }
 
@@ -727,6 +839,7 @@ class PiWeather
     
     
     /**
+     * UpdateWxMap()  Update the weather maps
      * 
      */
     public void UpdateWxMap()
@@ -760,7 +873,10 @@ class PiWeather
     }
     
     
+    
+    
     /**
+     * UpdateClock() Update the cock UI
      * 
      */
     public void UpdateClock()
@@ -773,7 +889,9 @@ class PiWeather
     
     
     
+    
     /**
+     * UpdateFromSensor()  Update the UI with current sensor data, inside and out.
      * 
      */
     public void UpdateFromSensor()
@@ -790,7 +908,10 @@ class PiWeather
     }
     
     
+    
+    
     /**
+     * SetLastUpdateTime()  Show the last update time in the UI
      * 
      */
     private void SetLastUpdateTime()
@@ -803,8 +924,9 @@ class PiWeather
     
     
     
+    
     /**
-     * 
+     * SaveWxXMLFile()  Save weather file data.  This is mostly for troubleshooting
      */
     private void SaveWxXMLFile()
     {
@@ -833,6 +955,7 @@ class PiWeather
     
     
     /**
+     * UpdateFromWeb()  Get an update from the web.  Called by the UI update timer
      * 
      */
     public void UpdateFromWeb()
@@ -855,7 +978,7 @@ class PiWeather
             
             if (mSaveWxFiles) {
                 LocalDateTime dt = LocalDateTime.now();
-                if (mSaveXMLFile && dt.getMinute()%20 == 0) {
+                if (dt.getMinute()%20 == 0) { // only save every 20 minutes max
                     SaveWxXMLFile();
                 }
             }
@@ -883,6 +1006,9 @@ class PiWeather
     
     
     /**
+     * DumpTrendData(String header)  Dump the trend data to standard out.
+     * 
+     * @param header a header to show first
      * 
      */
     private void DumpTrendData(String header)
@@ -900,7 +1026,10 @@ class PiWeather
     }
     
     
+    
+    
     /**
+     * CleanTrendData()  Clean up trend data.  If it's unreasonable grab the previous entry to "fix" it
      * 
      */
     private void CleanTrendData()
@@ -920,7 +1049,10 @@ class PiWeather
     }
     
     
+    
+    
     /**
+     * GenFakeTrendData()  generate 3 days of fake data for trouble shooting
      * 
      */
     private void GenFakeTrendData()
@@ -943,8 +1075,13 @@ class PiWeather
     
     
     
+    
     /**
+     * UpdateDataValues(Document doc)  Get the current observation data from the doc
      * 
+     * @param doc the Document
+     * 
+     * @return true on sucess
      */
     private boolean UpdateDataValues(Document doc)
     {
@@ -1038,7 +1175,8 @@ class PiWeather
     
     
     /**
-     * Save Trend Data in text format
+     * SaveTextTrendData() Save Trend Data in text format
+     * 
      */
     private void SaveTextTrendData()
     {
@@ -1069,7 +1207,11 @@ class PiWeather
 
 
     /**
-     * SetDataFromString set a TrendData from a saved string
+     * SetDataFromString() set a TrendData from a saved string
+     * 
+     * @param version   the version of the data file
+     * @param s         the string of data "|" deliniated
+     * @param td        TendData to fill in
      * 
      */
     private void SetDataFromString(int version, String s, TrendData td)
@@ -1098,8 +1240,12 @@ class PiWeather
         }
     }
 
+    
+    
+    
     /**
-     * Read Trend Data in text format
+     * ReadTextTrendData() Read Trend Data in text format
+     * 
      */
     private void ReadTextTrendData()
     {
@@ -1128,9 +1274,15 @@ class PiWeather
         }
     }
     
+    
+    
+    
     /**
+     * UpdateForecastValues()  Update the forecast data from the web
      * 
+     * @param doc the Document to read from
      * 
+     * @return true if we successfully handled the update
      */
     private boolean UpdateForecastValues(Document doc)
     {
@@ -1177,7 +1329,7 @@ class PiWeather
                         // iterate the icons
                         for (int i = 0; i < iconNodes.getLength(); i++) {
                            Element iconElement = (Element) iconNodes.item(i);
-                           String iconURL = getCharacterDataFromElement(iconElement);
+                           String iconURL = GetCharacterDataFromElement(iconElement);
                            mForecastValues.get(i+1).setIconURL(iconURL);
                         }
                     }
@@ -1197,7 +1349,7 @@ class PiWeather
                         int numValueNodes = tempValueNodes.getLength();
                         for (int valueNodeIdx = 0; valueNodeIdx < numValueNodes; valueNodeIdx++) {
                             Element valueElement = (Element) tempValueNodes.item(valueNodeIdx);
-                            String strval = getCharacterDataFromElement(valueElement);   
+                            String strval = GetCharacterDataFromElement(valueElement);   
                             double d = Double.parseDouble(strval);
                             int valueIndex = valueNodeIdx*2 + numSeq;
                             
@@ -1215,8 +1367,47 @@ class PiWeather
     
     
     
+    
+    
     /**
+     * Find airport data from airports.dat.  The airports.dat file is from OpenFlights.org
+     *    URL: https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat
      * 
+     * @param ICAO_Name 4-letter ICAO
+     * 
+     */
+    public void FindAirport(String ICAO_Name)
+    {
+        // file format, comma seperated list
+        // Airport ID     Unique OpenFlights identifier for this airport.
+        // Name           Name of airport. May or may not contain the City name.
+        // City           Main city served by airport. May be spelled differently from Name.
+        // Country        Country or territory where airport is located. See countries.dat to cross-reference to ISO 3166-1 codes.
+        // IATA           3-letter IATA code. Null if not assigned/unknown.
+        // ICAO           4-letter ICAO code.
+        //                   Null if not assigned.
+        // Latitude       Decimal degrees, usually to six significant digits. Negative is South, positive is North.
+        // Longitude      Decimal degrees, usually to six significant digits. Negative is West, positive is East.
+        // Altitude       In feet.
+        // Timezone       Hours offset from UTC. Fractional hours are expressed as decimals, eg. India is 5.5.
+        // DST            Daylight savings time. One of 
+        //                     E (Europe),
+        //                     A (US/Canada),
+        //                     S (South America),
+        //                     O (Australia),
+        //                     Z (New Zealand),
+        //                     N (None)
+        //                     U (Unknown). See also: Help: Time
+        // Tz database time zone   Timezone in "tz" (Olson) format, eg. "America/Los_Angeles".
+        // Type           Type of the airport. Value "airport" for air terminals, "station" for train stations, "port" for ferry terminals and "unknown" if not known. In airports.csv, only type=airport is included.
+        // Source         Source of this data. "OurAirports" for data sourced from OurAirports, "Legacy" for old data not matched to OurAirports (mostly DAFIF), "User" for unverified user contributions. In airports.csv, only source=OurAirports is included.
+    }
+    
+    
+    /**
+     * main The main
+     * 
+     * @param args the command line arguments
      * 
      */
     public static void main(String args[])

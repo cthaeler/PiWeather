@@ -14,13 +14,19 @@ public class Dummy_Sensor extends WxSensor
 
     }
     
+    /**
+     * GetName() returns dummy
+     * 
+     * @return just "Dummy" for now.
+     */
     public String GetName()
     {
-        return "MAC";
+        return "DUMMY";
     }
     
     /**
-     * RefreshSensorData()
+     * RefreshSensorData() refreshes the sensor and returns the minimum time before the sensor can be called again
+     * 
      * @return time in miliseconds till next safe refresh
      */
     public int RefreshSensorData()
@@ -30,6 +36,8 @@ public class Dummy_Sensor extends WxSensor
 
     /**
      * HasTemperature()
+     * 
+     * @return true
      */
     public boolean HasTemperature()
     {
@@ -38,7 +46,9 @@ public class Dummy_Sensor extends WxSensor
 
     
     /**
-     * GetTemperature()
+     * GetTemperature() Get the temerature value
+     * 
+     * @return 65 degrees
      */
     public double GetTemperature()
     {
@@ -47,6 +57,8 @@ public class Dummy_Sensor extends WxSensor
 
      /**
      * HasHumidity()
+     * 
+     * @return true
      */
     public boolean HasHumidity()
     {
@@ -56,6 +68,8 @@ public class Dummy_Sensor extends WxSensor
     
     /**
      * GetHumidity()
+     * 
+     * @return 50.0 degrees
      */
     public double GetHumidity()
     {
@@ -65,6 +79,8 @@ public class Dummy_Sensor extends WxSensor
     
     /**
      * HasBarometricPressure()
+     * 
+     * @return true
      */
     public boolean HasBarometricPressure()
     {
@@ -74,6 +90,8 @@ public class Dummy_Sensor extends WxSensor
     
     /**
      * GetBarometricPressure()
+     * 
+     * @return 29.92
      */
     public double GetBarometrucPressure()
     {

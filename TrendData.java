@@ -12,14 +12,23 @@ import java.time.format.DateTimeFormatter;
 public class TrendData
 {
     // instance variables - replace the example below with your own
+    /** time of the data was captures */
     private LocalDateTime mDateTime;
-    private double mTemp;
-    private double mHumidity;
-    private double mBarometer;
-    private double mSensorTemp;
-    private double mSensorHumidity;
-    private double mSensorBarometer;
+    /** observation time from the web */
     private String mObsTime;
+    /** temperature from the web */
+    private double mTemp;
+    /** humidity from the web */
+    private double mHumidity;
+    /** barometric pressure from the web */
+    private double mBarometer;
+    /** temperature from the sensor */
+    private double mSensorTemp;
+    /** humidity from the sensor */
+    private double mSensorHumidity;
+    /** barometric pressure from the sensor */
+    private double mSensorBarometer;
+    
 
     /**
      * Constructor for objects of class TrendData
@@ -39,6 +48,15 @@ public class TrendData
     
     /**
      * Constructor that takes data
+     * 
+     * @param time              time we collected the data
+     * @param obstime           time of the observation from the web
+     * @param temp              temperature of the observation from the web
+     * @param humidity          humidity of the observation from the web
+     * @param barometer         barometer of the observation from the web
+     * @param sensorTemp        temperature from the sensor
+     * @param sensorHumidity    humidity from the sensor
+     * @param sensorBarometer   barometer from the sensor
      */
     public TrendData(LocalDateTime time, String obstime, double temp, double humidity, double barometer,
                     double sensorTemp, double sensorHumidity, double sensorBarometer)
@@ -54,6 +72,8 @@ public class TrendData
     }
     
     /**
+     * GetDatTime()  get the time of the data entry
+     * 
      * @return date time info
      */
     public LocalDateTime GetDateTime()
@@ -62,8 +82,10 @@ public class TrendData
     }
     
     /**
-     * @param time
-     *      set the time
+     * SetDateTime()  Set the time the data was collected
+     * 
+     * @param time to save
+     *  
      */
     public void SetDateTime(LocalDateTime time)
     {
@@ -71,6 +93,8 @@ public class TrendData
     }
     
     /**
+     * GetTemp()  Get the temperature
+     * 
      * @return temperature
      */
     public double GetTemp()
@@ -79,8 +103,10 @@ public class TrendData
     }
     
     /**
-     * @param temp
-     *      set the temp
+     * SetTemp()  Set the temperature
+     * 
+     * @param temp the temperature
+     * 
      */
     public void SetTemp(double temp)
     {
@@ -88,6 +114,8 @@ public class TrendData
     }
     
     /**
+     * GetHumidity() Get the humdity
+     * 
      * @return humidity
      */
     public double GetHumidity()
@@ -96,8 +124,10 @@ public class TrendData
     }
     
     /**
-     * @param humidity
-     *      set the humidity
+     * SetHumidity()  Set the humidity
+     * 
+     * @param humidity the humidity
+     * 
      */
     public void SetHumidity(double humidity)
     {
@@ -105,6 +135,8 @@ public class TrendData
     }
     
     /**
+     * GetBarameter() get the barometric pressure
+     * 
      * @return barometer
      */
     public double GetBarometer()
@@ -113,8 +145,10 @@ public class TrendData
     }
     
     /**
-     * @param barometer
-     *      set the barometer
+     * SetBarometer() set the barometric presssure
+     * 
+     * @param barometer  the barometric pressure
+     * 
      */
     public void SetBarometer(double barometer)
     {
@@ -123,7 +157,9 @@ public class TrendData
 
         
     /**
-     * @return obs time
+     * GetObsTime()  Get the time of the observation from the web
+     * 
+     * @return obs time as a string
      */
     public String GetObsTime()
     {
@@ -131,8 +167,10 @@ public class TrendData
     }
     
     /**
-     * @param obstime
-     *      set the obs time
+     * SetObsTime()  Set the observation time
+     * 
+     * @param obstime  the observation time
+     * 
      */
     public void SetObsTime(String obstime)
     {
@@ -141,6 +179,8 @@ public class TrendData
     
     
     /**
+     * GetSensorTemp()  Get the sensor temperature
+     * 
      * @return sensor temperature
      */
     public double GetSensorTemp()
@@ -149,8 +189,10 @@ public class TrendData
     }
     
     /**
-     * @param temp
-     *      set the sensor temp
+     * SetSensorTemp()  set the sensor temperature
+     * 
+     * @param temp  the sensor temperature
+     * 
      */
     public void SetSensorTemp(double temp)
     {
@@ -158,7 +200,10 @@ public class TrendData
     }
     
     /**
+     * GetSensorHumidity() return the sensor humidity
+     * 
      * @return sensor humidity
+     * 
      */
     public double GetSensorHumidity()
     {
@@ -166,8 +211,10 @@ public class TrendData
     }
     
     /**
-     * @param humidity
-     *      set the sensor humidity
+     * SetSensorHumidity() set the sensor humidity value
+     * 
+     * @param humidity  the sensor humidity
+     * 
      */
     public void SetSensorHumidity(double humidity)
     {
@@ -175,6 +222,8 @@ public class TrendData
     }
     
     /**
+     * GetSensorBarometer()  Get the sensor barometric pressure
+     * 
      * @return sensor barometer
      *
      */
@@ -185,8 +234,9 @@ public class TrendData
 
     
     /**
-     * @param sensor barometer
-     *      set the sensor barometer
+     * SetSensorBarometer() set the sensor barometer
+     *
+     * @param barometer sensor barometer value
      *
      */
     public void SetSensorBarometer(double barometer)
@@ -195,6 +245,11 @@ public class TrendData
     }
 
     
+    /**
+     * toString() conver the data to a string
+     * 
+     * @return the data string
+     */
     public String toString()
     {
         return "TrendData[dt=" + DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(mDateTime) +

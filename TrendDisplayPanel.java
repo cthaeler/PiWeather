@@ -12,17 +12,32 @@ import java.time.LocalDateTime;
  */
 public class TrendDisplayPanel extends JPanel
 {
+    /** cached data so we don't need to recovert on redraws */
     private int[][] mData;
+    /** vertical grid data, needs to update ever time the number of days to display is updated */
     private int[][] mVertGrid;
+    /** number of days to display */
     private int mDisplayDays=3;
+    /** cycle through number of days from 1 to 10 */
     private boolean mCycleDisplayDays = false;
+    /** show verbose debugging data */
     private boolean mVerbose = false;
+    /** the sensor to read data from */
     private WxSensor mSensor = null;
+    /** start the graph here */
     private static int mGraphStartX = 25;
+    /** end of the graph here */
     private static int mGraphEndX = 25;
+    /** bottom of the graph */
     private static int mGraphStartY = 25;
     
-    
+    /**
+     * TrendDisplayPanel()  Constructor
+     * 
+     * @param displayDays  days to display 0 says cycle through days
+     * @param sensor       weather sensor to use
+     * @param verbose      display debugging data
+     */
     public TrendDisplayPanel(int displayDays, WxSensor sensor, boolean verbose)
     {
         super();
@@ -39,11 +54,16 @@ public class TrendDisplayPanel extends JPanel
     }
     
     /**
+     * GetTempY() return the Y value for a temperature value
      * 
+     * @param temp the temp to display
+     * 
+     * @return the Y value to display
      * 
      */
     private int GetTempY(double temp)
     {
+        // todo make this scale better for taller height
         Dimension dim = getSize();
         int height = (int)dim.getHeight() - 20; // allow a bourder
         
@@ -53,7 +73,11 @@ public class TrendDisplayPanel extends JPanel
     
     
     /**
+     * GetHumidityY()  return the Y value for a humidity value
      * 
+     * @param humidity the humidity to display (on the same scale as temperature (perhaps I should just call GetTempY()?
+     * 
+     * @return the Y value to display
      * 
      */
     private int GetHumidityY(double humidity)
@@ -67,11 +91,15 @@ public class TrendDisplayPanel extends JPanel
     
     
     /**
+     * GetBarometerY()  returns the Y value of the barometric pressure (scales 29.0 up)
      * 
+     * @param press the pressure to display
      * 
+     * @return the Y value to display
      */
     private int GetBarometerY(double press)
     {
+        // TODO make theis more adaptive based on height
         Dimension dim = getSize();
         int height = (int)dim.getHeight() - 20; // allow a bourder
         
@@ -79,8 +107,16 @@ public class TrendDisplayPanel extends JPanel
     }
     
     
+    
     /**
+     * DrawDashedLine() draw a dashed line between two points
      * 
+     * @param g Graphics object
+     * @param x1 first x coordinate
+     * @param y1 first y coordinate
+     * @param x2 second x coordinate
+     * @param y2 second y coordinate
+     * @param dash SIMPLE dash partern
      * 
      */
     private void DrawDashedLine(Graphics g, int x1, int y1, int x2, int y2, int dash)
@@ -99,8 +135,16 @@ public class TrendDisplayPanel extends JPanel
         g2d.dispose();
     }
     
+    
+    
     /**
-     * Draw dashed polyline
+     * DrawDashedPolyline() Draw dashed polyline
+     * 
+     * @param g Graphics object
+     * @param x x coordinate array
+     * @param y y coordinate array
+     * @param dash dash pattern array
+     * 
      */
     private void DrawDashedPolyline(Graphics g, int[] x, int[] y, float[] dash)
     {
@@ -121,7 +165,11 @@ public class TrendDisplayPanel extends JPanel
 
     
     /**
+     * GetX() Get the x location from a time
      * 
+     * @param toShow  the time coordinate to show
+     * 
+     * @return x value of the time
      * 
      */
     private int GetX(LocalDateTime toShow)
@@ -138,7 +186,11 @@ public class TrendDisplayPanel extends JPanel
     
     
     /**
+     * FindNext12() find the next noon or midnight from the specified time
      * 
+     * @param t time
+     * 
+     * @return LocalDateTime of tne next noon or midnight
      * 
      */
     private LocalDateTime FindNext12(LocalDateTime t)
@@ -165,7 +217,11 @@ public class TrendDisplayPanel extends JPanel
     }
     
     /**
+     * FindNextHout() find the next hour (no minutes or seconds)
      * 
+     * @param t LocalDateTime time to check from
+     * 
+     * @return the next hour
      * 
      */
     private LocalDateTime FindNextHour(LocalDateTime t)
@@ -187,7 +243,9 @@ public class TrendDisplayPanel extends JPanel
     
     
     /**
+     * UpdateData()  Update the internal data arrays
      * 
+     * @param list  the list of TrendData items.  Return doing nothing if there are less than 2 values
      * 
      */
     public void UpdateData(ArrayList<TrendData> list)
@@ -260,7 +318,13 @@ public class TrendDisplayPanel extends JPanel
         repaint();
     }
     
+    
+    
     /**
+     * UpdateNumDays() update the number of days to display.  This requires the local data arrays be updated.
+     * 
+     * @param list TrendData list
+     * @param displayDays number of days to display (0 == cycling)
      * 
      */
     public void UpdateNumDays(ArrayList<TrendData> list, int displayDays)
@@ -276,7 +340,9 @@ public class TrendDisplayPanel extends JPanel
     }
     
     /**
+     * doDrawing()  do the drawing
      * 
+     * @param graphics Graphics object
      * 
      */
     private void doDrawing(Graphics graphics)
@@ -402,7 +468,9 @@ public class TrendDisplayPanel extends JPanel
 
 
     /**
+     * paintComponent() paint the component
      * 
+     * @param g Graphics object
      * 
      */
     @Override

@@ -7,21 +7,38 @@
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * Timer for updating the clock
+ */
 public class TimeUpdateTimer
 {
-  Timer mTimer;
-  PiWeather mMain;
-
-  public TimeUpdateTimer(int seconds, PiWeather main) {
-    mMain = main;
-    mTimer = new Timer();
-    mTimer.schedule(new RemindTask(), 0, seconds * 1000);
-  }
-
-  class RemindTask extends TimerTask {
-    public void run() {
-      mMain.UpdateClock();
+    /** the Timer object */
+    Timer mTimer;
+    /** the PiWeather that we need to callback to */
+    PiWeather mMain;
+    
+    /** 
+     * TimeUpdateTimer()
+     * 
+     * @param seconds number of seconds per update
+     * @param main PiWeather to callback
+     */
+    public TimeUpdateTimer(int seconds, PiWeather main) {
+        mMain = main;
+        mTimer = new Timer();
+        mTimer.schedule(new RemindTask(), 0, seconds * 1000);
     }
-  }
+    
+    /** 
+     * The timer task it to use
+     */
+    class RemindTask extends TimerTask {
+        /**
+         * run() run this and call UpdateClock() in the PiWeather
+         */
+        public void run() {
+            mMain.UpdateClock();
+        }
+    }
 
 }

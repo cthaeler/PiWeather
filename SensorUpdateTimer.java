@@ -13,20 +13,37 @@ import java.time.LocalDateTime;
  */
 
 public class SensorUpdateTimer {
-  Timer mTimer;
-  PiWeather mMain;
-
-  public SensorUpdateTimer(int seconds, PiWeather main) {
-    mMain = main;
-    mTimer = new Timer();
-    if (seconds < 2) seconds = 2; // the sensor can't be sampled more frequently
-    mTimer.schedule(new RemindTask(), 0, seconds * 1000);
-  }
-
-  class RemindTask extends TimerTask {
-    public void run() {
-      mMain.UpdateFromSensor();
+    /** the Timer object */
+    Timer mTimer;
+    /** the PiWeather that we need to callback to */
+    PiWeather mMain;
+    
+    /** 
+     * SensorUpdateTimer()
+     * 
+     * @param seconds number of seconds per update.  If we have less than 5 seconds till the next minute
+     * @param main PiWeather to callback
+     */
+    public SensorUpdateTimer(int seconds, PiWeather main) {
+        mMain = main;
+        
+        mTimer = new Timer();
+        
+        if (seconds < 2) seconds = 2; // the sensor can't be sampled more frequently
+        
+        mTimer.schedule(new RemindTask(), 0, seconds * 1000);
     }
-  }
+    
+    /** 
+     * The timer task it to use
+     */
+    class RemindTask extends TimerTask {
+        /**
+         * run() run this and call UpdateFromSensor() in the PiWeather
+         */
+        public void run() {
+            mMain.UpdateFromSensor();
+        }
+    }
 
 }

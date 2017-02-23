@@ -8,8 +8,13 @@ import java.io.*;
  */
 public class DHT11_Sensor extends WxSensor
 {
+    /** the python command to run to query the dht11 sensor */
     static private String msCmdStr = "python ./sensors/dht11.py";
+    
+    /** the temperature cached at the last refresh */
     private double mTemp = 0.0;
+    
+    /** the humidity cached at the last refresh */
     private double mHumidity = 0.0;
     
     /**
@@ -20,6 +25,11 @@ public class DHT11_Sensor extends WxSensor
 
     }
     
+    /**
+     * GetName() name of the sensor - DHT11
+     * 
+     * @return the sensor name
+     */
     public String GetName()
     {
         return "DHT11";
@@ -27,7 +37,8 @@ public class DHT11_Sensor extends WxSensor
     
     /**
      * RefreshSensorData()
-     * @return time in miliseconds till next safe refresh
+     * 
+     * @return time in miliseconds till next safe refresh - 2 seconds
      */
     public int RefreshSensorData()
     {
@@ -59,6 +70,8 @@ public class DHT11_Sensor extends WxSensor
 
     /**
      * HasTemperature()
+     * 
+     * @return true
      */
     public boolean HasTemperature()
     {
@@ -67,7 +80,9 @@ public class DHT11_Sensor extends WxSensor
 
     
     /**
-     * GetTemperature()
+     * GetTemperature() get the temperature
+     * 
+     * @return the cached sensor value
      */
     public double GetTemperature()
     {
@@ -75,7 +90,9 @@ public class DHT11_Sensor extends WxSensor
     }
 
      /**
-     * HasHumidity()
+     * HasHumidity() we have a humidity sensor
+     * 
+     * @return true
      */
     public boolean HasHumidity()
     {
@@ -84,7 +101,9 @@ public class DHT11_Sensor extends WxSensor
 
     
     /**
-     * GetHumidity()
+     * GetHumidity() get the humidity
+     * 
+     * @return the cached sensor value
      */
     public double GetHumidity()
     {

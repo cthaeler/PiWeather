@@ -15,16 +15,24 @@ public abstract class WxSensor
 
     }
     
+    /**
+     * GetName()  Name of the sensor.  This MUST be overridden
+     * 
+     * @return returns the name of the sensor 
+     */
     abstract public String GetName();
     
     /**
-     * RefreshSensorData()
+     * RefreshSensorData()  Refresh the sensor data
+     * 
      * @return time in miliseconds till next safe refresh
      */
     abstract public int RefreshSensorData();
 
     /**
-     * HasTemperature()
+     * HasTemperature()  by default say no.  Subclasses will say yes
+     * 
+     * @return returns false by default
      */
     public boolean HasTemperature()
     {
@@ -33,7 +41,9 @@ public abstract class WxSensor
 
     
     /**
-     * GetTemperature()
+     * GetTemperature()  return the temperature.
+     * 
+     * @return return 65.0 by default
      */
     public double GetTemperature()
     {
@@ -42,6 +52,8 @@ public abstract class WxSensor
 
      /**
      * HasHumidity()
+     * 
+     * @return returns fauls by default
      */
     public boolean HasHumidity()
     {
@@ -50,7 +62,9 @@ public abstract class WxSensor
 
     
     /**
-     * GetHumidity()
+     * GetHumidity()  return the humidity
+     * 
+     * @return humidity bewteen 0 and 100
      */
     public double GetHumidity()
     {
@@ -60,6 +74,8 @@ public abstract class WxSensor
     
     /**
      * HasBarometricPressure()
+     * 
+     * @return false by default
      */
     public boolean HasBarometricPressure()
     {
@@ -68,7 +84,9 @@ public abstract class WxSensor
  
     
     /**
-     * GetBarometricPressure()
+     * GetBarometricPressure() returns the barometric pressure
+     * 
+     * @return return standard atmospheric presssure by default
      */
     public double GetBarometricPressure()
     {

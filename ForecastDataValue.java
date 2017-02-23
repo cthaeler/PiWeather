@@ -14,15 +14,21 @@ import javax.imageio.ImageIO;
 public class ForecastDataValue
 {
     // instance variables - replace the example below with your own
+    /** forecast temperature */
     private double mTemp;
+    /** URL of icon to show */
     private String mIconURL;
+    /** info about the day */
     private String mInfo;
+    /** the JLabel for the image */
     private JLabel mImageLabel;
+    /** the JLabel for the info */
     private JLabel mInfoLabel;
+    /** the JLabel for the temperature */
     private JLabel mTempLabel;
 
     /**
-     * Constructor for objects of class DataValue
+     * ForecastDataValue() Constructor for objects of class ForecastDataValue
      */
     public ForecastDataValue()
     {
@@ -33,7 +39,13 @@ public class ForecastDataValue
         CreateUIComponents();
     }
 
-    
+    /**
+     * ForecastDataValue() constructor
+     * 
+     * @param iconURL the icon URL
+     * @param temp the temperature
+     * @param info info to display
+     */
     public ForecastDataValue(String iconURL, double temp, String info)
     {
         // initialise instance variables
@@ -44,6 +56,9 @@ public class ForecastDataValue
         SetIconImage();
     }
 
+    /**
+     * CreateUIComponents() Create the components 
+     */
     private void CreateUIComponents()
     {
         mTempLabel = new JLabel("");
@@ -59,6 +74,13 @@ public class ForecastDataValue
         mImageLabel = new JLabel("");
     }
     
+    /**
+     * isImageCached()  we cache icons.  Is this one cached?
+     * 
+     * @param url url to check the cache for
+     * 
+     * @return true if cached
+     */
     private boolean isImageCached(String url)
     {
         // make sure the cache directory exists
@@ -77,6 +99,14 @@ public class ForecastDataValue
         return cacheFile.exists();
     }
     
+    
+    /**
+     * cachedImageFileName() returns the badURL icon if there's a glitch
+     * 
+     * @param url url of the icon
+     * 
+     * @return the file name of the cached icon
+     */
     private String cachedImageFilename(String url)
     {
         String cacheFile = "icons/badURL.png";
@@ -103,7 +133,11 @@ public class ForecastDataValue
         
         return cacheFile;
     }
-        
+    
+    
+    /**
+     * SetIconImage()  Set the icon image from the url
+     */
     private void SetIconImage()
     {
 
@@ -127,6 +161,11 @@ public class ForecastDataValue
         }
     }
     
+    /**
+     * setTemp() set the temperature
+     * 
+     * @param temp the temperature
+     */
     public void setTemp(double temp)
     {
         mTemp = temp;
@@ -134,6 +173,13 @@ public class ForecastDataValue
         mTempLabel.setText(str);
     }
 
+    /**
+     * setInfo()  set the info string
+     * 
+     * @param info the info to display
+     * @param isEven even or odd determines how we align
+     * 
+     */
     public void setInfo(String info, boolean isEven)
     {
         if (info.length() > 15) {
@@ -151,23 +197,42 @@ public class ForecastDataValue
         mInfoLabel.setText(mInfo);
     }
     
+    /**
+     * setIconURL() set the icon URL
+     * 
+     * @param url the icon url
+     */
     public void setIconURL(String url)
     {
         mIconURL = url;
         SetIconImage();
     }
     
-    
+    /**
+     * getImageLabel()
+     * 
+     * @return get the JLabel for the image
+     */
     public JLabel getImageLabel()
     {
         return mImageLabel;
     }
     
+    /**
+     * getInfoLabel()
+     * 
+     * @return get the JLabel for the info label
+     */
     public JLabel getInfoLabel()
     {
         return mInfoLabel;
     }
     
+    /**
+     * getTempLabel() get the JLabel
+     * 
+     * @return the JLabel for this object
+     */
         public JLabel getTempLabel()
     {
         return mTempLabel;
