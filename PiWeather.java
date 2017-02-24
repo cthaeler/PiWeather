@@ -1481,11 +1481,11 @@ class PiWeather
      * 
      * @return airport ICAO name (or null)
      */
-    private String GetAirportICAOName(String airport)
+    private String GetAirportICAOName(String airportdata)
     {
         // Sample KDVO
         // 8138,"Marin County Airport - Gnoss Field","Novato","United States",\N,"KDVO",38.143600463867,-122.55599975586,2,-8,"A","America/Los_Angeles","airport","OurAirports"
-        String[] data = airport.split(",");
+        String[] data = airportdata.split(",");
         if (data.length > 7) { // make sure we have lat and long
             String ICAO_Name = data[5].replaceAll("\"", "");
             return ICAO_Name;
@@ -1500,11 +1500,11 @@ class PiWeather
      * 
      * @return Country string
      */
-    private String GetAirportCountry(String airport)
+    private String GetAirportCountry(String airportdata)
     {
         // Sample KDVO
         // 8138,"Marin County Airport - Gnoss Field","Novato","United States",\N,"KDVO",38.143600463867,-122.55599975586,2,-8,"A","America/Los_Angeles","airport","OurAirports"
-        String[] data = airport.split(",");
+        String[] data = airportdata.split(",");
         if (data.length > 7) { // make sure we have lat and long
             String country = data[3].replaceAll("\"", "");
             return country;
