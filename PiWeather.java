@@ -225,7 +225,6 @@ class PiWeather
     {
         String jarfilename = GetJarFilename();
         if (jarfilename != null) {
-            System.out.println(jarfilename);
             try {
                 // extract the sensors from the jar file
                 JarFile jarfile = new JarFile(new File(jarfilename));

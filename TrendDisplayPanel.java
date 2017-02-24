@@ -12,7 +12,9 @@ import java.time.LocalDateTime;
  */
 public class TrendDisplayPanel extends JPanel
 {
-    /** cached data so we don't need to recovert on redraws */
+    /** local trend data copy */
+    private ArrayList<TrendData> mTrendData;
+    /** converted trend data for redraws */
     private int[][] mData;
     /** vertical grid data, needs to update ever time the number of days to display is updated */
     private int[][] mVertGrid;
@@ -63,11 +65,13 @@ public class TrendDisplayPanel extends JPanel
      */
     private int GetTempY(double temp)
     {
-        // todo make this scale better for taller height
         Dimension dim = getSize();
-        int height = (int)dim.getHeight() - 20; // allow a bourder
         
-        return(height - (int)temp);
+        // scale -10 -> 110 to (height - (20 bottom - 10 top)
+        double height = dim.getHeight() - 30;
+        double stemp = (temp - -10.0) * (height / (110.0 - -10.0));
+        
+        return((int)(height - stemp));
     }
     
     
@@ -75,23 +79,20 @@ public class TrendDisplayPanel extends JPanel
     /**
      * GetHumidityY()  return the Y value for a humidity value
      * 
-     * @param humidity the humidity to display (on the same scale as temperature (perhaps I should just call GetTempY()?
+     * @param humidity the humidity to display 
      * 
      * @return the Y value to display
      * 
      */
     private int GetHumidityY(double humidity)
     {
-        Dimension dim = getSize();
-        int height = (int)dim.getHeight() - 20; // allow a bourder
-        
-        return(height - (int)humidity);
+        return(GetTempY(humidity)); // temp and humidity are the same scale for now
     }
     
     
     
     /**
-     * GetBarometerY()  returns the Y value of the barometric pressure (scales 29.0 up)
+     * GetBarometerY()  returns the Y value of the barometric pressure
      * 
      * @param press the pressure to display
      * 
@@ -99,11 +100,13 @@ public class TrendDisplayPanel extends JPanel
      */
     private int GetBarometerY(double press)
     {
-        // TODO make theis more adaptive based on height
         Dimension dim = getSize();
-        int height = (int)dim.getHeight() - 20; // allow a bourder
         
-        return(height - (int)((press - 29.00) * 70.0));
+        // scale 28.5 -> 31.0 to (height - (20 bottom - 10 top))
+        double height = dim.getHeight() - 30; // allow a bourder
+        double spress = (press-28.5) * (height / (31.0 - 28.5));
+        
+        return((int)(height - spress));
     }
     
     
@@ -250,7 +253,17 @@ public class TrendDisplayPanel extends JPanel
      */
     public void UpdateData(ArrayList<TrendData> list)
     {
-        if (list == null || list.size() < 2) return;
+        mTrendData = new ArrayList<TrendData>() ;
+
+        for (int i = 0 ; i<list.size();i++){
+            mTrendData.add(list.get(i)) ;
+        }
+    }
+    
+    private void UpdateDrawingData()
+    {
+        
+        if (mTrendData == null || mTrendData.size() < 2) return;
         
         if (mCycleDisplayDays) {
             mDisplayDays++;
@@ -265,8 +278,8 @@ public class TrendDisplayPanel extends JPanel
         
         // we may have saved more than are going to be visible so find the first visible one
         int firstVisible = 0;
-        for (int i=0; i < list.size(); i++) {
-            long dt = Duration.between(list.get(i).GetDateTime(), list.get(list.size()-1).GetDateTime()).getSeconds();
+        for (int i=0; i < mTrendData.size(); i++) {
+            long dt = Duration.between(mTrendData.get(i).GetDateTime(), mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds();
             if (dt <= totalTime) {
                 firstVisible = i;
                 break;
@@ -303,17 +316,17 @@ public class TrendDisplayPanel extends JPanel
                 }
             }
         }
-        mData = new int[7][list.size()-firstVisible];
+        mData = new int[7][mTrendData.size()-firstVisible];
 
-        for (int i=firstVisible, di=0; i < list.size(); i++, di++)
+        for (int i=firstVisible, di=0; i < mTrendData.size(); i++, di++)
         {
-            mData[0][di] = GetX(list.get(i).GetDateTime());
-            mData[1][di] = GetTempY(list.get(i).GetTemp()); // 1 is the y temperature
-            mData[2][di] = GetHumidityY(list.get(i).GetHumidity()); // 2 is the humidity
-            mData[3][di] = GetBarometerY(list.get(i).GetBarometer()); // 3 is the barometer
-            mData[4][di] = GetTempY(list.get(i).GetSensorTemp()); // 4 is the y sensor temperature
-            mData[5][di] = GetHumidityY(list.get(i).GetSensorHumidity()); // 5 is the sensor humidity
-            mData[6][di] = GetBarometerY(list.get(i).GetSensorBarometer()); // 6 is the sensor barometer
+            mData[0][di] = GetX(mTrendData.get(i).GetDateTime());
+            mData[1][di] = GetTempY(mTrendData.get(i).GetTemp()); // 1 is the y temperature
+            mData[2][di] = GetHumidityY(mTrendData.get(i).GetHumidity()); // 2 is the humidity
+            mData[3][di] = GetBarometerY(mTrendData.get(i).GetBarometer()); // 3 is the barometer
+            mData[4][di] = GetTempY(mTrendData.get(i).GetSensorTemp()); // 4 is the y sensor temperature
+            mData[5][di] = GetHumidityY(mTrendData.get(i).GetSensorHumidity()); // 5 is the sensor humidity
+            mData[6][di] = GetBarometerY(mTrendData.get(i).GetSensorBarometer()); // 6 is the sensor barometer
         }
         repaint();
     }
@@ -348,6 +361,7 @@ public class TrendDisplayPanel extends JPanel
     private void doDrawing(Graphics graphics)
     {
         setBackground(Color.BLACK);
+        UpdateDrawingData();
     
         if (mVertGrid == null || mData == null) return;
         
