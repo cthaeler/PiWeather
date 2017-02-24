@@ -18,11 +18,13 @@ import org.w3c.dom.*;
 import static java.nio.file.StandardOpenOption.*;
 import java.nio.file.*;
 import java.io.*;
+import java.util.jar.*;
 
 import javax.imageio.ImageIO;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Enumeration;
 
 import java.time.*;
 import java.time.LocalTime;
@@ -172,6 +174,8 @@ class PiWeather
      */
     PiWeather(String args[])
     {
+        ExtractJarData();
+        
         ProcessArgs(args);
         
         mTrendData = new ArrayList<TrendData>();
@@ -197,7 +201,65 @@ class PiWeather
         SetupUI();
     }
     
+    /**
+     * GetJarFilename() get the jar file name if we're in a jar file
+     */
+    private String GetJarFilename()
+    {
+        String myClassName = this.getClass().getName() + ".class";
+        URL urlJar = this.getClass().getClassLoader().getSystemResource(myClassName);
+        if (urlJar == null)
+            return null;
+        String urlStr = urlJar.toString();
+        System.out.println(urlStr);
+        int from = "jar:file:".length();
+        int to = urlStr.indexOf("!/");
+        return urlStr.substring(from, to);
+    }
     
+    /**
+     * ExtractJarData() Extract the sensors and icons from the jar file if we are in one
+     * 
+     */
+    private void ExtractJarData()
+    {
+        String jarfilename = GetJarFilename();
+        if (jarfilename != null) {
+            System.out.println(jarfilename);
+            try {
+                // extract the sensors from the jar file
+                JarFile jarfile = new JarFile(new File(jarfilename));
+                Enumeration<JarEntry> enu = jarfile.entries();
+                while(enu.hasMoreElements())
+                {
+                    String destdir = ".";     // destination directory is the current directory
+                    JarEntry je = enu.nextElement();
+            
+                    if (je.getName().contains("sensor") || je.getName().contains("icons") ) {
+                        File fl = new File(destdir, je.getName());
+                        if (!fl.exists()) {
+                            fl.getParentFile().mkdirs();
+                            fl = new File(destdir, je.getName());
+                        }
+                        
+                        if (je.isDirectory()) 
+                            continue;
+                        if (mVerbose)
+                            System.out.println(je.getName());
+                        InputStream is = jarfile.getInputStream(je);
+                        FileOutputStream fo = new FileOutputStream(fl);
+                        
+                        while (is.available() > 0)
+                            fo.write(is.read());
+
+                        fo.close();
+                        is.close();
+                    }
+                }
+            } catch (Exception e) {
+            }
+        }
+    }
     
     /**
      * IsSupportedSensor() determine if the specified sensor is available
@@ -1062,9 +1124,11 @@ class PiWeather
             System.out.print(String.format("%4d ", i++));
             System.out.println(td.toString());
         }
-        if (mTrendData.size() > 1)
+
+        if (mTrendData.size() > 1) {
             System.out.println("First: " + mTrendData.get(0).GetDateTime());
             System.out.println("Last:  " + mTrendData.get(mTrendData.size()-1).GetDateTime());
+        }
         System.out.println("----");
     }
     
@@ -1559,6 +1623,8 @@ class PiWeather
         return -999;
     }
     
+
+  
     /**
      * main The main
      * 
@@ -1567,6 +1633,7 @@ class PiWeather
      */
     public static void main(String args[])
     {
+        
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 PiWeather piWXMain = new PiWeather(args);

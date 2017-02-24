@@ -39,6 +39,9 @@ all: jar docs
 jar: classes 
 	jar cfm PiWeather.jar MANIFEST.MF *.class icons sensors
 
+install: jar
+	cp PiWeather.jar ~/tmp
+
 classes: $(CLASSES:.java=.class)
 
 docs: classes

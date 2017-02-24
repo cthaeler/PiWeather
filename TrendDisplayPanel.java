@@ -401,7 +401,7 @@ public class TrendDisplayPanel extends JPanel
         
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));
         
-        if (mSensor != null || mVerbose) {
+        if (mSensor != null) {
             if (mSensor.HasTemperature()) {
                 g2d.setColor(tempColor);
                 g2d.drawString("s-Temp", 180, dim.height-5);
