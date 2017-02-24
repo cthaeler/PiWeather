@@ -1452,6 +1452,21 @@ class PiWeather
         // 8138,"Marin County Airport - Gnoss Field","Novato","United States",\N,"KDVO",38.143600463867,-122.55599975586,2,-8,"A","America/Los_Angeles","airport","OurAirports"
 
         File file = new File(msAirportDataFilename);
+        
+        if (!file.exists()) {
+            // try to download the file
+            try {
+                File dataDir = new File("data");
+                // if the directory does not exist, create it
+                if (!dataDir.exists()) {
+                    dataDir.mkdir();
+                }
+                InputStream in = new URL("https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat").openStream();
+                Files.copy(in, Paths.get(msAirportDataFilename));
+            } catch (IOException x) {
+                System.err.println(x);
+            }
+        }
 
         if (file.exists() && file.canRead()) {
             try {
