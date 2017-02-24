@@ -7,3 +7,4 @@ wxfiles
 wxfiles_fmt
 cache
 doc
+data/*.txt

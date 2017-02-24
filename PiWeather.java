@@ -41,13 +41,47 @@ class PiWeather
         {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
+    /** map URLs for the center column of the UI */
+    private static final String[] msMapURLs = {
+        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif",  // Precipitation
+        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptyp.gif",  // Precipitation Type
+        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_wind.gif",  // Surface Winds
+        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_temp.gif",  // Temperature
+        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif",  // Radar Reflectivity
+        "http://weather.rap.ucar.edu/model/ruc12hr_0_clouds.gif",  // Clouds
+    };
+    
+    /** satalite URLs for the center column of the UI */
+    private static final String[] msSatURLs = {
+        // Sat images - US
+        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_vis.jpg",  // Sat image
+        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_ir.jpg", // IR
+        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_irbw.jpg", // IRBW
+        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_wv.jpg", // Weather
+        // Sat Images - WMC (Winamuca, western US)
+        "http://www.aviationweather.gov/adds/data/satellite/latest_WMC_vis.jpg",  // Sat image
+        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_ir.jpg", // IR
+        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_irbw.jpg", // IRBW
+        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_wv.jpg", // Weather
+    };
+
+    
     /** supported sensors */
     private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "BMP280", "DUMMY"};
-    /** trend data file */
-    private static final String msParseableTrendDataFile = "cache/p_trend_data.txt";
     
+    /** trend data file */
+    private String mTrendDataFilename;
+    
+    /** the airport.dat file */
+    private static final String msAirportDataFilename = "data/airports.dat";
+    
+    /** the name of the location */
+    private String mLocationName;
+
     /** the location URL index we're getting */
-    private int mLocationURL = 0;
+    private String mLocationURL;
+    
+
     
     /** cached current temperature */
     private double mCurrTemp = 0.0;
@@ -86,10 +120,7 @@ class PiWeather
     private ArrayList<DataValue> mValues;
     /** the forcast UI objects */
     private ArrayList<ForecastDataValue> mForecastValues;
-    /** the map URLs */
-    private ArrayList<String> mMapURLs;
-    /** the sat URLs */
-    private ArrayList<String> mSatURLs;
+
     
     /** the trend data */
     private ArrayList<TrendData> mTrendData;
@@ -112,8 +143,6 @@ class PiWeather
     private JLabel mLastUpdateLabel;
     /** last web observation time label */
     private JLabel mLastObsLabel;
-    /** the quit button */
-    private JButton mQuitButton;
     
     
     // Variables from command line switches
@@ -269,7 +298,9 @@ class PiWeather
                     for (int l = 0; l < msLocations.length; l++) {
                         String locUC = args[i+1].toUpperCase();
                         if (locUC.equals(msLocations[l][0].toUpperCase())) {
-                            mLocationURL = l;
+                            mLocationName = msLocations[l][0];
+                            mLocationURL = msLocations[l][1];
+                            mTrendDataFilename = "data/" + mLocationName + "_trend_data.txt";
                             found = true;
                             break;
                         }
@@ -277,6 +308,36 @@ class PiWeather
                     if (!found) {
                         System.out.println("Location not found");
                         System.exit(1);
+                    }
+                    i++;
+                }
+                break;
+                
+            case "-airport":
+                if (i+1 >= args.length) {
+                    PrintUsage();
+                    System.exit(1);
+                } else {
+                    String airport = args[i+1].toUpperCase();
+                    String data = FindAirport(airport);
+                    if (data == null) {
+                        System.out.println("Airport not found");
+                        System.exit(1);
+                    }
+                    String country = GetAirportCountry(data);
+                    if (country == null || !country.equals("United States")) {
+                        System.out.println("Only us airports supported");
+                        System.exit(1);
+                    }
+                    // found the airport and it's a US city
+                    double lat = GetAirportLatitude(data);
+                    double lng = GetAirportLongitude(data);
+                    if (lat != -999 && lng != -999) { // got valid data
+                        mLocationName = airport;
+                        mLocationURL = "http://forecast.weather.gov/MapClick.php?lat=" +
+                                        String.format("%.4f", lat) + "&lon=" +
+                                        String.format("%.4f", lng) + "&unit=0&lg=english&FcstType=dwml";
+                        mTrendDataFilename = "data/" + airport + "_trend_data.txt";
                     }
                     i++;
                 }
@@ -290,6 +351,7 @@ class PiWeather
                 
             case "-ftd": // generate take Trend Data
                 mGenFakeTrendData = true;
+                mTrendDataFilename = "data/fake_trend_data.txt";
                 break;
                 
             case "-td": // set the number of trend data days to display
@@ -331,6 +393,13 @@ class PiWeather
                 System.exit(1);
             }
         }
+        
+        // if no location was specified setup Novato
+        if (mLocationName == null) {
+            mLocationName = msLocations[0][0];
+            mLocationURL = msLocations[0][1];
+            mTrendDataFilename = "data/" + mLocationName + "_trend_data.txt";
+        }
     }
     
     /**
@@ -346,6 +415,7 @@ class PiWeather
         System.out.println("  -wx        Save Wx files for later analysis");
         System.out.println("  -l         Specify a location");
         System.out.println("  -ll        Show a list of known locations and exit");
+        System.out.println("  -airport   Use an airport (must be US) as a location");
         System.out.println("  -v         Verbose");
     }
     
@@ -420,7 +490,7 @@ class PiWeather
         
         leftPanel.add(mTimeLabel);
         
-        mLocationLabel = new JLabel(msLocations[mLocationURL][0]);
+        mLocationLabel = new JLabel(mLocationName);
         mLocationLabel.setForeground(Color.green);
         mLocationLabel.setFont(new Font("Monospaced", Font.PLAIN, 28));
         leftPanel.add(mLocationLabel);
@@ -475,10 +545,10 @@ class PiWeather
         mLastObsLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
         leftPanel.add(mLastObsLabel);
         
-        mQuitButton = new JButton("Quit");
-        mQuitButton.setActionCommand("quit");
+        JButton quitButton = new JButton("Quit");
+        quitButton.setActionCommand("quit");
         
-        mQuitButton.addActionListener(new ActionListener() {
+        quitButton.addActionListener(new ActionListener() {
              public void actionPerformed(ActionEvent e) {
                     System.exit(0);
              }          
@@ -523,7 +593,7 @@ class PiWeather
         ctlPanel.setLayout(ctlBox);
         ctlPanel.setBackground(Color.BLACK);
         
-        ctlPanel.add(mQuitButton);
+        ctlPanel.add(quitButton);
         ctlPanel.add(chooser);
         
         ctlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -542,29 +612,8 @@ class PiWeather
      */
     private JPanel SetupCenterPanel()
     {
-        mMapURLs = new ArrayList<String>();
         mCurMap = 0;
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif"));  // Precipitation
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptyp.gif"));  // Precipitation Type
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_wind.gif"));  // Surface Winds
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_temp.gif"));  // Temperature
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif"));  // Radar Reflectivity
-        mMapURLs.add(new String("http://weather.rap.ucar.edu/model/ruc12hr_0_clouds.gif"));  // Clouds
-        
-
-        mSatURLs = new ArrayList<String>();
         mCurSat = 0;
-        // Sat images - US
-        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_vis.jpg"));  // Sat image
-        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_ir.jpg")); // IR
-        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_irbw.jpg")); // IRBW
-        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_wv.jpg")); // Weather
-        // Sat Images - WMC (Winamuca, western US)
-        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_WMC_vis.jpg"));  // Sat image
-        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_ir.jpg")); // IR
-        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_irbw.jpg")); // IRBW
-        mSatURLs.add(new String("http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_wv.jpg")); // Weather
-
 
         // Center Panel for the weather map images
         JPanel centerPanel = new JPanel();
@@ -847,8 +896,8 @@ class PiWeather
         int imageSize = 275;
         try {
           mCurMap++;
-          if (mCurMap >= mMapURLs.size()) mCurMap=0;
-          URL imgURL = new URL(mMapURLs.get(mCurMap));
+          if (mCurMap >= msMapURLs.length) mCurMap=0;
+          URL imgURL = new URL(msMapURLs[mCurMap]);
           Image image = ImageIO.read(imgURL);
           if (image.getHeight(null) > imageSize)
             mWxImageLabel.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
@@ -860,8 +909,8 @@ class PiWeather
         
         try {
           mCurSat++;
-          if (mCurSat >= mSatURLs.size()) mCurSat=0;
-          URL imgURL = new URL(mSatURLs.get(mCurSat));
+          if (mCurSat >= msSatURLs.length) mCurSat=0;
+          URL imgURL = new URL(msSatURLs[mCurSat]);
           Image image = ImageIO.read(imgURL);
           if (image.getHeight(null) > imageSize)
             mSatImageLabel.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
@@ -934,9 +983,9 @@ class PiWeather
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH_mm");
         String tstr = dt.format(formatter);
         // save the xml
-        Path p = Paths.get("./wxfiles/wxfile_"+msLocations[mLocationURL][0]+"_"+tstr+".xml");
+        Path p = Paths.get("./wxfiles/wxfile_" + mLocationURL + "_" + tstr + ".xml");
         try {
-            URL url = new URL(msLocations[mLocationURL][1]);
+            URL url = new URL(mLocationURL);
             InputStream in = url.openStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         
@@ -965,12 +1014,6 @@ class PiWeather
 
         SetLastUpdateTime();
         
-        if (false) { //mCycleLocations) {
-            mLocationURL++;
-            if (mLocationURL >= msLocations.length)
-                mLocationURL = 0;
-            mLocationLabel.setText(msLocations[mLocationURL][0]);
-        }
         
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -983,7 +1026,7 @@ class PiWeather
                 }
             }
 
-            URL url = new URL(msLocations[mLocationURL][1]);
+            URL url = new URL(mLocationURL);
             InputStream stream = url.openStream();
             Document doc = factory.newDocumentBuilder().parse(stream);
             
@@ -1181,7 +1224,7 @@ class PiWeather
     private void SaveTextTrendData()
     {
         try {
-            File file = new File(msParseableTrendDataFile);
+            File file = new File(mTrendDataFilename);
             if (!file.getParentFile().exists())
                 file.getParentFile().mkdirs();
             PrintWriter writer = new PrintWriter(file);
@@ -1249,10 +1292,10 @@ class PiWeather
      */
     private void ReadTextTrendData()
     {
-        File f = new File(msParseableTrendDataFile);
+        File f = new File(mTrendDataFilename);
         if (f.exists() && f.canRead()) {
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(msParseableTrendDataFile));
+                BufferedReader reader = new BufferedReader(new FileReader(f));
                 String line;
                 int version = 1;
                 if ((line = reader.readLine()) != null) {
@@ -1268,7 +1311,7 @@ class PiWeather
                 }
                 reader.close();
             } catch (Exception e) {
-                System.err.format("Exception occurred trying to read '%s'.", msParseableTrendDataFile);
+                System.err.format("Exception occurred trying to read '%s'.", mTrendDataFilename);
                 e.printStackTrace();
             }
         }
@@ -1370,13 +1413,16 @@ class PiWeather
     
     
     /**
+     * FindAirport()
      * Find airport data from airports.dat.  The airports.dat file is from OpenFlights.org
      *    URL: https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat
      * 
      * @param ICAO_Name 4-letter ICAO
      * 
+     * @return the airport data string (null if not found)
+     * 
      */
-    public void FindAirport(String ICAO_Name)
+    private String FindAirport(String ICAO_Name)
     {
         // file format, comma seperated list
         // Airport ID     Unique OpenFlights identifier for this airport.
@@ -1401,8 +1447,102 @@ class PiWeather
         // Tz database time zone   Timezone in "tz" (Olson) format, eg. "America/Los_Angeles".
         // Type           Type of the airport. Value "airport" for air terminals, "station" for train stations, "port" for ferry terminals and "unknown" if not known. In airports.csv, only type=airport is included.
         // Source         Source of this data. "OurAirports" for data sourced from OurAirports, "Legacy" for old data not matched to OurAirports (mostly DAFIF), "User" for unverified user contributions. In airports.csv, only source=OurAirports is included.
+    
+        // Sample KDVO
+        // 8138,"Marin County Airport - Gnoss Field","Novato","United States",\N,"KDVO",38.143600463867,-122.55599975586,2,-8,"A","America/Los_Angeles","airport","OurAirports"
+
+        File file = new File(msAirportDataFilename);
+
+        if (file.exists() && file.canRead()) {
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                String line;  
+                while ((line = reader.readLine()) != null)
+                {
+                    String name = GetAirportICAOName(line);
+                    if (name != null && name.toUpperCase().equals(ICAO_Name.toUpperCase())) {
+                        reader.close();
+                        return line;
+                    }
+                }
+                reader.close();
+            } catch (Exception e) {
+                System.err.format("Exception occurred trying to read '%s'.", msAirportDataFilename);
+                e.printStackTrace();
+            }
+        }
+        return null;
     }
     
+    /**
+     * GetAirportICAOName() Get the ICAO airport name from an airport data string
+     * 
+     * @param airportdata airport data string
+     * 
+     * @return airport ICAO name (or null)
+     */
+    private String GetAirportICAOName(String airport)
+    {
+        // Sample KDVO
+        // 8138,"Marin County Airport - Gnoss Field","Novato","United States",\N,"KDVO",38.143600463867,-122.55599975586,2,-8,"A","America/Los_Angeles","airport","OurAirports"
+        String[] data = airport.split(",");
+        if (data.length > 7) { // make sure we have lat and long
+            String ICAO_Name = data[5].replaceAll("\"", "");
+            return ICAO_Name;
+        }
+        return null;
+    }
+    
+    /**
+     * GetAirportCountry() Get the country from an airport data string
+     * 
+     * @param airportdata airport data string
+     * 
+     * @return Country string
+     */
+    private String GetAirportCountry(String airport)
+    {
+        // Sample KDVO
+        // 8138,"Marin County Airport - Gnoss Field","Novato","United States",\N,"KDVO",38.143600463867,-122.55599975586,2,-8,"A","America/Los_Angeles","airport","OurAirports"
+        String[] data = airport.split(",");
+        if (data.length > 7) { // make sure we have lat and long
+            String country = data[3].replaceAll("\"", "");
+            return country;
+        }
+        return null;
+    }
+    
+    /**
+     * GetAirportLatitude()  Get an airport's Latitude
+     * 
+     * @param airport   the airport data string
+     * 
+     * @return the latitude of the airport (-999 if not found)
+     */
+    private double GetAirportLatitude(String airport)
+    {
+        String[] data = airport.split(",");
+        if (data.length > 7) { // make sure we have lat and long
+            return Double.parseDouble(data[6]);
+        }
+        return -999;
+    }
+    
+    /**
+     * GetAirportLongitude()  Get an airport's Longitude
+     * 
+     * @param airport   the airport data string
+     * 
+     * @return the longitude of the airport (-999 if not found)
+     */
+    private double GetAirportLongitude(String airport)
+    {
+        String[] data = airport.split(",");
+        if (data.length > 7) { // make sure we have lat and long
+            return Double.parseDouble(data[7]);
+        }
+        return -999;
+    }
     
     /**
      * main The main
