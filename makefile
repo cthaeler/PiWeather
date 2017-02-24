@@ -40,7 +40,7 @@ jar: classes
 	jar cfm PiWeather.jar MANIFEST.MF *.class icons sensors
 
 install: jar
-	cp PiWeather.jar ~/tmp
+	cp PiWeather.jar ~/Documents/Soar-High_Website/soar-high.com/charlie/
 
 classes: $(CLASSES:.java=.class)
 
