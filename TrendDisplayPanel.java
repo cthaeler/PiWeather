@@ -14,24 +14,33 @@ public class TrendDisplayPanel extends JPanel
 {
     /** local trend data copy */
     private ArrayList<TrendData> mTrendData;
+    
     /** converted trend data for redraws */
     private int[][] mData;
+    
     /** vertical grid data, needs to update ever time the number of days to display is updated */
     private int[][] mVertGrid;
+    
     /** number of days to display */
     private int mDisplayDays=3;
+    
     /** cycle through number of days from 1 to 10 */
     private boolean mCycleDisplayDays = false;
+    
     /** show verbose debugging data */
     private boolean mVerbose = false;
+    
     /** the sensor to read data from */
     private WxSensor mSensor = null;
+    
     /** start the graph here */
-    private static int mGraphStartX = 25;
+    private static int msGraphStartX = 25;
     /** end of the graph here */
-    private static int mGraphEndX = 25;
+    private static int msGraphEndX = 25;
     /** bottom of the graph */
-    private static int mGraphStartY = 25;
+    private static int msGraphStartY = 25;
+    /** top of the graph */
+    private static int msGraphEndY = 10;
     
     /**
      * TrendDisplayPanel()  Constructor
@@ -182,9 +191,9 @@ public class TrendDisplayPanel extends JPanel
         double dispTime = Duration.between(toShow, now).getSeconds();
         
         Dimension dim = getSize();
-        double width = dim.width - (mGraphStartX + mGraphEndX);
+        double width = dim.width - (msGraphStartX + msGraphEndX);
 
-        return dim.width - mGraphEndX - (int)(width * (dispTime/totalTime));
+        return dim.width - msGraphEndX - (int)(width * (dispTime/totalTime));
     }
     
     
@@ -271,7 +280,7 @@ public class TrendDisplayPanel extends JPanel
         }
         
         Dimension dim = getSize();
-        int width = dim.width - (mGraphStartX + mGraphEndX);
+        int width = dim.width - (msGraphStartX + msGraphEndX);
         
         
         long totalTime = 24*60*60*mDisplayDays;
@@ -316,17 +325,20 @@ public class TrendDisplayPanel extends JPanel
                 }
             }
         }
-        mData = new int[7][mTrendData.size()-firstVisible];
+        for (int i = 0; i < 7; i++) {
+       	    mData = new int[7][mTrendData.size()-firstVisible];
+	}
 
         for (int i=firstVisible, di=0; i < mTrendData.size(); i++, di++)
         {
-            mData[0][di] = GetX(mTrendData.get(i).GetDateTime());
-            mData[1][di] = GetTempY(mTrendData.get(i).GetTemp()); // 1 is the y temperature
-            mData[2][di] = GetHumidityY(mTrendData.get(i).GetHumidity()); // 2 is the humidity
-            mData[3][di] = GetBarometerY(mTrendData.get(i).GetBarometer()); // 3 is the barometer
-            mData[4][di] = GetTempY(mTrendData.get(i).GetSensorTemp()); // 4 is the y sensor temperature
-            mData[5][di] = GetHumidityY(mTrendData.get(i).GetSensorHumidity()); // 5 is the sensor humidity
-            mData[6][di] = GetBarometerY(mTrendData.get(i).GetSensorBarometer()); // 6 is the sensor barometer
+            TrendData td = mTrendData.get(i);
+            mData[0][di] = GetX(td.GetDateTime()); // 0 is the time value (X)
+            mData[1][di] = GetTempY(td.GetTemp()); // 1 is the y temperature
+            mData[2][di] = GetHumidityY(td.GetHumidity()); // 2 is the humidity
+            mData[3][di] = GetBarometerY(td.GetBarometer()); // 3 is the barometer
+            mData[4][di] = GetTempY(td.GetSensorTemp()); // 4 is the y sensor temperature
+            mData[5][di] = GetHumidityY(td.GetSensorHumidity()); // 5 is the sensor humidity
+            mData[6][di] = GetBarometerY(td.GetSensorBarometer()); // 6 is the sensor barometer
         }
         repaint();
     }
@@ -372,7 +384,7 @@ public class TrendDisplayPanel extends JPanel
         // draw the vertical grid lines
         g2d.setColor(new Color(100, 100, 100));
         for (int vl = 0; vl < mVertGrid.length; vl++) {
-            DrawDashedLine(g2d, mVertGrid[vl][0], 0, mVertGrid[vl][0], dim.height-20, 1);
+            DrawDashedLine(g2d, mVertGrid[vl][0], msGraphEndY, mVertGrid[vl][0], dim.height-msGraphStartY, 1);
         }
         
         
@@ -389,10 +401,13 @@ public class TrendDisplayPanel extends JPanel
         
         // draw the Temperature grid lines
         g2d.setColor(tempGridColor);
-        for (double t = 0; t < ((dim.height>135)?130:120); t+=20) {
+        double startTemp = -20;
+        double endTemp = 110;
+        double tempStep = (dim.height > 180) ? 10.0: 20.0;
+        for (double t = startTemp; t < endTemp; t += tempStep) {
             int y = GetTempY(t);
-            DrawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 1);
-            g2d.drawString(String.format("%.0f", t), dim.width-mGraphEndX, y+5);
+            DrawDashedLine(g2d, msGraphStartX, y, dim.width-msGraphEndX, y, 1);
+            g2d.drawString(String.format("%.0f", t), dim.width-msGraphEndX, y+5);
         }
         
         
@@ -407,10 +422,10 @@ public class TrendDisplayPanel extends JPanel
         
         // Draw the Barometric Pressure Grid Lines
         g2d.setColor(pressureGridColor);
-        for (double b = 29.0; b < 31; b+=0.5) {
+        for (double b = 28.5; b < 31; b += (dim.height > 180) ? 0.25 : 0.5) {
             int y = GetBarometerY(b);
-            DrawDashedLine(g2d, mGraphStartX, y, dim.width-mGraphEndX, y, 1);
-            g2d.drawString(String.format("%.1f", b), 0, y+5);
+            DrawDashedLine(g2d, msGraphStartX, y, dim.width-msGraphEndX, y, 1);
+            g2d.drawString(String.format("%.2f", b), 0, y+5);
         }
         
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 12));

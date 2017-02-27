@@ -203,6 +203,7 @@ class PiWeather
     
     /**
      * GetJarFilename() get the jar file name if we're in a jar file
+     * @return returns the jar filename if we're executing from a jar.  null if not
      */
     private String GetJarFilename()
     {
@@ -211,7 +212,7 @@ class PiWeather
         if (urlJar == null)
             return null;
         String urlStr = urlJar.toString();
-        System.out.println(urlStr);
+        //System.out.println(urlStr);
         int from = "jar:file:".length();
         int to = urlStr.indexOf("!/");
         return urlStr.substring(from, to);
