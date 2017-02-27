@@ -262,22 +262,34 @@ public class TrendDisplayPanel extends JPanel
      */
     public void UpdateData(ArrayList<TrendData> list)
     {
-        mTrendData = new ArrayList<TrendData>() ;
+        mTrendData = new ArrayList<TrendData>();
 
-        for (int i = 0 ; i<list.size();i++){
+        for (int i = 0 ; i<list.size();i++) {
             mTrendData.add(list.get(i)) ;
         }
+        UpdateCycling();
+        UpdateDrawingData();
     }
+    
+    
+    /**
+     * UpdateCycling()  Update the days displayed when cycling
+     * 
+     */
+    private void UpdateCycling()
+    {
+        if (mCycleDisplayDays) {
+            mDisplayDays++;
+            if (mDisplayDays > 10) mDisplayDays = 1;
+        }
+    }
+    
     
     private void UpdateDrawingData()
     {
         
         if (mTrendData == null || mTrendData.size() < 2) return;
         
-        if (mCycleDisplayDays) {
-            mDisplayDays++;
-            if (mDisplayDays > 10) mDisplayDays = 1;
-        }
         
         Dimension dim = getSize();
         int width = dim.width - (msGraphStartX + msGraphEndX);

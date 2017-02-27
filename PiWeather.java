@@ -212,9 +212,9 @@ class PiWeather
         if (urlJar == null)
             return null;
         String urlStr = urlJar.toString();
-        //System.out.println(urlStr);
         int from = "jar:file:".length();
         int to = urlStr.indexOf("!/");
+        if (from == -1 || to == -1) return null;
         return urlStr.substring(from, to);
     }
     
