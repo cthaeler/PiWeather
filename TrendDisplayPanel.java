@@ -42,6 +42,9 @@ public class TrendDisplayPanel extends JPanel
     /** top of the graph */
     private static int msGraphEndY = 10;
     
+    /** saved panel size to limit data updates on irrevivent updates */
+    private static Dimension msPanelSize = new Dimension(0, 0);
+    
     /**
      * TrendDisplayPanel()  Constructor
      * 
@@ -337,21 +340,29 @@ public class TrendDisplayPanel extends JPanel
                 }
             }
         }
-        for (int i = 0; i < 7; i++) {
-       	    mData = new int[7][mTrendData.size()-firstVisible];
-	}
+        int numDataPoints = mTrendData.size()-firstVisible;
+       	mData = new int[7][numDataPoints];
 
-        for (int i=firstVisible, di=0; i < mTrendData.size(); i++, di++)
-        {
-            TrendData td = mTrendData.get(i);
-            mData[0][di] = GetX(td.GetDateTime()); // 0 is the time value (X)
-            mData[1][di] = GetTempY(td.GetTemp()); // 1 is the y temperature
-            mData[2][di] = GetHumidityY(td.GetHumidity()); // 2 is the humidity
-            mData[3][di] = GetBarometerY(td.GetBarometer()); // 3 is the barometer
-            mData[4][di] = GetTempY(td.GetSensorTemp()); // 4 is the y sensor temperature
-            mData[5][di] = GetHumidityY(td.GetSensorHumidity()); // 5 is the sensor humidity
-            mData[6][di] = GetBarometerY(td.GetSensorBarometer()); // 6 is the sensor barometer
-        }
+		try {
+	        for (int i=firstVisible, di=0; i < mTrendData.size(); i++, di++)
+	        {
+	        	if (di >= numDataPoints) {
+	        		System.out.println(LocalDateTime.now());
+					System.out.println("numDataPoints = " + numDataPoints);
+		        	System.out.println("di = " + di);
+		        }
+	            TrendData td = mTrendData.get(i);
+	            mData[0][di] = GetX(td.GetDateTime()); // 0 is the time value (X)
+	            mData[1][di] = GetTempY(td.GetTemp()); // 1 is the y temperature
+	            mData[2][di] = GetHumidityY(td.GetHumidity()); // 2 is the humidity
+	            mData[3][di] = GetBarometerY(td.GetBarometer()); // 3 is the barometer
+	            mData[4][di] = GetTempY(td.GetSensorTemp()); // 4 is the y sensor temperature
+	            mData[5][di] = GetHumidityY(td.GetSensorHumidity()); // 5 is the sensor humidity
+	            mData[6][di] = GetBarometerY(td.GetSensorBarometer()); // 6 is the sensor barometer
+	        }
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	    }
         repaint();
     }
     
@@ -385,13 +396,18 @@ public class TrendDisplayPanel extends JPanel
     private void doDrawing(Graphics graphics)
     {
         setBackground(Color.BLACK);
-        UpdateDrawingData();
+        Dimension dim = getSize();
+        if (!dim.equals(msPanelSize)) {
+	        UpdateDrawingData();
+	        msPanelSize = dim;
+	        System.out.println(dim);
+	    }
     
         if (mVertGrid == null || mData == null) return;
         
         Graphics2D g2d = (Graphics2D) graphics;
         
-        Dimension dim = getSize();
+        
         
         // draw the vertical grid lines
         g2d.setColor(new Color(100, 100, 100));
