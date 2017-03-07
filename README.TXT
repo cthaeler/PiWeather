@@ -9,4 +9,4 @@ PURPOSE OF PROJECT: Swing based weather for raspberry pi
 VERSION or DATE: 22 Feb 2017
 HOW TO START THIS PROJECT: PiWeather
 AUTHORS: Charles Thaeler
-USER INSTRUCTIONS:
+USER INSTRUCTIONS: see the help in the app for all explanations
