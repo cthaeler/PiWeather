@@ -52,5 +52,6 @@ docs: classes
 
 clean:
 	$(RM) *.class
+	$(RM) *.ctxt
 	$(RM) *.jar
 	$(RM) -rf $(DOCDIR)/*
