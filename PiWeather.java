@@ -35,12 +35,12 @@ class PiWeather
 
     /** locations we know about */
     private static final String[][] msLocations = {
-        {"Novato", "http://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
-        {"Petaluma", "http://forecast.weather.gov/MapClick.php?lat=38.2324&lon=-122.6366&unit=0&lg=english&FcstType=dwml"},
-        {"Reno", "http://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
-        {"Escondido", "http://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
-        {"Chicago", "http://forecast.weather.gov/MapClick.php?lat=41.85&lon=-87.65&unit=0&lg=english&FcstType=dwml"},
-        {"New York", "http://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
+        {"Novato", "https://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
+        {"Petaluma", "https://forecast.weather.gov/MapClick.php?lat=38.2324&lon=-122.6366&unit=0&lg=english&FcstType=dwml"},
+        {"Reno", "https://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
+        {"Escondido", "https://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
+        {"Chicago", "https://forecast.weather.gov/MapClick.php?lat=41.85&lon=-87.65&unit=0&lg=english&FcstType=dwml"},
+        {"New York", "https://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
     
     /** map URLs for the center column of the UI */
@@ -56,15 +56,16 @@ class PiWeather
     /** satalite URLs for the center column of the UI */
     private static final String[] msSatURLs = {
         // Sat images - US
-        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_vis.jpg",  // Sat image
-        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_ir.jpg", // IR
-        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_irbw.jpg", // IRBW
-        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_US_wv.jpg", // Weather
+        "https://www.aviationweather.gov/data/obs/sat/us/sat_vis_us.jpg",  // Sat image
+        "https://www.aviationweather.gov/data/obs/sat/us/sat_ircol_us.jpg",  // Sat IR
+        "https://www.aviationweather.gov/data/obs/sat/us/sat_irbw_us.jpg",  // Sat IRBW
+        "https://www.aviationweather.gov/data/obs/sat/us/sat_wv_us.jpg",  // Sat Weather
+
         // Sat Images - WMC (Winamuca, western US)
-        "http://www.aviationweather.gov/adds/data/satellite/latest_WMC_vis.jpg",  // Sat image
-        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_ir.jpg", // IR
-        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_irbw.jpg", // IRBW
-        "http://www.aviationweather.gov/adds/data/satellite/latest_sm_WMC_wv.jpg", // Weather
+        "https://www.aviationweather.gov/data/obs/sat/us/sat_vis_wmc.jpg",  // Sat image
+        "https://www.aviationweather.gov/data/obs/sat/us/sat_ircol_wmc.jpg",  // Sat IR
+        "https://www.aviationweather.gov/data/obs/sat/us/sat_irbw_wmc.jpg",  // Sat IRBW
+        "https://www.aviationweather.gov/data/obs/sat/us/sat_wv_wmc.jpg",  // Sat Weather
     };
 
     
@@ -1045,7 +1046,8 @@ class PiWeather
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH_mm");
         String tstr = dt.format(formatter);
         // save the xml
-        Path p = Paths.get("./wxfiles/wxfile_" + mLocationURL + "_" + tstr + ".xml");
+        Path p = Paths.get("./wxfiles/wxfile_" + mLocationName + "_" + tstr + ".xml");
+        
         try {
             URL url = new URL(mLocationURL);
             InputStream in = url.openStream();
@@ -1054,12 +1056,16 @@ class PiWeather
             OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(p, CREATE, APPEND));
             String line = null;
             while ((line = reader.readLine()) != null) {
-                writer.write(line);
-                writer.write("\n");
+                System.out.println("Got line:"+line);
+                writer.write(line + "\n");
             }
+            reader.close();
             writer.flush();
-        } catch (IOException x) {
-            System.err.println(x);
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("SaveWxXMLFile: Catch exception");
+            System.err.println(e);
+            e.printStackTrace();
         }
     }
     
@@ -1080,19 +1086,23 @@ class PiWeather
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
-            
             if (mSaveWxFiles) {
                 LocalDateTime dt = LocalDateTime.now();
                 if (dt.getMinute()%20 == 0) { // only save every 20 minutes max
                     SaveWxXMLFile();
                 }
             }
-
+            
+            //System.out.println("Dump wx file:"+ mLocationURL);
+            //SaveWxXMLFile();
+            //System.out.println("Done Dump");
+            //System.out.println("Reading From Web");
             URL url = new URL(mLocationURL);
             InputStream stream = url.openStream();
+            //System.out.println("Stream Open");
             Document doc = factory.newDocumentBuilder().parse(stream);
-            
-
+            //System.out.println("done reading from web");
+           
             if (UpdateDataValues(doc)) {
                 // don't bother trying to update the forcast if the data values update failed
                 if (UpdateForecastValues(doc)) {
@@ -1104,6 +1114,8 @@ class PiWeather
                 mLastUpdateLabel.setForeground(Color.red);
             }
         } catch (Exception e) {
+            System.out.println("UpdateFromWeb: Catch exception");
+            e.printStackTrace();
             mLastUpdateLabel.setForeground(Color.red);
         }
     }
