@@ -50,7 +50,14 @@ public class ForecastDataValue
     {
         // initialise instance variables
         mTemp = temp;
-        mIconURL = iconURL;
+        
+        // if it's an http make it https
+        if (iconURL.substring(0,5).equalsIgnoreCase("http:")) {
+            mIconURL = "https:" + iconURL.substring(5);
+        } else {
+            mIconURL = iconURL;
+        }
+
         mInfo = info;
         CreateUIComponents();
         SetIconImage();
@@ -65,15 +72,15 @@ public class ForecastDataValue
         mTempLabel.setFont(new Font("Monospaced", Font.PLAIN, 48));
         mTempLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mTempLabel.setForeground(Color.white);
-        
+
         mInfoLabel = new JLabel("");
         mInfoLabel.setFont(new Font("Monospaced", Font.PLAIN, 14));
         mInfoLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mInfoLabel.setForeground(Color.white);
-        
+
         mImageLabel = new JLabel("");
     }
-    
+
     /**
      * isImageCached()  we cache icons.  Is this one cached?
      * 
@@ -91,15 +98,15 @@ public class ForecastDataValue
             try {
                 cacheDir.mkdir();
             } catch (Exception e) {
-              return false;
+                return false;
             }
         }
-    
-        File cacheFile = new File(cachedImageFilename(url));
+
+        String filename = cachedImageFilename(url);
+        File cacheFile = new File(filename);
         return cacheFile.exists();
     }
-    
-    
+
     /**
      * cachedImageFileName() returns the badURL icon if there's a glitch
      * 
@@ -110,11 +117,11 @@ public class ForecastDataValue
     private String cachedImageFilename(String url)
     {
         String cacheFile = "icons/badURL.png";
-        
+
         // the URL should look like one of the following
         // http://forecast.weather.gov/newimages/medium/nshra60.png
         // http://forecast.weather.gov/DualImage.php?i=shra&amp;j=few&amp;ip=20
-        
+
         if (url.contains("DualImage")) {
             int idxi = url.indexOf("i=");
             int idxamp = url.indexOf("&", idxi);
@@ -130,11 +137,10 @@ public class ForecastDataValue
             String fname = url.substring(idx+1, url.length());
             cacheFile = "cache/"+fname;
         }
-        
+
         return cacheFile;
     }
-    
-    
+
     /**
      * SetIconImage()  Set the icon image from the url
      */
@@ -142,25 +148,26 @@ public class ForecastDataValue
     {
 
         try {
-          if (isImageCached(mIconURL)) {
-            Image image = ImageIO.read(new File(cachedImageFilename(mIconURL)));
+            String filename = cachedImageFilename(mIconURL);
+            if (!isImageCached(mIconURL)) {
+                URL url = new URL(mIconURL);
+                
+                BufferedImage image = ImageIO.read(url);
+                if (image != null) {
+                    ImageIO.write(image, "png", new File(filename));
+                } else {
+                    System.out.println("image is null");
+                }
+            }
+            Image image = ImageIO.read(new File(filename));
             mImageLabel.setIcon(new ImageIcon(image));
-          } else {
-            URL imgURL = new URL(mIconURL);
-            BufferedImage image = ImageIO.read(imgURL);
-            
-            File cacheFile = new File(cachedImageFilename(mIconURL));
-            ImageIO.write(image, "PNG", cacheFile);
-            //if (image.getHeight(null) > 80)
-            //  mImageLabel.setIcon(new ImageIcon(image.getScaledInstance(80, -1, Image.SCALE_AREA_AVERAGING)));
-            //else
-            mImageLabel.setIcon(new ImageIcon(image));
-          }
-        } catch (IOException e) {
-          mImageLabel.setIcon(new ImageIcon("badURL.png"));
+        } catch (Exception e) {
+            System.out.println("Exception");
+            e.printStackTrace();
+            mImageLabel.setIcon(new ImageIcon("badURL.png"));
         }
     }
-    
+
     /**
      * setTemp() set the temperature
      * 
@@ -186,28 +193,33 @@ public class ForecastDataValue
             info = info.substring(0, Math.min(info.length(), 15));
         } else {
             if(isEven) {
-               // even
-               info = String.format("%15s", info);
+                // even
+                info = String.format("%15s", info);
             } else {
-               // odd
-               info = String.format("%-15s", info);
+                // odd
+                info = String.format("%-15s", info);
             }
         }
         mInfo = info;
         mInfoLabel.setText(mInfo);
     }
-    
+
     /**
      * setIconURL() set the icon URL
      * 
      * @param url the icon url
      */
-    public void setIconURL(String url)
+    public void setIconURL(String iconURL)
     {
-        mIconURL = url;
+        if (iconURL.substring(0,5).equalsIgnoreCase("http:")) {
+            mIconURL = "https:" + iconURL.substring(5);
+        } else {
+            mIconURL = iconURL;
+        }
+
         SetIconImage();
     }
-    
+
     /**
      * getImageLabel()
      * 
@@ -217,7 +229,7 @@ public class ForecastDataValue
     {
         return mImageLabel;
     }
-    
+
     /**
      * getInfoLabel()
      * 
@@ -227,13 +239,13 @@ public class ForecastDataValue
     {
         return mInfoLabel;
     }
-    
+
     /**
      * getTempLabel() get the JLabel
      * 
      * @return the JLabel for this object
      */
-        public JLabel getTempLabel()
+    public JLabel getTempLabel()
     {
         return mTempLabel;
     }
