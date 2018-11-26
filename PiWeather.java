@@ -865,14 +865,14 @@ class PiWeather
      * 
      * @return a double value for e or 0 if it fails
      */
-    private static double ReadValueFromDoc(Document doc, String e)
+    private static double ReadValueFromDoc(Document doc, String elem)
     {
         NodeList dataNodes = doc.getElementsByTagName("data");
         for (int n = 0; n < dataNodes.getLength(); n++) {
             Element element = (Element) dataNodes.item(n);
             String typeString = element.getAttribute("type");
             if (typeString.equals("current observations")) {
-                NodeList nodes = element.getElementsByTagName(e);
+                NodeList nodes = element.getElementsByTagName(elem);
                 // iterate the pressures
                 for (int i = 0; i < nodes.getLength(); i++) {
                    Element childElement = (Element) nodes.item(i);
@@ -881,8 +881,13 @@ class PiWeather
                    String strval = GetCharacterDataFromElement(line);   
                    if (strval.equals("NA"))
                        continue;
-                   double d = Double.parseDouble(strval);
-                   return d;
+                   try {    
+                       double d = Double.parseDouble(strval);
+                       return d;
+                    } catch (Exception e) {
+                        System.out.println("Bad Double Val " + elem + " = " + strval);
+                        return 0.0;
+                    }
                 }
             }
         }
