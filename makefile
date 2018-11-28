@@ -30,7 +30,8 @@ CLASSES = \
 	TrendData.java \
 	TrendDisplayPanel.java \
 	UIUpdateTimer.java \
-	WxSensor.java
+	WxSensor.java \
+	AirportData.java
 
 default: classes
 

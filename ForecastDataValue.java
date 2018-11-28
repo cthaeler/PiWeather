@@ -162,8 +162,8 @@ public class ForecastDataValue
             Image image = ImageIO.read(new File(filename));
             mImageLabel.setIcon(new ImageIcon(image));
         } catch (Exception e) {
-            System.out.println("Exception");
-            e.printStackTrace();
+            System.out.println("Bad Icon Image " + mIconURL);
+            //e.printStackTrace();
             mImageLabel.setIcon(new ImageIcon("badURL.png"));
         }
     }

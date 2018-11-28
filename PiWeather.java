@@ -42,6 +42,13 @@ class PiWeather
         {"Chicago", "https://forecast.weather.gov/MapClick.php?lat=41.85&lon=-87.65&unit=0&lg=english&FcstType=dwml"},
         {"New York", "https://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
     };
+
+
+    /** possible raw data for airports */
+    private static final String[][] msAirports = {
+        {"KDVO", "https://w1.weather.gov/data/METAR/KDVO.1.txt"},
+        {"KO69", "https://w1.weather.gov/data/METAR/KO69.1.txt"},
+    };
     
     /** map URLs for the center column of the UI */
     private static final String[] msMapURLs = {
@@ -68,7 +75,10 @@ class PiWeather
         "https://www.aviationweather.gov/data/obs/sat/us/sat_wv_wmc.jpg",  // Sat Weather
     };
 
-    
+
+    /** global variables for debugging */
+    public static int msDebugLevel = 0;
+
     /** supported sensors */
     private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "BMP280", "DUMMY"};
     
@@ -156,8 +166,6 @@ class PiWeather
     private boolean mSaveWxFiles = false;
     /** number of trend days to display - defaults to 3 days unless -td is specified on the command line */
     private int mTrendDataDays = 3;
-    /** show verbose debugging data */
-    private boolean mVerbose = false;
     
     /** the weather sensor */
     private WxSensor mWxSensor;
@@ -183,7 +191,7 @@ class PiWeather
             ReadTextTrendData();
             CleanTrendData();
         }
-        if (mVerbose)
+        if (msDebugLevel > 0)
             DumpTrendData("---- Initial Read ----");
             
         if (HaveSensor())
@@ -242,7 +250,7 @@ class PiWeather
                         
                         if (je.isDirectory()) 
                             continue;
-                        if (mVerbose)
+                        if (msDebugLevel > 0)
                             System.out.println(je.getName());
                         InputStream is = jarfile.getInputStream(je);
                         FileOutputStream fo = new FileOutputStream(fl);
@@ -334,7 +342,7 @@ class PiWeather
                     if (IsSupportedSensor(args[i+1])) {
                         String sensor = args[i+1].toUpperCase();
                         mWxSensor = GetWxSensor(sensor);
-                        if (mVerbose && mWxSensor != null)
+                        if (msDebugLevel > 0 && mWxSensor != null)
                             System.out.println("Sensor: " + mWxSensor.GetName());
                         i++;
                     } else {
@@ -373,7 +381,7 @@ class PiWeather
                 }
                 break;
                 
-            case "-airport":
+            case "-airport": case "-a":
                 if (i+1 >= args.length) {
                     PrintUsage();
                     System.exit(1);
@@ -403,10 +411,14 @@ class PiWeather
                 }
                 break;
                 
-            case "-ll": // list locations and exit
+            case "-list": // list locations and exit
                 for (String[] loc : msLocations) {
                     System.out.println(loc[0]);
                 }
+                System.exit(1);
+                
+            case "-ll": // by Lat Long
+                System.out.println("Not yet Implemented");
                 System.exit(1);
                 
             case "-ftd": // generate take Trend Data
@@ -439,8 +451,25 @@ class PiWeather
                 PrintUsage();
                 System.exit(1);
                 
-            case "-v":
-                mVerbose = true;
+            case "-debug":
+                if (i+1 >= args.length) {
+                    PrintUsage();
+                    System.exit(1);
+                } else {
+                    try {
+                        msDebugLevel = Integer.parseInt(args[i+1]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Invalid debug level");
+                        PrintUsage();
+                        System.exit(1);
+                    }
+                    if (msDebugLevel < 0 || msDebugLevel > 5) {
+                        System.err.println("Invalid debug level");
+                        PrintUsage();
+                        System.exit(1);
+                    }
+                    i++;
+                }
                 break;
                 
             case "-wx": // save wx files
@@ -468,15 +497,16 @@ class PiWeather
     private void PrintUsage()
     {
         System.out.println("Usage: PiWeather -s [DHT11, DHT22, BME280, DUMMY] -td 4 -f");
-        System.out.println("  -s         Sensor type, one of DHT11, DHT22, BME280 or DUMMY The DUMMY sensor is a simulatored sensor for testing");
-        System.out.println("  -f         Full frame");
-        System.out.println("  -td <num>  Show num (1-30) days of trend data.  0 == cycle through # of days");
-        System.out.println("  -ftd       Generate Fake Trend Data and exit");
-        System.out.println("  -wx        Save Wx files for later analysis");
-        System.out.println("  -l         Specify a location");
-        System.out.println("  -ll        Show a list of known locations and exit");
-        System.out.println("  -airport   Use an airport (must be US) as a location");
-        System.out.println("  -v         Verbose");
+        System.out.println("  -s              Sensor type, one of DHT11, DHT22, BME280 or DUMMY The DUMMY sensor is a simulatored sensor for testing");
+        System.out.println("  -f               Full frame");
+        System.out.println("  -td <num>        Show num (1-30) days of trend data.  0 == cycle through # of days");
+        System.out.println("  -ftd             Generate Fake Trend Data and exit");
+        System.out.println("  -wx              Save Wx files for later analysis");
+        System.out.println("  -l               Specify a location");
+        System.out.println("  -list            Show a list of known locations and exit");
+        System.out.println("  -ll <lat> <long> Use Lat Long for location");
+        System.out.println("  -airport         Use an airport (must be US) as a location");
+        System.out.println("  -debug <level>   Debug Level (0-5)");
     }
     
     
@@ -808,7 +838,7 @@ class PiWeather
         
         rightMainPanel.add(forcastPanel);
         
-        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, mVerbose);
+        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, msDebugLevel > 0);
         
         rightMainPanel.add(mTrendDisplayPanel);
  
@@ -975,6 +1005,7 @@ class PiWeather
             mWxImageLabel.setIcon(new ImageIcon(image));
         } catch (IOException e) {
           // Don't do anything
+          System.out.println("Failed to get image " + msMapURLs[mCurMap]);
         }
         
         try {
@@ -988,6 +1019,7 @@ class PiWeather
             mSatImageLabel.setIcon(new ImageIcon(image));
         } catch (IOException e) {
           // Don't do anything
+          System.out.println("Failed to get image " + msSatURLs[mCurSat]);
         }
     }
     
@@ -1282,7 +1314,7 @@ class PiWeather
             if (addOrRemoved) {
                 CleanTrendData();
                 SaveTextTrendData();
-                if (mVerbose)
+                if (msDebugLevel > 0)
                     DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----");
             }
             
