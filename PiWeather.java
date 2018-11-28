@@ -522,7 +522,9 @@ class PiWeather
         // if no location was specified setup Novato
         if (mLocationName == null) {
             mLocationName = msLocations[0][0];
-            mLocationURL = msLocations[0][1];
+            double lat = Double.parseDouble(msLocations[0][1]);
+            double lng = Double.parseDouble(msLocations[0][2]);
+            SetupLocationFromLatLong(lat, lng);
             mTrendDataFilename = "data/" + mLocationName + "_trend_data.txt";
         }
     }
