@@ -35,12 +35,12 @@ class PiWeather
 
     /** locations we know about */
     private static final String[][] msLocations = {
-        {"Novato", "https://forecast.weather.gov/MapClick.php?lat=38.11&lon=-122.57&unit=0&lg=english&FcstType=dwml"},
-        {"Petaluma", "https://forecast.weather.gov/MapClick.php?lat=38.2324&lon=-122.6366&unit=0&lg=english&FcstType=dwml"},
-        {"Reno", "https://forecast.weather.gov/MapClick.php?lat=39.5296&lon=-119.8138&unit=0&lg=english&FcstType=dwml"},
-        {"Escondido", "https://forecast.weather.gov/MapClick.php?lat=33.1192&lon=-117.0864&unit=0&lg=english&FcstType=dwml"},
-        {"Chicago", "https://forecast.weather.gov/MapClick.php?lat=41.85&lon=-87.65&unit=0&lg=english&FcstType=dwml"},
-        {"New York", "https://forecast.weather.gov/MapClick.php?lat=40.7142&lon=-74.0059&unit=0&lg=english&FcstType=dwml"},
+        {"Novato",    "38.11",   "-122.57"},
+        {"Petaluma",  "38.2324", "-122.6366"},
+        {"Reno",      "39.5296", "-119.8138"},
+        {"Escondido", "33.1192", "-117.0864"},
+        {"Chicago",   "41.85",   "-87.65"},
+        {"New York",  "40.7142", "-74.0059"},
     };
 
 
@@ -191,7 +191,7 @@ class PiWeather
             ReadTextTrendData();
             CleanTrendData();
         }
-        if (msDebugLevel > 0)
+        if (msDebugLevel > 1)
             DumpTrendData("---- Initial Read ----");
             
         if (HaveSensor())
@@ -250,7 +250,7 @@ class PiWeather
                         
                         if (je.isDirectory()) 
                             continue;
-                        if (msDebugLevel > 0)
+                        if (msDebugLevel > 1)
                             System.out.println(je.getName());
                         InputStream is = jarfile.getInputStream(je);
                         FileOutputStream fo = new FileOutputStream(fl);
@@ -322,7 +322,19 @@ class PiWeather
         
         return null;
     }
-    
+
+
+    /**
+     * SetupLocationFromLatLong()
+     *
+     */
+    private void SetupLocationFromLatLong(double lat, double lng)
+    {
+         mLocationURL = "https://forecast.weather.gov/MapClick.php?lat=" +
+                            String.format("%.4f", lat) + "&lon=" +
+                            String.format("%.4f", lng) + "&unit=0&lg=english&FcstType=dwml";
+    }
+
     /**
      * ProcessArgs()  Parse the command line arguments.  Sets variable to match arguments
      * 
@@ -342,7 +354,7 @@ class PiWeather
                     if (IsSupportedSensor(args[i+1])) {
                         String sensor = args[i+1].toUpperCase();
                         mWxSensor = GetWxSensor(sensor);
-                        if (msDebugLevel > 0 && mWxSensor != null)
+                        if (msDebugLevel > 1 && mWxSensor != null)
                             System.out.println("Sensor: " + mWxSensor.GetName());
                         i++;
                     } else {
@@ -367,7 +379,9 @@ class PiWeather
                         String locUC = args[i+1].toUpperCase();
                         if (locUC.equals(msLocations[l][0].toUpperCase())) {
                             mLocationName = msLocations[l][0];
-                            mLocationURL = msLocations[l][1];
+                            double lat = Double.parseDouble(msLocations[l][1]);
+                            double lng = Double.parseDouble(msLocations[l][2]);
+                            SetupLocationFromLatLong(lat, lng);
                             mTrendDataFilename = "data/" + mLocationName + "_trend_data.txt";
                             found = true;
                             break;
@@ -376,6 +390,8 @@ class PiWeather
                     if (!found) {
                         System.out.println("Location not found");
                         System.exit(1);
+                    } else {
+                        System.out.println(mLocationName + " URL is " + mLocationURL);
                     }
                     i++;
                 }
@@ -402,10 +418,8 @@ class PiWeather
                     double lng = AirportData.GetAirportLongitude(data);
                     if (lat != -999 && lng != -999) { // got valid data
                         mLocationName = airport;
-                        mLocationURL = "https://forecast.weather.gov/MapClick.php?lat=" +
-                                        String.format("%.4f", lat) + "&lon=" +
-                                        String.format("%.4f", lng) + "&unit=0&lg=english&FcstType=dwml";
-                        mTrendDataFilename = "data/" + airport + "_trend_data.txt";
+                        mTrendDataFilename = "data/" + mLocationName + "_trend_data.txt";
+                        SetupLocationFromLatLong(lat, lng);
                     }
                     i++;
                 }
@@ -418,8 +432,26 @@ class PiWeather
                 System.exit(1);
                 
             case "-ll": // by Lat Long
-                System.out.println("Not yet Implemented");
-                System.exit(1);
+                if (i+2 >= args.length) {
+                    PrintUsage();
+                    System.exit(1);
+                } else {
+                    String latStr = args[i+1];
+                    String longStr = args[i+2];
+                    try {
+                        mLocationName = "LL_"+latStr+"_"+longStr;
+                        mTrendDataFilename = "data/" + mLocationName + "_trend_data.txt";
+                        double lat = Double.parseDouble(latStr);
+                        double lng = Double.parseDouble(longStr);
+                        SetupLocationFromLatLong(lat, lng);
+                    } catch (Exception e) {
+                        System.out.println("Bad lat long");
+                        PrintUsage();
+                        System.exit(1);
+                    }
+                }
+                i+=2;
+                break;
                 
             case "-ftd": // generate take Trend Data
                 mGenFakeTrendData = true;
@@ -467,6 +499,9 @@ class PiWeather
                         System.err.println("Invalid debug level");
                         PrintUsage();
                         System.exit(1);
+                    }
+                    if (msDebugLevel > 0) {
+                        System.out.println("Debug Level set to: " + msDebugLevel);
                     }
                     i++;
                 }
@@ -838,7 +873,7 @@ class PiWeather
         
         rightMainPanel.add(forcastPanel);
         
-        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, msDebugLevel > 0);
+        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, msDebugLevel > 1);
         
         rightMainPanel.add(mTrendDisplayPanel);
  
@@ -1314,7 +1349,7 @@ class PiWeather
             if (addOrRemoved) {
                 CleanTrendData();
                 SaveTextTrendData();
-                if (msDebugLevel > 0)
+                if (msDebugLevel > 1)
                     DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----");
             }
             
