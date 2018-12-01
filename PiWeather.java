@@ -53,12 +53,17 @@ class PiWeather
     
     /** map URLs for the center column of the UI */
     private static final String[] msMapURLs = {
+        "https://www.ssd.noaa.gov/goes/west/weus/avn-l.jpg",    // GOES-West IR
+        "https://www.ssd.noaa.gov/goes/west/weus/vis-l.jpg",    // GOES-West Visual
+        "https://www.ssd.noaa.gov/goes/west/weus/wv-l.jpg",     // GOES-West Water Vapor
+/**        
         "http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif",  // Precipitation
         "http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptyp.gif",  // Precipitation Type
         "http://weather.rap.ucar.edu/model/ruc12hr_sfc_wind.gif",  // Surface Winds
         "http://weather.rap.ucar.edu/model/ruc12hr_sfc_temp.gif",  // Temperature
         "http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif",  // Radar Reflectivity
         "http://weather.rap.ucar.edu/model/ruc12hr_0_clouds.gif",  // Clouds
+*/
     };
     
     /** satalite URLs for the center column of the UI */
