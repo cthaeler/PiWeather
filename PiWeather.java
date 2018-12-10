@@ -52,33 +52,34 @@ class PiWeather
     };
     
     /** map URLs for the center column of the UI */
-    private static final String[] msMapURLs = {
-        "https://www.ssd.noaa.gov/goes/west/weus/avn-l.jpg",    // GOES-West IR
-        "https://www.ssd.noaa.gov/goes/west/weus/vis-l.jpg",    // GOES-West Visual
-        "https://www.ssd.noaa.gov/goes/west/weus/wv-l.jpg",     // GOES-West Water Vapor
-/**        
-        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif",  // Precipitation
-        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptyp.gif",  // Precipitation Type
-        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_wind.gif",  // Surface Winds
-        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_temp.gif",  // Temperature
-        "http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif",  // Radar Reflectivity
-        "http://weather.rap.ucar.edu/model/ruc12hr_0_clouds.gif",  // Clouds
-*/
+    private static final String[][] msMapURLs = {      
+        {"http://weather.rap.ucar.edu/model/ruc12hr_sfc_prcp.gif" ,"RUC12 - sfc - prcp"},  // Precipitation
+        {"http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptyp.gif" ,"RUC12 - sfc - prcp type"},  // Precipitation Type
+        {"http://weather.rap.ucar.edu/model/ruc12hr_sfc_wind.gif" ,"RUC12 - sfc - Winds"},  // Surface Winds
+        {"http://weather.rap.ucar.edu/model/ruc12hr_sfc_temp.gif" ,"RUC12 - sfc - Temp"},  // Temperature
+        {"http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif" ,"RUC12 - sfc - radar"},  // Radar Reflectivity
+        {"http://weather.rap.ucar.edu/model/ruc12hr_0_clouds.gif" ,"RUC12 - clouds"},  // Clouds
     };
     
     /** satalite URLs for the center column of the UI */
-    private static final String[] msSatURLs = {
+    private static final String[][] msSatURLs = {
         // Sat images - US
-        "https://www.aviationweather.gov/data/obs/sat/us/sat_vis_us.jpg",  // Sat image
-        "https://www.aviationweather.gov/data/obs/sat/us/sat_ircol_us.jpg",  // Sat IR
-        "https://www.aviationweather.gov/data/obs/sat/us/sat_irbw_us.jpg",  // Sat IRBW
-        "https://www.aviationweather.gov/data/obs/sat/us/sat_wv_us.jpg",  // Sat Weather
+        {"https://www.aviationweather.gov/data/obs/sat/us/sat_vis_us.jpg", "US - Vis"},  // Sat image
+        {"https://www.aviationweather.gov/data/obs/sat/us/sat_ircol_us.jpg", "US - IR"},  // Sat IR
+        {"https://www.aviationweather.gov/data/obs/sat/us/sat_irbw_us.jpg", "US - IRBW"},  // Sat IRBW
+        {"https://www.aviationweather.gov/data/obs/sat/us/sat_wv_us.jpg", "US - Wx"},  // Sat Weather
 
         // Sat Images - WMC (Winamuca, western US)
-        "https://www.aviationweather.gov/data/obs/sat/us/sat_vis_wmc.jpg",  // Sat image
-        "https://www.aviationweather.gov/data/obs/sat/us/sat_ircol_wmc.jpg",  // Sat IR
-        "https://www.aviationweather.gov/data/obs/sat/us/sat_irbw_wmc.jpg",  // Sat IRBW
-        "https://www.aviationweather.gov/data/obs/sat/us/sat_wv_wmc.jpg",  // Sat Weather
+        {"https://www.aviationweather.gov/data/obs/sat/us/sat_vis_wmc.jpg", "WMC - Vis"},  // Sat image
+        {"https://www.aviationweather.gov/data/obs/sat/us/sat_ircol_wmc.jpg", "WMC - IR"},  // Sat IR
+        {"https://www.aviationweather.gov/data/obs/sat/us/sat_irbw_wmc.jpg", "WMC - IRBW"},  // Sat IRBW
+        {"https://www.aviationweather.gov/data/obs/sat/us/sat_wv_wmc.jpg", "WMC - Wx"},  // Sat Weather
+        
+        // GOES
+        {"https://www.ssd.noaa.gov/goes/west/weus/avn-l.jpg", "GOES-West IR"},    // GOES-West IR
+        {"https://www.ssd.noaa.gov/goes/west/weus/vis-l.jpg", "GOES-West Visual"},    // GOES-West Visual
+        {"https://www.ssd.noaa.gov/goes/west/weus/wv-l.jpg",  "GOES-West Water Vapor"},     // GOES-West Water Vapor
+  
     };
 
 
@@ -144,8 +145,10 @@ class PiWeather
     
     // UI components that need periodic update based on timer events
     /** the center panel map image */
+    private JLabel mWxImageBitmap;
     private JLabel mWxImageLabel;
     /** the center panel sat image */
+    private JLabel mSatImageBitmap;
     private JLabel mSatImageLabel;
     
     /** the trend display panel */
@@ -754,13 +757,23 @@ class PiWeather
         centerPanel.setLayout(imageBox);
         centerPanel.setBackground(Color.BLACK);
         
-        mWxImageLabel = new JLabel("");
+        // Wx Images
+        mWxImageBitmap = new JLabel("");
+        centerPanel.add(mWxImageBitmap);
+        mWxImageLabel = new JLabel("WxImg");
+        mWxImageLabel.setForeground(Color.white);
         centerPanel.add(mWxImageLabel);
         
         centerPanel.add(Box.createVerticalGlue());
         
-        mSatImageLabel = new JLabel("");
+        // Satelite Images
+        mSatImageBitmap = new JLabel("");
+        centerPanel.add(mSatImageBitmap);
+        
+        mSatImageLabel = new JLabel("Sat Img");
+        mSatImageLabel.setForeground(Color.white);
         centerPanel.add(mSatImageLabel);
+        
         centerPanel.add(Box.createVerticalGlue());
         
         return centerPanel;
@@ -1040,26 +1053,28 @@ class PiWeather
         try {
           mCurMap++;
           if (mCurMap >= msMapURLs.length) mCurMap=0;
-          URL imgURL = new URL(msMapURLs[mCurMap]);
+          URL imgURL = new URL(msMapURLs[mCurMap][0]);
           Image image = ImageIO.read(imgURL);
           if (image.getHeight(null) > imageSize)
-            mWxImageLabel.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
+            mWxImageBitmap.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
            else
-            mWxImageLabel.setIcon(new ImageIcon(image));
+            mWxImageBitmap.setIcon(new ImageIcon(image));
+          mWxImageLabel.setText(msMapURLs[mCurMap][1]);
         } catch (IOException e) {
           // Don't do anything
-          System.out.println("Failed to get image " + msMapURLs[mCurMap]);
+          System.out.println("Failed to get image " + msMapURLs[mCurMap][0]);
         }
         
         try {
           mCurSat++;
           if (mCurSat >= msSatURLs.length) mCurSat=0;
-          URL imgURL = new URL(msSatURLs[mCurSat]);
+          URL imgURL = new URL(msSatURLs[mCurSat][0]);
           Image image = ImageIO.read(imgURL);
           if (image.getHeight(null) > imageSize)
-            mSatImageLabel.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
+            mSatImageBitmap.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
            else
-            mSatImageLabel.setIcon(new ImageIcon(image));
+            mSatImageBitmap.setIcon(new ImageIcon(image));
+            mSatImageLabel.setText(msSatURLs[mCurSat][1]);
         } catch (IOException e) {
           // Don't do anything
           System.out.println("Failed to get image " + msSatURLs[mCurSat]);

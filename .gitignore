@@ -3,6 +3,7 @@ java.hprof.txt
 *.class
 *.ctxt
 *.pyc
+*.pui
 wxfiles
 wxfiles_fmt
 cache
