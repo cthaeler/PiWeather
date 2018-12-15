@@ -30,31 +30,6 @@ import java.time.*;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-
-enum Verbosity {
-    ShowSilent,
-    ShowExceptions,
-    ShowErrors,
-    ShowInformation,
-    ShowEverything;
-    
-    boolean ShowSilent() {
-        return this.ordinal() == Verbosity.ShowSilent.ordinal();
-    }
-    boolean ShowExceptions() {
-        return this.ordinal() > Verbosity.ShowSilent.ordinal();
-    }
-    boolean ShowErrors() {
-        return this.ordinal() > Verbosity.ShowExceptions.ordinal();
-    }
-    boolean ShowInformation() {
-        return this.ordinal() > Verbosity.ShowErrors.ordinal();
-    }
-    boolean ShowEverything() {
-        return this.ordinal() > Verbosity.ShowInformation.ordinal();
-    }
-}
-
 class PiWeather
 {
 
