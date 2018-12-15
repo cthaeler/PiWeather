@@ -95,7 +95,7 @@ public class AirportData
                 reader.close();
             } catch (Exception e) {
                 System.err.format("Exception occurred trying to read '%s'.", msAirportDataFilename);
-                e.printStackTrace();
+                if (PiWeather.DebugLevel().ShowExceptions()) e.printStackTrace();
             }
         }
         return null;

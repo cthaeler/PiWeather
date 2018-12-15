@@ -163,7 +163,7 @@ public class ForecastDataValue
             mImageLabel.setIcon(new ImageIcon(image));
         } catch (Exception e) {
             System.out.println("Bad Icon Image " + mIconURL);
-            //e.printStackTrace();
+            if (PiWeather.DebugLevel().ShowExceptions()) e.printStackTrace();
             mImageLabel.setIcon(new ImageIcon("badURL.png"));
         }
     }

@@ -3,6 +3,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.io.*;
 
 /**
  * TrendDisplayPanel is a JPanel used to display a line graph of historical observation data.
@@ -361,7 +362,7 @@ public class TrendDisplayPanel extends JPanel
 	            mData[6][di] = GetBarometerY(td.GetSensorBarometer()); // 6 is the sensor barometer
 	        }
 	    } catch (Exception e) {
-	    	e.printStackTrace();
+	    	if (PiWeather.DebugLevel().ShowExceptions()) e.printStackTrace();
 	    }
         repaint();
     }

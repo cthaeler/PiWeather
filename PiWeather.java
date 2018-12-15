@@ -30,6 +30,31 @@ import java.time.*;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
+
+enum Verbosity {
+    ShowSilent,
+    ShowExceptions,
+    ShowErrors,
+    ShowInformation,
+    ShowEverything;
+    
+    boolean ShowSilent() {
+        return this.ordinal() == Verbosity.ShowSilent.ordinal();
+    }
+    boolean ShowExceptions() {
+        return this.ordinal() > Verbosity.ShowSilent.ordinal();
+    }
+    boolean ShowErrors() {
+        return this.ordinal() > Verbosity.ShowExceptions.ordinal();
+    }
+    boolean ShowInformation() {
+        return this.ordinal() > Verbosity.ShowErrors.ordinal();
+    }
+    boolean ShowEverything() {
+        return this.ordinal() > Verbosity.ShowInformation.ordinal();
+    }
+}
+
 class PiWeather
 {
 
@@ -83,8 +108,6 @@ class PiWeather
     };
 
 
-    /** global variables for debugging */
-    public static int msDebugLevel = 0;
 
     /** supported sensors */
     private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "BMP280", "DUMMY"};
@@ -179,6 +202,10 @@ class PiWeather
     /** the weather sensor */
     private WxSensor mWxSensor;
     
+    /** global variables for debugging */
+    private static Verbosity msDebugLevel = Verbosity.ShowSilent;
+
+    
 
     
     /**
@@ -200,7 +227,8 @@ class PiWeather
             ReadTextTrendData();
             CleanTrendData();
         }
-        if (msDebugLevel > 1)
+
+        if (msDebugLevel.ShowEverything())
             DumpTrendData("---- Initial Read ----");
             
         if (HaveSensor())
@@ -215,6 +243,11 @@ class PiWeather
         
         SetupUI();
     }
+    
+    /**
+     * DebugLevel() get the debug level
+     */
+     public static Verbosity DebugLevel() { return msDebugLevel; }
     
     /**
      * GetJarFilename() get the jar file name if we're in a jar file
@@ -259,7 +292,7 @@ class PiWeather
                         
                         if (je.isDirectory()) 
                             continue;
-                        if (msDebugLevel > 1)
+                        if (msDebugLevel.ShowInformation())
                             System.out.println(je.getName());
                         InputStream is = jarfile.getInputStream(je);
                         FileOutputStream fo = new FileOutputStream(fl);
@@ -363,7 +396,7 @@ class PiWeather
                     if (IsSupportedSensor(args[i+1])) {
                         String sensor = args[i+1].toUpperCase();
                         mWxSensor = GetWxSensor(sensor);
-                        if (msDebugLevel > 1 && mWxSensor != null)
+                        if (msDebugLevel.ShowInformation() && mWxSensor != null)
                             System.out.println("Sensor: " + mWxSensor.GetName());
                         i++;
                     } else {
@@ -498,18 +531,20 @@ class PiWeather
                     System.exit(1);
                 } else {
                     try {
-                        msDebugLevel = Integer.parseInt(args[i+1]);
+                        int level = Integer.parseInt(args[i+1]);
+                        try {
+                            msDebugLevel = Verbosity.values()[ level ];
+                        } catch (Exception e) {
+                            System.err.println("Invalid debug level: " + level);
+                            PrintUsage();
+                            System.exit(1);
+                        }
                     } catch (NumberFormatException e) {
                         System.err.println("Invalid debug level");
                         PrintUsage();
                         System.exit(1);
                     }
-                    if (msDebugLevel < 0 || msDebugLevel > 5) {
-                        System.err.println("Invalid debug level");
-                        PrintUsage();
-                        System.exit(1);
-                    }
-                    if (msDebugLevel > 0) {
+                    if (msDebugLevel.ShowInformation()) {
                         System.out.println("Debug Level set to: " + msDebugLevel);
                     }
                     i++;
@@ -552,7 +587,13 @@ class PiWeather
         System.out.println("  -list            Show a list of known locations and exit");
         System.out.println("  -ll <lat> <long> Use Lat Long for location");
         System.out.println("  -airport         Use an airport (must be US) as a location");
-        System.out.println("  -debug <level>   Debug Level (0-5)");
+        System.out.println("  -debug <level>   Debug Level (0 is the default)");
+
+        int i = 0;
+        for (Verbosity v : Verbosity.values()) {
+            System.out.println("            " + i++ + "      " + v);
+        }
+
     }
     
     
@@ -894,7 +935,7 @@ class PiWeather
         
         rightMainPanel.add(forcastPanel);
         
-        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, msDebugLevel > 1);
+        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, msDebugLevel.ShowInformation());
         
         rightMainPanel.add(mTrendDisplayPanel);
  
@@ -1162,7 +1203,7 @@ class PiWeather
         } catch (IOException e) {
             System.out.println("SaveWxXMLFile: Catch exception");
             System.err.println(e);
-            e.printStackTrace();
+            if (DebugLevel().ShowExceptions()) e.printStackTrace();
         }
     }
     
@@ -1212,7 +1253,7 @@ class PiWeather
             }
         } catch (Exception e) {
             System.out.println("UpdateFromWeb: Catch exception");
-            e.printStackTrace();
+            if (DebugLevel().ShowExceptions()) e.printStackTrace();
             mLastUpdateLabel.setForeground(Color.red);
         }
     }
@@ -1372,7 +1413,7 @@ class PiWeather
             if (addOrRemoved) {
                 CleanTrendData();
                 SaveTextTrendData();
-                if (msDebugLevel > 1)
+                if (msDebugLevel.ShowInformation())
                     DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----");
             }
             
@@ -1380,7 +1421,7 @@ class PiWeather
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
-            e.printStackTrace();
+            if (DebugLevel().ShowExceptions()) e.printStackTrace();
             mLastUpdateLabel.setForeground(Color.red);
             return false;
         }
@@ -1416,7 +1457,7 @@ class PiWeather
             writer.close();
         } catch (IOException e) {
            System.err.println("error writing trend data file");
-           e.printStackTrace();
+           if (msDebugLevel.ShowExceptions()) e.printStackTrace();
         }
     }
      
@@ -1485,7 +1526,7 @@ class PiWeather
                 reader.close();
             } catch (Exception e) {
                 System.err.format("Exception occurred trying to read '%s'.", mTrendDataFilename);
-                e.printStackTrace();
+                if (DebugLevel().ShowExceptions()) e.printStackTrace();
             }
         }
     }
@@ -1585,7 +1626,7 @@ class PiWeather
     
     
     
-        
+    public static PiWeather piWXMain;        
 
   
     /**
@@ -1599,7 +1640,7 @@ class PiWeather
         
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                PiWeather piWXMain = new PiWeather(args);
+                piWXMain = new PiWeather(args);
                 piWXMain.UpdateFromWeb();
                 new UIUpdateTimer(5 * 60, piWXMain); // update every 5 minutes
                 new MapUpdateTimer(10, piWXMain);
