@@ -98,6 +98,7 @@ public class ForecastDataValue
             try {
                 cacheDir.mkdir();
             } catch (Exception e) {
+                if (PiWeather.DebugLevel().ShowStackTrace()) e.printStackTrace();
                 return false;
             }
         }
@@ -162,8 +163,8 @@ public class ForecastDataValue
             Image image = ImageIO.read(new File(filename));
             mImageLabel.setIcon(new ImageIcon(image));
         } catch (Exception e) {
+            if (PiWeather.DebugLevel().ShowStackTrace()) e.printStackTrace();
             System.out.println("Bad Icon Image " + mIconURL);
-            if (PiWeather.DebugLevel().ShowExceptions()) e.printStackTrace();
             mImageLabel.setIcon(new ImageIcon("badURL.png"));
         }
     }

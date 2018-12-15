@@ -362,7 +362,7 @@ public class TrendDisplayPanel extends JPanel
 	            mData[6][di] = GetBarometerY(td.GetSensorBarometer()); // 6 is the sensor barometer
 	        }
 	    } catch (Exception e) {
-	    	if (PiWeather.DebugLevel().ShowExceptions()) e.printStackTrace();
+	    	if (PiWeather.DebugLevel().ShowStackTrace()) e.printStackTrace();
 	    }
         repaint();
     }

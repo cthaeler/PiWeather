@@ -280,6 +280,7 @@ class PiWeather
                     }
                 }
             } catch (Exception e) {
+                if (DebugLevel().ShowStackTrace()) e.printStackTrace();
             }
         }
     }
@@ -987,6 +988,7 @@ class PiWeather
                        double d = Double.parseDouble(strval);
                        return d;
                     } catch (Exception e) {
+                        if (DebugLevel().ShowStackTrace()) e.printStackTrace();
                         System.out.println("Bad Double Val " + elem + " = " + strval);
                         return 0.0;
                     }
@@ -1059,42 +1061,63 @@ class PiWeather
     }
     
     
+    
+    /**
+     *  UpdateWxMapImage()
+     */
+     
+    private void UpdateWxMapImage(String urlStr, String text, JLabel bitmapLabel, JLabel textLabel)
+    {
+        int imageSize = 275;
+        try {
+          URL url = new URL(urlStr);
+          URLConnection con = url.openConnection();
+          con.setConnectTimeout(5000);
+          con.setReadTimeout(5000);
+          InputStream in = con.getInputStream();
+        
+          Image image = ImageIO.read(in);
+          if (image.getHeight(null) > imageSize)
+            bitmapLabel.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
+           else
+            bitmapLabel.setIcon(new ImageIcon(image));
+          textLabel.setText(text);
+        } catch (Exception e) {
+          if (DebugLevel().ShowStackTrace()) e.printStackTrace();
+          // Don't do anything
+          if (DebugLevel().ShowErrors()) System.out.println("Failed to get image " + msMapURLs[mCurMap][0]);
+          
+          try {
+              // Load a dummy image
+              Image image = ImageIO.read(new File("usa-physical.jpg"));
+              if (image.getHeight(null) > imageSize)
+                bitmapLabel.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
+               else
+                bitmapLabel.setIcon(new ImageIcon(image));
+              textLabel.setText("Bad Image");
+            } catch (Exception ioe) {
+                if (DebugLevel().ShowStackTrace()) e.printStackTrace();
+                if (DebugLevel().ShowErrors()) System.out.println("Failed to get Map image us-physical.jpg");
+            }
+        }
+    }
+      
     /**
      * UpdateWxMap()  Update the weather maps
      * 
      */
     public void UpdateWxMap()
     {
-        int imageSize = 275;
-        try {
-          mCurMap++;
-          if (mCurMap >= msMapURLs.length) mCurMap=0;
-          URL imgURL = new URL(msMapURLs[mCurMap][0]);
-          Image image = ImageIO.read(imgURL);
-          if (image.getHeight(null) > imageSize)
-            mWxImageBitmap.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
-           else
-            mWxImageBitmap.setIcon(new ImageIcon(image));
-          mWxImageLabel.setText(msMapURLs[mCurMap][1]);
-        } catch (IOException e) {
-          // Don't do anything
-          System.out.println("Failed to get image " + msMapURLs[mCurMap][0]);
-        }
+ 
+        /* first the Map */
+        mCurMap++;
+        if (mCurMap >= msMapURLs.length) mCurMap=0;
+        UpdateWxMapImage(msMapURLs[mCurMap][0], msMapURLs[mCurMap][1], mWxImageBitmap, mWxImageLabel);
         
-        try {
-          mCurSat++;
-          if (mCurSat >= msSatURLs.length) mCurSat=0;
-          URL imgURL = new URL(msSatURLs[mCurSat][0]);
-          Image image = ImageIO.read(imgURL);
-          if (image.getHeight(null) > imageSize)
-            mSatImageBitmap.setIcon(new ImageIcon(image.getScaledInstance(imageSize, -1, Image.SCALE_AREA_AVERAGING)));
-           else
-            mSatImageBitmap.setIcon(new ImageIcon(image));
-            mSatImageLabel.setText(msSatURLs[mCurSat][1]);
-        } catch (IOException e) {
-          // Don't do anything
-          System.out.println("Failed to get image " + msSatURLs[mCurSat]);
-        }
+        /* then the Sat map */
+        mCurSat++;
+        if (mCurSat >= msSatURLs.length) mCurSat=0;
+        UpdateWxMapImage(msSatURLs[mCurSat][0], msSatURLs[mCurSat][1], mSatImageBitmap, mSatImageLabel);
     }
     
     
@@ -1176,9 +1199,8 @@ class PiWeather
             writer.flush();
             writer.close();
         } catch (IOException e) {
-            System.out.println("SaveWxXMLFile: Catch exception");
-            System.err.println(e);
-            if (DebugLevel().ShowExceptions()) e.printStackTrace();
+            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
+            System.out.println("SaveWxXMLFile: Error");
         }
     }
     
@@ -1227,8 +1249,8 @@ class PiWeather
                 mLastUpdateLabel.setForeground(Color.red);
             }
         } catch (Exception e) {
+            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
             System.out.println("UpdateFromWeb: Catch exception");
-            if (DebugLevel().ShowExceptions()) e.printStackTrace();
             mLastUpdateLabel.setForeground(Color.red);
         }
     }
@@ -1396,7 +1418,7 @@ class PiWeather
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
-            if (DebugLevel().ShowExceptions()) e.printStackTrace();
+            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
             mLastUpdateLabel.setForeground(Color.red);
             return false;
         }
@@ -1431,8 +1453,8 @@ class PiWeather
             }
             writer.close();
         } catch (IOException e) {
-           System.err.println("error writing trend data file");
-           if (msDebugLevel.ShowExceptions()) e.printStackTrace();
+            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
+            if (DebugLevel().ShowErrors()) System.err.println("error writing trend data file");
         }
     }
      
@@ -1500,8 +1522,8 @@ class PiWeather
                 }
                 reader.close();
             } catch (Exception e) {
-                System.err.format("Exception occurred trying to read '%s'.", mTrendDataFilename);
-                if (DebugLevel().ShowExceptions()) e.printStackTrace();
+                if (DebugLevel().ShowStackTrace()) e.printStackTrace();
+                if (DebugLevel().ShowErrors()) System.err.format("Exception occurred trying to read '%s'.", mTrendDataFilename);
             }
         }
     }
@@ -1592,6 +1614,7 @@ class PiWeather
                 }
             }
         } catch (Exception e) {
+            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
             return false;
         }
         return true;

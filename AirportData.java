@@ -75,8 +75,9 @@ public class AirportData
                 }
                 InputStream in = new URL("https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat").openStream();
                 Files.copy(in, Paths.get(msAirportDataFilename));
-            } catch (IOException x) {
-                System.err.println(x);
+            } catch (IOException e) {
+                if (PiWeather.DebugLevel().ShowStackTrace()) e.printStackTrace();
+                if (PiWeather.DebugLevel().ShowErrors()) System.err.println(e);
             }
         }
 
@@ -94,8 +95,8 @@ public class AirportData
                 }
                 reader.close();
             } catch (Exception e) {
-                System.err.format("Exception occurred trying to read '%s'.", msAirportDataFilename);
-                if (PiWeather.DebugLevel().ShowExceptions()) e.printStackTrace();
+                if (PiWeather.DebugLevel().ShowStackTrace()) e.printStackTrace();
+                if (PiWeather.DebugLevel().ShowErrors()) System.err.format("Exception occurred trying to read '%s'.", msAirportDataFilename);
             }
         }
         return null;

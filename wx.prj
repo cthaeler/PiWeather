@@ -33,6 +33,7 @@
     <File>DHT11_Sensor.java</File>
     <File>UIUpdateTimer.java</File>
     <File>TimeUpdateTimer.java</File>
+    <File>Verbosity.java</File>
     <File>PiWeather.java</File>
   </Files>
 </PRJ>

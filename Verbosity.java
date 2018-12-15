@@ -8,23 +8,27 @@
 
 public enum Verbosity {
     ShowSilent,
-    ShowExceptions,
     ShowErrors,
+    ShowStackTrace,
     ShowInformation,
     ShowEverything;
     
     boolean ShowSilent() {
         return this.ordinal() == Verbosity.ShowSilent.ordinal();
     }
-    boolean ShowExceptions() {
+
+    boolean ShowErrors() {
         return this.ordinal() > Verbosity.ShowSilent.ordinal();
     }
-    boolean ShowErrors() {
-        return this.ordinal() > Verbosity.ShowExceptions.ordinal();
-    }
-    boolean ShowInformation() {
+    
+    boolean ShowStackTrace() {
         return this.ordinal() > Verbosity.ShowErrors.ordinal();
     }
+    
+    boolean ShowInformation() {
+        return this.ordinal() > Verbosity.ShowStackTrace.ordinal();
+    }
+    
     boolean ShowEverything() {
         return this.ordinal() > Verbosity.ShowInformation.ordinal();
     }

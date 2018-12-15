@@ -61,6 +61,7 @@ public class BMP280_Sensor extends WxSensor
             bri.close();
             proc.waitFor();
         } catch  (Exception e) {
+            if (PiWeather.DebugLevel().ShowStackTrace()) e.printStackTrace();
             mTemp = 0.0;
             mPressure = 0.0;
         }
