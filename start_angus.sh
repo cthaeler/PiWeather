@@ -10,4 +10,4 @@
 #  -airport   Use an airport (must be US) as a location
 #  -v         Verbose
 
-java PiWeather -debug 2 -l Petaluma -s BME280 -f -td 10
+java PiWeather -debug 1 -l Petaluma -s BME280 -f -td 10

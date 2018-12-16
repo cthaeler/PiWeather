@@ -16,11 +16,13 @@
     <Signature>UE Proj: v.1</Signature>
   </Project_ID>
   <Files>
-    <File>MapUpdateTimer.java</File>
     <File>start_piwx.sh</File>
+    <File>MapUpdateTimer.java</File>
     <File>makefile</File>
     <File>BMP280_Sensor.java</File>
     <File>DataValue.java</File>
+    <File>start_mac_wx.sh</File>
+    <File>start_angus.sh</File>
     <File>SensorUpdateTimer.java</File>
     <File>TrendDisplayPanel.java</File>
     <File>AirportData.java</File>
