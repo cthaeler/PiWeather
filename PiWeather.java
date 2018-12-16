@@ -1082,6 +1082,7 @@ class PiWeather
            else
             bitmapLabel.setIcon(new ImageIcon(image));
           textLabel.setText(text);
+          textLabel.setForeground(Color.white);
         } catch (Exception e) {
           if (DebugLevel().ShowStackTrace()) e.printStackTrace();
           // Don't do anything
@@ -1095,6 +1096,7 @@ class PiWeather
                else
                 bitmapLabel.setIcon(new ImageIcon(image));
               textLabel.setText("Bad Image");
+              textLabel.setForeground(Color.red);
             } catch (Exception ioe) {
                 if (DebugLevel().ShowStackTrace()) e.printStackTrace();
                 if (DebugLevel().ShowErrors()) System.out.println("Failed to get Map image us-physical.jpg");
