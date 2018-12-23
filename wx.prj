@@ -22,6 +22,7 @@
     <File>BMP280_Sensor.java</File>
     <File>DataValue.java</File>
     <File>start_mac_wx.sh</File>
+    <File>/Users/cst/github_repos/myRepos/PiWeather/sensors_py/</File>
     <File>start_angus.sh</File>
     <File>SensorUpdateTimer.java</File>
     <File>TrendDisplayPanel.java</File>
@@ -38,4 +39,7 @@
     <File>Verbosity.java</File>
     <File>PiWeather.java</File>
   </Files>
+  <Group_Filter>
+    <OF Name="/Users/cst/github_repos/myRepos/PiWeather/sensors_py/">*.*</OF>
+  </Group_Filter>
 </PRJ>

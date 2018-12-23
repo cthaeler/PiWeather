@@ -9,7 +9,7 @@ import java.io.*;
 public class BMP280_Sensor extends WxSensor
 {
     /** the python command to run to query the bmp280 sensor */
-    static private String msCmdStr = "python ./sensors/bmp280.py";
+    static private String msCmdStr = "python ./sensors_py/bmp280.py";
     
     /** the temperature cached at the last refresh */
     private double mTemp = 0.0;

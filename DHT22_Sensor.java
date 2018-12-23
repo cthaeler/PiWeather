@@ -8,7 +8,7 @@ import java.io.*;
 public class DHT22_Sensor extends WxSensor
 {
     /** the python command to run to query the dht22 sensor */
-    static private String msCmdStr = "python ./sensors/dht22.py";
+    static private String msCmdStr = "python ./sensors_py/dht22.py";
     
     /** the temperature cached at the last refresh */
     private double mTemp = 0.0;
