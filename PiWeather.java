@@ -6,6 +6,7 @@
  */
 import javax.swing.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.awt.*;
 
 import java.util.ArrayList;
@@ -223,7 +224,23 @@ class PiWeather
      * DebugLevel() get the debug level
      */
      public static Verbosity DebugLevel() { return msDebugLevel; }
-    
+     
+     /**
+      * DumpException(String errorString, Exception e)
+      */
+      public static void DumpError(String errorString, Exception exception)
+      {
+        if (DebugLevel().ShowErrors()) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm:ss");
+            LocalDateTime dateTime = LocalDateTime.now();
+            String tstr = dateTime.format(formatter);
+            System.err.println("ERROR: " + errorString + " at " + tstr);
+        }
+        if (exception != null && DebugLevel().ShowStackTrace()) {
+             exception.printStackTrace();
+        }
+      }
+
     /**
      * GetJarFilename() get the jar file name if we're in a jar file
      * @return returns the jar filename if we're executing from a jar.  null if not
@@ -280,7 +297,7 @@ class PiWeather
                     }
                 }
             } catch (Exception e) {
-                if (DebugLevel().ShowStackTrace()) e.printStackTrace();
+                DumpError("ExtractJarData", e);
             }
         }
     }
@@ -581,7 +598,11 @@ class PiWeather
     private void SetupUI()
     {
         // Create a new JFrame container.
-        JFrame jfrm = new JFrame("Pi Wx Display");
+        String frameLabel = "Pi Wx Display";
+        if (!DebugLevel().ShowSilent()) frameLabel += " - " + DebugLevel();
+        JFrame jfrm = new JFrame(frameLabel);
+
+
 
         // Terminate the program when the user closes the application
         jfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -616,6 +637,22 @@ class PiWeather
         // Add the panel to the frame
         jfrm.add(mainPanel);
         
+
+        try {
+            //URL resource = jfrm.getClass().getResource("./icon.gif");
+            //BufferedImage img = ImageIO.read(resource);
+            //if (img != null) System.out.println("found image " + img + " " + img.getIconWidth() + " by " + img.getIconHeight());
+            //jfrm.setIconImage(img);
+            
+            //ImageIcon img = new ImageIcon("./icon.gif);
+            //if (img != null) System.out.println("found image " + img + " " + img.getIconWidth() + " by " + img.getIconHeight());
+            //jfrm.setIconImage(img.getImage());
+            
+            jfrm.setIconImage(ImageIO.read(new File("./icon.gif")));
+        } catch (Exception e) {
+            DumpError("SetupUI: Icon Not found", e);
+        }
+
         // Display the frame.
         jfrm.setVisible(true);
     }
@@ -988,8 +1025,7 @@ class PiWeather
                        double d = Double.parseDouble(strval);
                        return d;
                     } catch (Exception e) {
-                        if (DebugLevel().ShowStackTrace()) e.printStackTrace();
-                        System.out.println("Bad Double Val " + elem + " = " + strval);
+                        DumpError("ReadValueFromDoc: Bad Double Val " + elem + " = " + strval , e);
                         return 0.0;
                     }
                 }
@@ -1086,7 +1122,7 @@ class PiWeather
         } catch (Exception e) {
           if (DebugLevel().ShowStackTrace()) e.printStackTrace();
           // Don't do anything
-          if (DebugLevel().ShowErrors()) System.out.println("Failed to get image " + msMapURLs[mCurMap][0]);
+          DumpError("UpdateWxMapImage: Failed to get image " + msMapURLs[mCurMap][0], e);
           
           try {
               // Load a dummy image
@@ -1098,8 +1134,7 @@ class PiWeather
               textLabel.setText("Bad Image");
               textLabel.setForeground(Color.red);
             } catch (Exception ioe) {
-                if (DebugLevel().ShowStackTrace()) e.printStackTrace();
-                if (DebugLevel().ShowErrors()) System.out.println("Failed to get Map image us-physical.jpg");
+                DumpError("UpdateWxMapImage: Failed to get Map image us-physical.jpg", ioe);
             }
         }
     }
@@ -1201,8 +1236,7 @@ class PiWeather
             writer.flush();
             writer.close();
         } catch (IOException e) {
-            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
-            System.out.println("SaveWxXMLFile: Error");
+            DumpError("SaveWxXMLFile", e);
         }
     }
     
@@ -1230,15 +1264,18 @@ class PiWeather
                 }
             }
             
-            //System.out.println("Dump wx file:"+ mLocationURL);
+            if (DebugLevel().ShowInformation()) System.out.println("Reading From: " + mLocationURL);
+            
+            //System.out.println("Dump wx file:");
             //SaveWxXMLFile();
             //System.out.println("Done Dump");
-            //System.out.println("Reading From Web");
+
             URL url = new URL(mLocationURL);
             InputStream stream = url.openStream();
-            //System.out.println("Stream Open");
+            
+            if (DebugLevel().ShowInformation()) System.out.println("Stream Open " + stream);
             Document doc = factory.newDocumentBuilder().parse(stream);
-            //System.out.println("done reading from web");
+            if (DebugLevel().ShowInformation()) System.out.println("done reading from web");
            
             if (UpdateDataValues(doc)) {
                 // don't bother trying to update the forcast if the data values update failed
@@ -1251,8 +1288,7 @@ class PiWeather
                 mLastUpdateLabel.setForeground(Color.red);
             }
         } catch (Exception e) {
-            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
-            System.out.println("UpdateFromWeb: Catch exception");
+            DumpError("UpdateFromWeb", e);
             mLastUpdateLabel.setForeground(Color.red);
         }
     }
@@ -1420,7 +1456,8 @@ class PiWeather
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
-            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
+            DumpError("UpdateDataValues:", e);
+
             mLastUpdateLabel.setForeground(Color.red);
             return false;
         }
@@ -1454,9 +1491,8 @@ class PiWeather
                 writer.println(s);
             }
             writer.close();
-        } catch (IOException e) {
-            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
-            if (DebugLevel().ShowErrors()) System.err.println("error writing trend data file");
+        } catch (IOException ioe) {
+            DumpError("SaveTextTrendData: error writing trend data file", ioe);
         }
     }
      
@@ -1524,8 +1560,7 @@ class PiWeather
                 }
                 reader.close();
             } catch (Exception e) {
-                if (DebugLevel().ShowStackTrace()) e.printStackTrace();
-                if (DebugLevel().ShowErrors()) System.err.format("Exception occurred trying to read '%s'.", mTrendDataFilename);
+                DumpError("ReadTextTrendData: Error occurred trying to read " + mTrendDataFilename, e);
             }
         }
     }
@@ -1616,7 +1651,7 @@ class PiWeather
                 }
             }
         } catch (Exception e) {
-            if (DebugLevel().ShowStackTrace()) e.printStackTrace();
+            DumpError("UpdateForecastValues", e);
             return false;
         }
         return true;
