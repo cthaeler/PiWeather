@@ -16,8 +16,8 @@
     <Signature>UE Proj: v.1</Signature>
   </Project_ID>
   <Files>
-    <File>MapUpdateTimer.java</File>
     <File>start_piwx.sh</File>
+    <File>MapUpdateTimer.java</File>
     <File>makefile</File>
     <File>BMP280_Sensor.java</File>
     <File>DataValue.java</File>

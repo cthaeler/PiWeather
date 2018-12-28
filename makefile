@@ -14,7 +14,6 @@ JD = javadoc
 .java.class:
 	$(JC) $(JFLAGS) $*.java
 
-
 CLASSES = \
 	PiWeather.java \
 	BME280_Sensor.java \
@@ -44,7 +43,7 @@ test_jar: jar
 	cp PiWeather.jar ~/tmp
 
 install: jar
-	cp PiWeather.jar ~/Documents/Soar-High_Website/soar-high.com/charlie/
+	cp PiWeather.jar ~/bin
 
 classes: $(CLASSES:.java=.class)
 

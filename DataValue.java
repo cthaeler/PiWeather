@@ -12,7 +12,7 @@ public class DataValue
     // instance variables
     /** the value from the web to display */
     private double mValue;
-    /** the sendor value to display */
+    /** the sensor value to display */
     private double mInsideValue;
     /** the format string */
     private String mFormatStr;

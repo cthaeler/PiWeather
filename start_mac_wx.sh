@@ -10,4 +10,4 @@
 #  -airport   Use an airport (must be US) as a location
 #  -v         Verbose
 
-java PiWeather -debug 2
+java -Xdock:icon=icon.gif PiWeather -debug 2

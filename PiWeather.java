@@ -231,10 +231,13 @@ class PiWeather
       public static void DumpError(String errorString, Exception exception)
       {
         if (DebugLevel().ShowErrors()) {
+            System.err.printf("\n\n");
+            System.err.println("ERROR: " + errorString);
+            
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm:ss");
             LocalDateTime dateTime = LocalDateTime.now();
-            String tstr = dateTime.format(formatter);
-            System.err.println("ERROR: " + errorString + " at " + tstr);
+
+            System.err.println(dateTime.format(formatter));
         }
         if (exception != null && DebugLevel().ShowStackTrace()) {
              exception.printStackTrace();
@@ -609,7 +612,7 @@ class PiWeather
         if (mFullFrame) {
             // set properties
             jfrm.setSize(Toolkit.getDefaultToolkit().getScreenSize());
-            jfrm.setUndecorated(true);
+           // jfrm.setUndecorated(true);
         } else {
             jfrm.setSize(1024, 600);
         }
@@ -638,16 +641,7 @@ class PiWeather
         jfrm.add(mainPanel);
         
 
-        try {
-            //URL resource = jfrm.getClass().getResource("./icon.gif");
-            //BufferedImage img = ImageIO.read(resource);
-            //if (img != null) System.out.println("found image " + img + " " + img.getIconWidth() + " by " + img.getIconHeight());
-            //jfrm.setIconImage(img);
-            
-            //ImageIcon img = new ImageIcon("./icon.gif);
-            //if (img != null) System.out.println("found image " + img + " " + img.getIconWidth() + " by " + img.getIconHeight());
-            //jfrm.setIconImage(img.getImage());
-            
+        try {            
             jfrm.setIconImage(ImageIO.read(new File("./icon.gif")));
         } catch (Exception e) {
             DumpError("SetupUI: Icon Not found", e);
@@ -1253,7 +1247,7 @@ class PiWeather
 
         SetLastUpdateTime();
         
-        
+        /* Read from the web doc the weather information */
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
