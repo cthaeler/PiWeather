@@ -7,7 +7,7 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class DataValue
+public class DataValueUI
 {
     // instance variables
     /** the value from the web to display */
@@ -28,7 +28,7 @@ public class DataValue
     /**
      * Constructor for objects of class DataValue
      */
-    public DataValue()
+    public DataValueUI()
     {
         // initialise instance variables
         mValue = 0;
@@ -48,7 +48,7 @@ public class DataValue
     * @param  value  Data Value that will be displayed
     * @param  legend The Legend displayed under the data value
     */
-    public DataValue(double value, String legend)
+    public DataValueUI(double value, String legend)
     {
         // initialise instance variables
         mValue = value;
@@ -69,7 +69,7 @@ public class DataValue
     * @param  legend The Legend displayed under the data value
     * @param  fmt Format for the value
     */
-    public DataValue(double value, String legend, String fmt)
+    public DataValueUI(double value, String legend, String fmt)
     {
         // initialise instance variables
         mValue = value;
@@ -90,7 +90,7 @@ public class DataValue
     * @param  insideValue  Value read from a sensor (or other source)
     * @param  legend The Legend displayed under the data value
     */
-    public DataValue(double value, double insideValue, String legend)
+    public DataValueUI(double value, double insideValue, String legend)
     {
         // initialise instance variables
         mValue = value;
@@ -112,7 +112,7 @@ public class DataValue
     * @param  legend The Legend displayed under the data value
     * @param  fmt Format for the value
     */
-    public DataValue(double value, double insideValue, String legend, String fmt)
+    public DataValueUI(double value, double insideValue, String legend, String fmt)
     {
         // initialise instance variables
         mValue = value;

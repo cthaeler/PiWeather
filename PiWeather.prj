@@ -29,7 +29,7 @@
     <Signature>UE Proj: v.1</Signature>
   </Project_ID>
   <Files>
-    <File>ForecastDataValue.java</File>
+    <File>ForecastDataValueUI.java</File>
     <File>UIUpdateTimer.ctxt</File>
     <File>TimeUpdateTimer.ctxt</File>
     <File>MapUpdateTimer.ctxt</File>
@@ -38,9 +38,9 @@
     <File>PiWeather.java</File>
     <File>UIUpdateTimer.java</File>
     <File>README.TXT</File>
-    <File>DataValue.ctxt</File>
-    <File>ForecastDataValue.ctxt</File>
+    <File>DataValueUI.ctxt</File>
+    <File>ForecastDataValueUI.ctxt</File>
     <File>PiWeather.ctxt</File>
-    <File>DataValue.java</File>
+    <File>DataValueUI.java</File>
   </Files>
 </PRJ>

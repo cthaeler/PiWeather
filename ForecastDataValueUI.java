@@ -11,7 +11,7 @@ import java.io.*;
 import java.net.URL;
 import javax.imageio.ImageIO;
 
-public class ForecastDataValue
+public class ForecastDataValueUI
 {
     // instance variables - replace the example below with your own
     /** forecast temperature */
@@ -28,9 +28,9 @@ public class ForecastDataValue
     private JLabel mTempLabel;
 
     /**
-     * ForecastDataValue() Constructor for objects of class ForecastDataValue
+     * ForecastDataValueUI() Constructor for objects of class ForecastDataValueUI
      */
-    public ForecastDataValue()
+    public ForecastDataValueUI()
     {
         // initialise instance variables
         mTemp = 999;
@@ -40,13 +40,13 @@ public class ForecastDataValue
     }
 
     /**
-     * ForecastDataValue() constructor
+     * ForecastDataValueUI() constructor
      * 
      * @param iconURL the icon URL
      * @param temp the temperature
      * @param info info to display
      */
-    public ForecastDataValue(String iconURL, double temp, String info)
+    public ForecastDataValueUI(String iconURL, double temp, String info)
     {
         // initialise instance variables
         mTemp = temp;

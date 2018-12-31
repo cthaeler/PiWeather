@@ -20,9 +20,9 @@ CLASSES = \
 	BMP280_Sensor.java \
 	DHT11_Sensor.java \
 	DHT22_Sensor.java \
-	DataValue.java \
+	DataValueUI.java \
 	Dummy_Sensor.java \
-	ForecastDataValue.java \
+	ForecastDataValueUI.java \
 	MapUpdateTimer.java \
 	SensorUpdateTimer.java \
 	TimeUpdateTimer.java \

@@ -133,9 +133,9 @@ class PiWeather
 
     // Data and UI state
     /** the data values UI objects */
-    private ArrayList<DataValue> mValues;
+    private ArrayList<DataValueUI> mValues;
     /** the forcast UI objects */
-    private ArrayList<ForecastDataValue> mForecastValues;
+    private ArrayList<ForecastDataValueUI> mForecastValues;
 
     
     /** the trend data */
@@ -231,13 +231,15 @@ class PiWeather
       public static void DumpError(String errorString, Exception exception)
       {
         if (DebugLevel().ShowErrors()) {
-            System.err.printf("\n\n");
+            System.err.println();
+            System.err.println((char)27 + "[31m");
             System.err.println("ERROR: " + errorString);
             
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm:ss");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss dd MMM, yyyy");
             LocalDateTime dateTime = LocalDateTime.now();
 
-            System.err.println(dateTime.format(formatter));
+            System.err.print(dateTime.format(formatter));
+            System.err.println((char)27 + "[39;49m");
         }
         if (exception != null && DebugLevel().ShowStackTrace()) {
              exception.printStackTrace();
@@ -552,7 +554,7 @@ class PiWeather
                 break;
                 
             default: // nothing else matches
-                System.err.println("Unknown switch");
+                DumpError("Unknown switch", null);
                 PrintUsage();
                 System.exit(1);
             }
@@ -682,29 +684,29 @@ class PiWeather
         leftPanel.add(Box.createVerticalGlue());
         
         // create the Current Conditions values list
-        mValues = new ArrayList<DataValue>();
+        mValues = new ArrayList<DataValueUI>();
         if (HaveSensor() && mWxSensor.HasTemperature())
-            mValues.add(new DataValue(0, 0, "Temperature (out|in)", "%2.0f|%.0f"));
+            mValues.add(new DataValueUI(0, 0, "Temperature (out|in)", "%2.0f|%.0f"));
         else
-            mValues.add(new DataValue(0, "Temperature"));
+            mValues.add(new DataValueUI(0, "Temperature"));
 
         
         if (HaveSensor() && mWxSensor.HasHumidity()) 
-            mValues.add(new DataValue(0, 0, "Humidity    (out|in)", "%2.0f|%.0f"));
+            mValues.add(new DataValueUI(0, 0, "Humidity    (out|in)", "%2.0f|%.0f"));
         else 
-            mValues.add(new DataValue(0, "Humidity"));
+            mValues.add(new DataValueUI(0, "Humidity"));
 
         // Someday wind will come :)
-        mValues.add(new DataValue(0, 0, "Wind", "%.0f@%.0f"));
+        mValues.add(new DataValueUI(0, 0, "Wind", "%.0f@%.0f"));
         
         if (HaveSensor() && mWxSensor.HasBarometricPressure())
-            mValues.add(new DataValue(0, "Barometer (out/in)", "<html>%.2f<br>%.2f</html>"));
+            mValues.add(new DataValueUI(0, "Barometer (out/in)", "<html>%.2f<br>%.2f</html>"));
         else
-            mValues.add(new DataValue(0, "Barometer", "%.2f"));
+            mValues.add(new DataValueUI(0, "Barometer", "%.2f"));
 
             
         for (int i = 0; i < mValues.size(); i++) {
-            DataValue dv = mValues.get(i);
+            DataValueUI dv = mValues.get(i);
             leftPanel.add(dv.getValueLabel());
             leftPanel.add(dv.getLegendLabel());
             leftPanel.add(Box.createVerticalGlue());
@@ -837,9 +839,9 @@ class PiWeather
     private JPanel SetupRightPanel()
     {
         // allow 18 slots
-        mForecastValues = new ArrayList<ForecastDataValue>();
+        mForecastValues = new ArrayList<ForecastDataValueUI>();
         for (int fc = 0; fc < 18; fc++) {
-            ForecastDataValue fv = new ForecastDataValue();
+            ForecastDataValueUI fv = new ForecastDataValueUI();
             mForecastValues.add(fv);
         }
         
@@ -870,7 +872,7 @@ class PiWeather
         // only show 12 for now
         for (int i = 0; i < 10; i+=2) {
             // left one
-            ForecastDataValue lfv = mForecastValues.get(i);
+            ForecastDataValueUI lfv = mForecastValues.get(i);
             // a forecast panel contains an info panel with temp and info and the image
             JPanel leftFP = new JPanel();
             leftFP.setBackground(Color.BLACK);
@@ -904,7 +906,7 @@ class PiWeather
 
             
             
-            ForecastDataValue rfv = mForecastValues.get(i+1);
+            ForecastDataValueUI rfv = mForecastValues.get(i+1);
             
             JPanel rightFP = new JPanel();
             rightFP.setBackground(Color.BLACK);
@@ -1271,7 +1273,7 @@ class PiWeather
             Document doc = factory.newDocumentBuilder().parse(stream);
             if (DebugLevel().ShowInformation()) System.out.println("done reading from web");
            
-            if (UpdateDataValues(doc)) {
+            if (UpdateDataValueUIs(doc)) {
                 // don't bother trying to update the forcast if the data values update failed
                 if (UpdateForecastValues(doc)) {
                     mLastUpdateLabel.setForeground(Color.green);
@@ -1363,13 +1365,13 @@ class PiWeather
     
     
     /**
-     * UpdateDataValues(Document doc)  Get the current observation data from the doc
+     * UpdateDataValueUIs(Document doc)  Get the current observation data from the doc
      * 
      * @param doc the Document
      * 
      * @return true on sucess
      */
-    private boolean UpdateDataValues(Document doc)
+    private boolean UpdateDataValueUIs(Document doc)
     {
         try {
             mCurrObsTime = ReadStringFromDoc(doc, "start-valid-time");
@@ -1450,7 +1452,7 @@ class PiWeather
 
             mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
         } catch (Exception e) {
-            DumpError("UpdateDataValues:", e);
+            DumpError("UpdateDataValueUIs:", e);
 
             mLastUpdateLabel.setForeground(Color.red);
             return false;

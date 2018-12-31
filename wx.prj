@@ -19,15 +19,14 @@
     <File>start_piwx.sh</File>
     <File>MapUpdateTimer.java</File>
     <File>makefile</File>
+    <File>ForecastDataValueUI.java</File>
     <File>BMP280_Sensor.java</File>
-    <File>DataValue.java</File>
     <File>start_mac_wx.sh</File>
     <File>/Users/cst/github_repos/myRepos/PiWeather/sensors_py/</File>
     <File>start_angus.sh</File>
     <File>SensorUpdateTimer.java</File>
     <File>TrendDisplayPanel.java</File>
     <File>AirportData.java</File>
-    <File>ForecastDataValue.java</File>
     <File>TrendData.java</File>
     <File>Dummy_Sensor.java</File>
     <File>DHT22_Sensor.java</File>
@@ -35,6 +34,7 @@
     <File>WxSensor.java</File>
     <File>DHT11_Sensor.java</File>
     <File>UIUpdateTimer.java</File>
+    <File>DataValueUI.java</File>
     <File>TimeUpdateTimer.java</File>
     <File>Verbosity.java</File>
     <File>PiWeather.java</File>
