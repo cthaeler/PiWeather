@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="ASCII"?>
 <!DOCTYPE PRJ SYSTEM "wx.dtd">
 <PRJ>
+  <Folder Name="build_tools">
+    <File>start_piwx.sh</File>
+    <File>makefile</File>
+    <File>start_mac_wx.sh</File>
+    <File>start_angus.sh</File>
+  </Folder>
   <Project_Information>
     <Use_Relative_Dir>1</Use_Relative_Dir>
     <Relative_to_Project_File>1</Relative_to_Project_File>
@@ -9,30 +15,32 @@
     <Filter/>
     <CTags_Support>0</CTags_Support>
     <Word_File/>
+    <Relative_File_Path>1</Relative_File_Path>
     <Project_Directory>/Users/cst/github_repos/myRepos/PiWeather</Project_Directory>
     <Tag_File/>
   </Project_Information>
+  <Folder Name="Sensors">
+    <File>BMP280_Sensor.java</File>
+    <File>DHT22_Sensor.java</File>
+    <File>BME280_Sensor.java</File>
+    <File>DHT11_Sensor.java</File>
+  </Folder>
   <Project_ID>
     <Signature>UE Proj: v.1</Signature>
   </Project_ID>
   <Files>
-    <File>start_piwx.sh</File>
     <File>MapUpdateTimer.java</File>
-    <File>makefile</File>
     <File>ForecastDataValueUI.java</File>
-    <File>BMP280_Sensor.java</File>
-    <File>start_mac_wx.sh</File>
     <File>/Users/cst/github_repos/myRepos/PiWeather/sensors_py/</File>
-    <File>start_angus.sh</File>
+    <File>WxWebDocUtils.java</File>
     <File>SensorUpdateTimer.java</File>
     <File>TrendDisplayPanel.java</File>
     <File>AirportData.java</File>
     <File>TrendData.java</File>
     <File>Dummy_Sensor.java</File>
-    <File>DHT22_Sensor.java</File>
-    <File>BME280_Sensor.java</File>
+    <File>ForecastData.java</File>
     <File>WxSensor.java</File>
-    <File>DHT11_Sensor.java</File>
+    <File>SensorData.java</File>
     <File>UIUpdateTimer.java</File>
     <File>DataValueUI.java</File>
     <File>TimeUpdateTimer.java</File>

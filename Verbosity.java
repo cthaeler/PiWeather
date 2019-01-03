@@ -11,7 +11,8 @@ public enum Verbosity {
     ShowErrors,
     ShowStackTrace,
     ShowInformation,
-    ShowEverything;
+    ShowEverything,
+    ShowDebugging;
     
     boolean ShowSilent() {
         return this.ordinal() == Verbosity.ShowSilent.ordinal();
@@ -31,5 +32,9 @@ public enum Verbosity {
     
     boolean ShowEverything() {
         return this.ordinal() > Verbosity.ShowInformation.ordinal();
+    }
+     
+    boolean ShowDebugging() {
+        return this.ordinal() > Verbosity.ShowEverything.ordinal();
     }
 }

@@ -14,7 +14,8 @@ public abstract class WxSensor
     {
 
     }
-    
+
+
     /**
      * GetName()  Name of the sensor.  This MUST be overridden
      * 
@@ -28,6 +29,7 @@ public abstract class WxSensor
      * @return time in miliseconds till next safe refresh
      */
     abstract public int RefreshSensorData();
+
 
     /**
      * HasTemperature()  by default say no.  Subclasses will say yes
@@ -50,6 +52,7 @@ public abstract class WxSensor
         return 65.0;
     }
 
+
      /**
      * HasHumidity()
      * 
@@ -70,6 +73,7 @@ public abstract class WxSensor
     {
         return 50.0;
     }
+
 
     
     /**
@@ -93,5 +97,50 @@ public abstract class WxSensor
         return 29.92;
     }
  
+ 
+ 
+ 
+    /**
+     * HasWindSpeed()
+     * 
+     * @return false by default
+     */
+    public boolean HasWindSpeed()
+    {
+        return false;
+    }
+ 
     
+    /**
+     * GetWindSpeed() returns the wind speed
+     * 
+     * @return returns 0 by default
+     */
+    public double GetWindSpeed()
+    {
+        return 0.0;
+    }
+    
+    
+    
+     /**
+     * HasWindDirection()
+     * 
+     * @return false by default
+     */
+    public boolean HasWindDirection()
+    {
+        return false;
+    }
+ 
+    
+    /**
+     * GetWindDirection() returns the wind durection
+     * 
+     * @return return 0  (North) by default
+     */
+    public double GetWindDirection()
+    {
+        return 0.0;
+    }    
 }

@@ -16,12 +16,15 @@ JD = javadoc
 
 CLASSES = \
 	PiWeather.java \
+	WxSensor.java \
+	SensorData.java \
 	BME280_Sensor.java \
 	BMP280_Sensor.java \
 	DHT11_Sensor.java \
 	DHT22_Sensor.java \
 	DataValueUI.java \
 	Dummy_Sensor.java \
+	ForecastData.java \
 	ForecastDataValueUI.java \
 	MapUpdateTimer.java \
 	SensorUpdateTimer.java \
@@ -29,7 +32,7 @@ CLASSES = \
 	TrendData.java \
 	TrendDisplayPanel.java \
 	UIUpdateTimer.java \
-	WxSensor.java \
+	WxWebDocUtils.java \
 	AirportData.java
 
 default: classes

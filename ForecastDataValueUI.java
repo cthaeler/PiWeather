@@ -13,7 +13,6 @@ import javax.imageio.ImageIO;
 
 public class ForecastDataValueUI
 {
-    // instance variables - replace the example below with your own
     /** forecast temperature */
     private double mTemp;
     /** URL of icon to show */
@@ -212,6 +211,7 @@ public class ForecastDataValueUI
      */
     public void setIconURL(String iconURL)
     {
+        //System.out.println("setIconURL: " + iconURL);
         if (iconURL.substring(0,5).equalsIgnoreCase("http:")) {
             mIconURL = "https:" + iconURL.substring(5);
         } else {

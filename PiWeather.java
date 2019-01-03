@@ -2,7 +2,7 @@
  * Main for PiWeather
  * 
  * @author Charles Thaeler <cst@soar-high.com>
- * @version 0.2
+ * @version 0.3
  */
 import javax.swing.*;
 import java.awt.event.*;
@@ -98,32 +98,21 @@ class PiWeather
     private String mLocationURL;
     
 
+    /** Data from a data sensor */
+    private SensorData mSensorData;
+    /** Data from a weather.gov site */
+    private SensorData mWebData;
+    /** Forecast Data from weather.gov site */
+    private ForecastData mForecastData;
     
-    /** cached current temperature */
-    private double mCurrTemp = 0.0;
-    /** cached sensor temperature */
-    private double mInsideTemp = 0.0;
-    
-    /** cached current humidity */
-    private double mCurrHumidity = 0.0;
-    /** cached sensor humidity */
-    private double mInsideHumidity = 0.0;
-    
-    /** cached current barometric pressure */
-    private double mCurrPres = 0.0;
-    /** cached sensor barometric pressure */
-    private double mInsidePres = 0.0;
-    
-    /** cached current wind speed */
-    private double mCurrSpeed = 0.0;
-    /** cached current wind direction */
-    private double mCurrDir = 0.0;
-    
+
+
+  
     /** cached observation time */
     private String mCurrObsTime = "";
     
     /** cached current conditios URL */
-    private String mCurrConditionIconURL;
+    //private String mCurrConditionIconURL;
     
     /** currentl map display index */
     private int mCurMap = 0;
@@ -196,6 +185,18 @@ class PiWeather
         
         ProcessArgs(args);
         
+        
+        /* create data set objects and do an intial update */
+        if (HaveSensor()) {
+            mSensorData = new SensorData();
+            mSensorData.UpdateFromSensor(mWxSensor);
+        }
+        mWebData = new SensorData();
+        mForecastData = new ForecastData(15);
+        mWebData.UpdateFromWeb(mLocationURL);
+        mCurrObsTime = mWebData.GetObsTime();
+        mForecastData.UpdateFromWeb(mLocationURL, mWebData);
+        
         mTrendData = new ArrayList<TrendData>();
         if (mGenFakeTrendData) {
             GenFakeTrendData();
@@ -204,11 +205,8 @@ class PiWeather
             CleanTrendData();
         }
 
-        if (msDebugLevel.ShowEverything())
+        if (msDebugLevel.ShowDebugging())
             DumpTrendData("---- Initial Read ----");
-            
-        if (HaveSensor())
-            ReadInsideSensor();
 
         
         if (System.getProperty("os.name").equals("Mac OS X")) {  // should do better here, what about windows
@@ -223,7 +221,10 @@ class PiWeather
     /**
      * DebugLevel() get the debug level
      */
-     public static Verbosity DebugLevel() { return msDebugLevel; }
+     public static Verbosity DebugLevel()
+     {
+        return msDebugLevel;
+     }
      
      /**
       * DumpException(String errorString, Exception e)
@@ -944,154 +945,13 @@ class PiWeather
         
         rightMainPanel.add(forcastPanel);
         
-        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, msDebugLevel.ShowInformation());
+        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, msDebugLevel.ShowDebugging());
         
         rightMainPanel.add(mTrendDisplayPanel);
  
         return rightMainPanel;
     }
   
-    
-    /**
-     * ReadInsideSensor()  Read the specified sensor if it is specified.
-     * 
-     */
-    private void ReadInsideSensor()
-    {
-        if (HaveSensor()) {
-            mWxSensor.RefreshSensorData();
-            mInsideTemp = mWxSensor.GetTemperature();
-            mInsideHumidity = mWxSensor.GetHumidity();
-            mInsidePres = mWxSensor.GetBarometricPressure();
-        } else {
-            mInsideTemp = 0.0;
-            mInsideHumidity = 0.0;
-            mInsidePres = 0.0;
-        }
-    }
-    
-    
-    /****************************************************************************************
-     *  Info from the weather forcast document downloaded
-     *
-     *
-     ****************************************************************************************/
-    /**
-     * GetCharacterDataFromElement()  Get data from the specified element of the Document
-     * 
-     * @param e docuement element  to query data from
-     * 
-     * @return returns the string for the element e
-     */
-    private static String GetCharacterDataFromElement(Element e) {
-        Node child = e.getFirstChild();
-        if (child instanceof CharacterData) {
-            CharacterData cd = (CharacterData) child;
-            return cd.getData();
-        }
-        return "?";
-    }
-
-    
-    /**
-     * ReadValueFromDoc()  Read a double value from the document
-     * 
-     * @param doc the Document
-     * @param e the element to read
-     * 
-     * @return a double value for e or 0 if it fails
-     */
-    private static double ReadValueFromDoc(Document doc, String elem)
-    {
-        NodeList dataNodes = doc.getElementsByTagName("data");
-        for (int n = 0; n < dataNodes.getLength(); n++) {
-            Element element = (Element) dataNodes.item(n);
-            String typeString = element.getAttribute("type");
-            if (typeString.equals("current observations")) {
-                NodeList nodes = element.getElementsByTagName(elem);
-                // iterate the pressures
-                for (int i = 0; i < nodes.getLength(); i++) {
-                   Element childElement = (Element) nodes.item(i);
-                   NodeList value = childElement.getElementsByTagName("value");
-                   Element line = (Element) value.item(0);
-                   String strval = GetCharacterDataFromElement(line);   
-                   if (strval.equals("NA"))
-                       continue;
-                   try {    
-                       double d = Double.parseDouble(strval);
-                       return d;
-                    } catch (Exception e) {
-                        DumpError("ReadValueFromDoc: Bad Double Val " + elem + " = " + strval , e);
-                        return 0.0;
-                    }
-                }
-            }
-        }
-        
-        return 0;
-    }
-    
-    
-    
-    /**
-     * ReadStringFromDoc()  Read a string value from the document
-     * 
-     * @param doc the Document
-     * @param e the element to read
-     * 
-     * @return a string if found or the empty string (not null) if it isn't found
-     */
-    private static String ReadStringFromDoc(Document doc, String e)
-    {
-        NodeList dataNodes = doc.getElementsByTagName("data");
-        for (int n = 0; n < dataNodes.getLength(); n++) {
-            Element element = (Element) dataNodes.item(n);
-            String typeString = element.getAttribute("type");
-            if (typeString.equals("current observations")) {
-                NodeList nodes = element.getElementsByTagName(e);
-                
-                for (int i = 0; i < nodes.getLength(); i++) {
-                   // just the first
-                   return GetCharacterDataFromElement((Element) nodes.item(i));
-                }
-            }
-        }
-        
-        return "";
-    }
-    
-    
-    
-    
-    /**
-     * ReadCurrentConditionsIconFromDocument() Get the URL for the current condtions icon
-     * 
-     * @param doc Document to read from
-     * 
-     * @return the URL or an empty string
-     */
-    private String ReadCurrentConditionsIconFromDocument(Document doc)
-    {
-        NodeList dataNodes = doc.getElementsByTagName("data");
-        for (int n = 0; n < dataNodes.getLength(); n++) {
-            Element element = (Element) dataNodes.item(n);
-            String typeString = element.getAttribute("type");
-            if (typeString.equals("current observations")) {
-                NodeList nodes = element.getElementsByTagName("conditions-icon");
-                
-                if (nodes.getLength() > 0) {
-                    Element e = (Element)nodes.item(0);
-                    NodeList iconNodes = e.getElementsByTagName("icon-link");
-                    Element line = (Element) iconNodes.item(0);
-                    String strval = GetCharacterDataFromElement(line);
-                    return strval;
-                }
-
-            }
-        }
-        return "";
-    }
-    
     
     
     /**
@@ -1157,7 +1017,7 @@ class PiWeather
     
     
     /**
-     * UpdateClock() Update the cock UI
+     * UpdateClock() Update the clock UI
      * 
      */
     public void UpdateClock()
@@ -1168,27 +1028,17 @@ class PiWeather
         mTimeLabel.setText(tstr);
     }
     
-    
-    
-    
     /**
-     * UpdateFromSensor()  Update the UI with current sensor data, inside and out.
+     * UpdateFromSensor() Sensor UI
      * 
      */
     public void UpdateFromSensor()
     {
         if (HaveSensor()) {
-            ReadInsideSensor();
-            if (mWxSensor.HasTemperature())
-                mValues.get(0).setValue(mCurrTemp, mInsideTemp);
-            if (mWxSensor.HasHumidity())
-                mValues.get(1).setValue(mCurrHumidity, mInsideHumidity);
-            if (mWxSensor.HasBarometricPressure())
-                mValues.get(3).setValue(mCurrPres, mInsidePres);
+            mSensorData.UpdateFromSensor(mWxSensor);
+            UpdateDataValuesUI();
         }
     }
-    
-    
     
     
     /**
@@ -1204,37 +1054,7 @@ class PiWeather
     }
     
     
-    
-    
-    /**
-     * SaveWxXMLFile()  Save weather file data.  This is mostly for troubleshooting
-     */
-    private void SaveWxXMLFile()
-    {
-        LocalDateTime dt = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd_MMM_yyyy_HH_mm");
-        String tstr = dt.format(formatter);
-        // save the xml
-        Path p = Paths.get("./wxfiles/wxfile_" + mLocationName + "_" + tstr + ".xml");
-        
-        try {
-            URL url = new URL(mLocationURL);
-            InputStream in = url.openStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-        
-            OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(p, CREATE, APPEND));
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                System.out.println("Got line:"+line);
-                writer.write(line + "\n");
-            }
-            reader.close();
-            writer.flush();
-            writer.close();
-        } catch (IOException e) {
-            DumpError("SaveWxXMLFile", e);
-        }
-    }
+
     
     
     
@@ -1244,49 +1064,147 @@ class PiWeather
      */
     public void UpdateFromWeb()
     {
-        if (HaveSensor())
-            ReadInsideSensor();
-
         SetLastUpdateTime();
         
-        /* Read from the web doc the weather information */
+        //if (HaveSensor())
+        //   mSensorData.UpdateFromSensor(mWxSensor);
+            
+        mWebData.UpdateFromWeb(mLocationURL);
+        mCurrObsTime = mWebData.GetObsTime();
+
+        mForecastData.UpdateFromWeb(mLocationURL, mWebData);
+        
+        if(DebugLevel().ShowDebugging()) {
+            System.out.println(mSensorData);
+            System.out.println(mWebData);
+            System.out.println(mForecastData);
+        }
+        
+        UpdateDataValuesUI();
+        UpdateForecastValuesUI();
+        
+        
+        return; 
+    }
+
+
+    /**
+     * UpdateDataValuesUI()  Get the current observation data from the SensorData objects
+     * 
+     * @return true on sucess
+     */
+    private boolean UpdateDataValuesUI()
+    {
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            if (mSaveWxFiles) {
-                LocalDateTime dt = LocalDateTime.now();
-                if (dt.getMinute()%20 == 0) { // only save every 20 minutes max
-                    SaveWxXMLFile();
+            mLastObsLabel.setText(mCurrObsTime);
+            /* Temperature */
+            if (HaveSensor() && mWxSensor.HasTemperature()) {
+                double webTemp = mWebData.GetTemp();
+                mValues.get(0).setValue(webTemp, mSensorData.GetTemp());
+                // match the width
+                if (webTemp >= 100) {
+                    mValues.get(0).setFormat("%3.0f|%.0f");
+                } else {
+                    mValues.get(0).setFormat("%2.0f|%.0f");
                 }
+                
+            } else {
+                mValues.get(0).setValue(mWebData.GetTemp());
             }
             
-            if (DebugLevel().ShowInformation()) System.out.println("Reading From: " + mLocationURL);
-            
-            //System.out.println("Dump wx file:");
-            //SaveWxXMLFile();
-            //System.out.println("Done Dump");
-
-            URL url = new URL(mLocationURL);
-            InputStream stream = url.openStream();
-            
-            if (DebugLevel().ShowInformation()) System.out.println("Stream Open " + stream);
-            Document doc = factory.newDocumentBuilder().parse(stream);
-            if (DebugLevel().ShowInformation()) System.out.println("done reading from web");
-           
-            if (UpdateDataValueUIs(doc)) {
-                // don't bother trying to update the forcast if the data values update failed
-                if (UpdateForecastValues(doc)) {
-                    mLastUpdateLabel.setForeground(Color.green);
+            /* Humidity */
+            if (HaveSensor() && mWxSensor.HasHumidity()) {
+                double webHumidity = mWebData.GetHumidity();
+                mValues.get(1).setValue(webHumidity, mSensorData.GetHumidity());
+                // match the width
+                if (webHumidity >= 100) {
+                    mValues.get(1).setFormat("%3.0f|%.0f");
                 } else {
-                    mLastUpdateLabel.setForeground(Color.yellow);
+                    mValues.get(1).setFormat("%2.0f|%.0f");
                 }
+                
             } else {
-                mLastUpdateLabel.setForeground(Color.red);
+                mValues.get(1).setValue(mWebData.GetHumidity());
+            }
+            
+            /* wind speed and direction */
+            mValues.get(2).setValue(mWebData.GetWindDirection(), mWebData.GetWindSpeed());
+            
+            /* Barometric Preassure */
+            if (HaveSensor() && mWxSensor.HasBarometricPressure()) {
+                mValues.get(3).setValue(mWebData.GetBarometer(), mSensorData.GetBarometer());
+            } else {
+                mValues.get(3).setValue(mWebData.GetBarometer());
+            }
+            
+            
+            
+            boolean addOrRemoved = false;
+            // sparce after we have 10
+            if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
+                if (HaveSensor()) {
+                    mTrendData.add(new TrendData(LocalDateTime.now(), mCurrObsTime,
+                                    mWebData.GetTemp(), mWebData.GetHumidity(), mWebData.GetBarometer(),
+                                    mSensorData.GetTemp(), mSensorData.GetHumidity(), mSensorData.GetBarometer()));
+                } else {
+                    mTrendData.add(new TrendData(LocalDateTime.now(), mCurrObsTime,
+                                    mWebData.GetTemp(), mWebData.GetHumidity(), mWebData.GetBarometer(),
+                                    0, 0, 0));
+                }
+                addOrRemoved = true;
+            }
+            // cull out "old" data, save 30 days worth, we can display less
+            while (mTrendData.size() > 2 &&
+                    Duration.between(mTrendData.get(0).GetDateTime(),
+                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24*30) { 
+                mTrendData.remove(0);
+                addOrRemoved = true;
+            }
+            
+            if (addOrRemoved) {
+                CleanTrendData();
+                SaveTextTrendData();
+                if (msDebugLevel.ShowDebugging())
+                    DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----");
+            }
+            
+            mTrendDisplayPanel.UpdateData(mTrendData);
+
+        } catch (Exception e) {
+            DumpError("UpdateDataValueUIs:", e);
+            mLastUpdateLabel.setForeground(Color.red);
+            return false;
+        }
+        return true;
+    }
+    
+
+   
+    
+    /**
+     * UpdateForecastValuesUI()  Update the forecast data from the web
+     * 
+     * 
+     * @return true if we successfully handled the update
+     */
+    private boolean UpdateForecastValuesUI()
+    {
+        try {
+            for (int i = 0; i < mForecastValues.size(); i++) {
+                double temp = mForecastData.GetTemp(i);
+                String url = mForecastData.GetIconURL(i);
+                String info = mForecastData.GetInfo(i);
+                if (url == null) break;
+
+                mForecastValues.get(i).setTemp(temp);
+                mForecastValues.get(i).setIconURL(url);
+                mForecastValues.get(i).setInfo(info, false);
             }
         } catch (Exception e) {
-            DumpError("UpdateFromWeb", e);
-            mLastUpdateLabel.setForeground(Color.red);
+            DumpError("UpdateForecastValues", e);
+            return false;
         }
+        return true;
     }
     
     
@@ -1363,103 +1281,9 @@ class PiWeather
     
     
     
-    
-    /**
-     * UpdateDataValueUIs(Document doc)  Get the current observation data from the doc
-     * 
-     * @param doc the Document
-     * 
-     * @return true on sucess
-     */
-    private boolean UpdateDataValueUIs(Document doc)
-    {
-        try {
-            mCurrObsTime = ReadStringFromDoc(doc, "start-valid-time");
-            mLastObsLabel.setText(mCurrObsTime);
-            
-            mCurrTemp = ReadValueFromDoc(doc, "temperature");
-            if (HaveSensor() && mWxSensor.HasTemperature()) {
-                mValues.get(0).setValue(mCurrTemp, mInsideTemp);
-                // match the width
-                if (mCurrTemp >= 100) {
-                    mValues.get(0).setFormat("%3.0f|%.0f");
-                } else {
-                    mValues.get(0).setFormat("%2.0f|%.0f");
-                }
-                
-            } else {
-                mValues.get(0).setValue(mCurrTemp);
-            }
-            
-            mCurrHumidity = ReadValueFromDoc(doc, "humidity");
-            if (HaveSensor() && mWxSensor.HasHumidity()) {
-                mValues.get(1).setValue(mCurrHumidity, mInsideHumidity);
-                // match the width
-                if (mCurrHumidity >= 100) {
-                    mValues.get(1).setFormat("%3.0f|%.0f");
-                } else {
-                    mValues.get(1).setFormat("%2.0f|%.0f");
-                }
-                
-            } else {
-                mValues.get(1).setValue(mCurrHumidity);
-            }
-            
-            
-            
-            mCurrDir = ReadValueFromDoc(doc, "direction");
-            mCurrSpeed = ReadValueFromDoc(doc, "wind-speed");
-            mValues.get(2).setValue(mCurrDir, mCurrSpeed);
-            
-            mCurrPres = ReadValueFromDoc(doc, "pressure");
-            if (HaveSensor() && mWxSensor.HasBarometricPressure()) {
-                mValues.get(3).setValue(mCurrPres, mInsidePres);
-            } else {
-                mValues.get(3).setValue(mCurrPres);
-            }
-            
-            boolean addOrRemoved = false;
-            // sparce after we have 10
-            if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
-                if (HaveSensor()) {
-                    mTrendData.add(new TrendData(LocalDateTime.now(),
-                                    mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
-                                    mInsideTemp, mInsideHumidity, mInsidePres));
-                } else {
-                    mTrendData.add(new TrendData(LocalDateTime.now(),
-                                    mCurrObsTime, mCurrTemp, mCurrHumidity, mCurrPres,
-                                    0, 0, 0));
-                }
-                addOrRemoved = true;
-            }
-            
-            // cull out "old" data, save 30 days worth, we can display less
-            while (mTrendData.size() > 2 &&
-                    Duration.between(mTrendData.get(0).GetDateTime(),
-                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24*30) { 
-                mTrendData.remove(0);
-                addOrRemoved = true;
-            }
-            
-            if (addOrRemoved) {
-                CleanTrendData();
-                SaveTextTrendData();
-                if (msDebugLevel.ShowInformation())
-                    DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----");
-            }
-            
-            mTrendDisplayPanel.UpdateData(mTrendData);
 
-            mCurrConditionIconURL = ReadCurrentConditionsIconFromDocument(doc);
-        } catch (Exception e) {
-            DumpError("UpdateDataValueUIs:", e);
-
-            mLastUpdateLabel.setForeground(Color.red);
-            return false;
-        }
-        return true;
-    }
     
+      
     
     
     
@@ -1561,98 +1385,7 @@ class PiWeather
         }
     }
     
-    
-    
-    
-    /**
-     * UpdateForecastValues()  Update the forecast data from the web
-     * 
-     * @param doc the Document to read from
-     * 
-     * @return true if we successfully handled the update
-     */
-    private boolean UpdateForecastValues(Document doc)
-    {
-        try {
-            NodeList dataNodes = doc.getElementsByTagName("data");
-
-            // the 0'th element is the current condition
-            mForecastValues.get(0).setTemp(mCurrTemp);
-            mForecastValues.get(0).setIconURL(mCurrConditionIconURL);
-            mForecastValues.get(0).setInfo("Now", false);
-            
-            for (int n = 0; n < dataNodes.getLength(); n++) {
-                // first let's find the icon data
-                Element dataElement = (Element) dataNodes.item(n);
-                String typeString = dataElement.getAttribute("type");
-                
-                // look for the forecast data
-                if (typeString.equals("forecast")) {
-                    
-                    // found the forecasts now find the time coordinates
-                    NodeList timeCoordsNodes = dataElement.getElementsByTagName("time-layout");
-                    for (int tc = 0; tc < timeCoordsNodes.getLength(); tc++) {
-                        Element childElement = (Element) timeCoordsNodes.item(tc);
-                        NodeList svtNodes = childElement.getElementsByTagName("start-valid-time");
-                        // find the full list not the short lists just so it's easier
-                        if (svtNodes.getLength() > 7) {
-                            // found the full list
-                            for (int svt = 0; svt < svtNodes.getLength(); svt++) {
-                                Element svtElement = (Element) svtNodes.item(svt);
-                                Attr attr = svtElement.getAttributeNode("period-name");
-                                String info = attr.getValue();
-                                mForecastValues.get(svt+1).setInfo(info, ((svt % 2) == 0));
-                            }
-                        }
-                    }
-                    // now find the conditions icons
-                    NodeList conditionNodes = dataElement.getElementsByTagName("conditions-icon");
-                    int numConditionNodes = conditionNodes.getLength();
-                    if (conditionNodes.getLength() > 0) {
-                        Element childElement = (Element) conditionNodes.item(0);
-                        NodeList iconNodes = childElement.getElementsByTagName("icon-link");
-                        int numIconNodes = iconNodes.getLength();
-                        
-                        // iterate the icons
-                        for (int i = 0; i < iconNodes.getLength(); i++) {
-                           Element iconElement = (Element) iconNodes.item(i);
-                           String iconURL = GetCharacterDataFromElement(iconElement);
-                           mForecastValues.get(i+1).setIconURL(iconURL);
-                        }
-                    }
-                    
-                    // Now let's find the min and max temperature data
-                    NodeList tempNodes = dataElement.getElementsByTagName("temperature");
-                    // there should be two sections with 6, 7 or 8 entries as either minimum or maximum temperatures
-                    int numTempNodes = tempNodes.getLength();
-                    for (int nodeIdx = 0; nodeIdx < numTempNodes; nodeIdx++) {
-                        Element tempElement = (Element) tempNodes.item(nodeIdx);
-                        String tempType = tempElement.getAttribute("type"); // this should be "minimum" or "maximum"
-                        String tempTimeLayout = tempElement.getAttribute("time-layout");
-                        // the time layout should look like this "k-p24h-n8-1":
-                        int numTemps = Integer.parseInt(tempTimeLayout.substring(8, 9));
-                        int numSeq = Integer.parseInt(tempTimeLayout.substring(10, 11));
-                        NodeList tempValueNodes = tempElement.getElementsByTagName("value");
-                        int numValueNodes = tempValueNodes.getLength();
-                        for (int valueNodeIdx = 0; valueNodeIdx < numValueNodes; valueNodeIdx++) {
-                            Element valueElement = (Element) tempValueNodes.item(valueNodeIdx);
-                            String strval = GetCharacterDataFromElement(valueElement);   
-                            double d = Double.parseDouble(strval);
-                            int valueIndex = valueNodeIdx*2 + numSeq;
-                            
-                            if (valueIndex < mForecastValues.size())
-                                mForecastValues.get(valueIndex).setTemp(d);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            DumpError("UpdateForecastValues", e);
-            return false;
-        }
-        return true;
-    }
-    
+   
     
     
     
@@ -1672,10 +1405,15 @@ class PiWeather
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 piWXMain = new PiWeather(args);
+                
                 piWXMain.UpdateFromWeb();
+                
                 new UIUpdateTimer(5 * 60, piWXMain); // update every 5 minutes
+                
                 new MapUpdateTimer(10, piWXMain);
+                
                 if (piWXMain.HaveSensor()) new SensorUpdateTimer(5, piWXMain);
+                
                 new TimeUpdateTimer(1, piWXMain);
             }
         });
