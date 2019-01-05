@@ -841,7 +841,7 @@ class PiWeather
     {
         // allow 18 slots
         mForecastValues = new ArrayList<ForecastDataValueUI>();
-        for (int fc = 0; fc < 18; fc++) {
+        for (int fc = 0; fc < 15; fc++) {
             ForecastDataValueUI fv = new ForecastDataValueUI();
             mForecastValues.add(fv);
         }

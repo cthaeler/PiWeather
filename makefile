@@ -32,6 +32,7 @@ CLASSES = \
 	TrendData.java \
 	TrendDisplayPanel.java \
 	UIUpdateTimer.java \
+	Verbosity.java \
 	WxWebDocUtils.java \
 	AirportData.java
 
