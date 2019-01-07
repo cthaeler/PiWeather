@@ -111,8 +111,6 @@ class PiWeather
     /** cached observation time */
     private String mCurrObsTime = "";
     
-    /** cached current conditios URL */
-    //private String mCurrConditionIconURL;
     
     /** currentl map display index */
     private int mCurMap = 0;
@@ -841,7 +839,7 @@ class PiWeather
     {
         // allow 18 slots
         mForecastValues = new ArrayList<ForecastDataValueUI>();
-        for (int fc = 0; fc < 15; fc++) {
+        for (int fc = 0; fc < 10; fc++) {
             ForecastDataValueUI fv = new ForecastDataValueUI();
             mForecastValues.add(fv);
         }
@@ -870,7 +868,7 @@ class PiWeather
         BoxLayout rightListPanelBox = new BoxLayout(rightListPanel, BoxLayout.Y_AXIS);
         rightListPanel.setLayout(rightListPanelBox);
         
-        // only show 12 for now
+        // only show 10 for now
         for (int i = 0; i < 10; i+=2) {
             // left one
             ForecastDataValueUI lfv = mForecastValues.get(i);
@@ -1073,15 +1071,18 @@ class PiWeather
         mCurrObsTime = mWebData.GetObsTime();
 
         mForecastData.UpdateFromWeb(mLocationURL, mWebData);
+       
         
-        if(DebugLevel().ShowDebugging()) {
-            System.out.println(mSensorData);
-            System.out.println(mWebData);
-            System.out.println(mForecastData);
+        if (UpdateDataValuesUI()) {
+            
+            if (UpdateForecastValuesUI()) {
+                mLastObsLabel.setForeground(Color.GREEN);
+            } else {
+                mLastObsLabel.setForeground(Color.YELLOW);
+            }
+        } else {
+            mLastObsLabel.setForeground(Color.RED);
         }
-        
-        UpdateDataValuesUI();
-        UpdateForecastValuesUI();
         
         
         return; 

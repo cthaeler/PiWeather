@@ -167,10 +167,12 @@ public class ForecastData
                                     Attr attr = svtElement.getAttributeNode("period-name");
                                     String info = attr.getValue();
                                     mValues.get(svt+1).SetInfo(info);
+                                    
                                     if (svt+1 >= mValues.size()-1) break;
                                 }
                             }
                         }
+                        
                         // now find the conditions icons
                         NodeList conditionNodes = dataElement.getElementsByTagName("conditions-icon");
                         int numConditionNodes = conditionNodes.getLength();
@@ -183,7 +185,11 @@ public class ForecastData
                             for (int i = 0; i < iconNodes.getLength(); i++) {
                                Element iconElement = (Element) iconNodes.item(i);
                                String iconURL = WxWebDocUtils.GetCharacterDataFromElement(iconElement);
-                               mValues.get(i+1).SetIconURL(iconURL);
+                               if (i < mValues.size()) {
+                                   mValues.get(i+1).SetIconURL(iconURL);
+                                } else {
+                                    break;
+                                }
                             }
                         }
                         
@@ -203,21 +209,24 @@ public class ForecastData
                             for (int valueNodeIdx = 0; valueNodeIdx < numValueNodes; valueNodeIdx++) {
                                 Element valueElement = (Element) tempValueNodes.item(valueNodeIdx);
                                 String strval = WxWebDocUtils.GetCharacterDataFromElement(valueElement);   
-                                double d = Double.parseDouble(strval);
+                                double temp = Double.parseDouble(strval);
                                 int valueIndex = valueNodeIdx*2 + numSeq;
                                 
-                                if (valueIndex < mValues.size())
-                                    mValues.get(valueIndex).SetTemp(d);
+                                if (valueIndex < mValues.size()) {
+                                    mValues.get(valueIndex).SetTemp(temp);
+                                } else {
+                                    break;
+                                }
                             }
                         }
                     }
                 }
             } catch (Exception e) {
-                PiWeather.DumpError("ForecastData.UpdateFromWeb:", e);
+                PiWeather.DumpError("ForecastData.UpdateFromWeb: Read Elements", e);
                 return false;
             }
         } catch (Exception e) {
-            PiWeather.DumpError("ForecastData.UpdateFromWeb:", e);
+            PiWeather.DumpError("ForecastData.UpdateFromWeb: Open and Parse Stream", e);
             return false;
         }
         return true;

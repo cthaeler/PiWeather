@@ -19,6 +19,7 @@ public class ForecastDataValueUI
     private String mIconURL;
     /** info about the day */
     private String mInfo;
+    
     /** the JLabel for the image */
     private JLabel mImageLabel;
     /** the JLabel for the info */
