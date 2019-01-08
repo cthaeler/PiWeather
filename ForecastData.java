@@ -185,7 +185,7 @@ public class ForecastData
                             for (int i = 0; i < iconNodes.getLength(); i++) {
                                Element iconElement = (Element) iconNodes.item(i);
                                String iconURL = WxWebDocUtils.GetCharacterDataFromElement(iconElement);
-                               if (i < mValues.size()) {
+                               if (i < mValues.size()-1) {
                                    mValues.get(i+1).SetIconURL(iconURL);
                                 } else {
                                     break;

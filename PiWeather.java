@@ -105,11 +105,14 @@ class PiWeather
     /** Forecast Data from weather.gov site */
     private ForecastData mForecastData;
     
+    /** Wx Trend data */
+    private TrendData mTrendData;
 
 
   
     /** cached observation time */
     private String mCurrObsTime = "";
+
     
     
     /** currentl map display index */
@@ -124,9 +127,7 @@ class PiWeather
     /** the forcast UI objects */
     private ArrayList<ForecastDataValueUI> mForecastValues;
 
-    
-    /** the trend data */
-    private ArrayList<TrendData> mTrendData;
+
 
     
     // UI components that need periodic update based on timer events
@@ -195,16 +196,18 @@ class PiWeather
         mCurrObsTime = mWebData.GetObsTime();
         mForecastData.UpdateFromWeb(mLocationURL, mWebData);
         
-        mTrendData = new ArrayList<TrendData>();
+        mTrendData = new TrendData();
+
+        
         if (mGenFakeTrendData) {
-            GenFakeTrendData();
+            mTrendData.GenFakeTrendData();
         } else {
-            ReadTextTrendData();
-            CleanTrendData();
+            mTrendData.ReadFromFile(mTrendDataFilename);
+            mTrendData.CleanTrendData();
         }
 
-        if (msDebugLevel.ShowDebugging())
-            DumpTrendData("---- Initial Read ----");
+        //if (DebugLevel().ShowDebugging())
+        //    mTrendData.DumpTrendData("---- Initial Read ----", "---- END of Trend Data Dump ----");
 
         
         if (System.getProperty("os.name").equals("Mac OS X")) {  // should do better here, what about windows
@@ -1071,8 +1074,8 @@ class PiWeather
         mCurrObsTime = mWebData.GetObsTime();
 
         mForecastData.UpdateFromWeb(mLocationURL, mWebData);
-       
-        
+
+
         if (UpdateDataValuesUI()) {
             
             if (UpdateForecastValuesUI()) {
@@ -1142,31 +1145,31 @@ class PiWeather
             
             boolean addOrRemoved = false;
             // sparce after we have 10
-            if (mTrendData.size() < 10 || !mCurrObsTime.equals(mTrendData.get(mTrendData.size()-1).GetObsTime())) {
+            if (mTrendData.NumValues() < 10 || !mCurrObsTime.equals(mTrendData.GetObsTime(mTrendData.NumValues()-1))) {
                 if (HaveSensor()) {
-                    mTrendData.add(new TrendData(LocalDateTime.now(), mCurrObsTime,
+                    mTrendData.AddValueSet(LocalDateTime.now(), mCurrObsTime,
                                     mWebData.GetTemp(), mWebData.GetHumidity(), mWebData.GetBarometer(),
-                                    mSensorData.GetTemp(), mSensorData.GetHumidity(), mSensorData.GetBarometer()));
+                                    mSensorData.GetTemp(), mSensorData.GetHumidity(), mSensorData.GetBarometer());
                 } else {
-                    mTrendData.add(new TrendData(LocalDateTime.now(), mCurrObsTime,
+                    mTrendData.AddValueSet(LocalDateTime.now(), mCurrObsTime,
                                     mWebData.GetTemp(), mWebData.GetHumidity(), mWebData.GetBarometer(),
-                                    0, 0, 0));
+                                    0, 0, 0);
                 }
                 addOrRemoved = true;
             }
             // cull out "old" data, save 30 days worth, we can display less
-            while (mTrendData.size() > 2 &&
-                    Duration.between(mTrendData.get(0).GetDateTime(),
-                                     mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds() > 60*60*24*30) { 
-                mTrendData.remove(0);
+            while (mTrendData.NumValues() > 2 &&
+                    Duration.between(mTrendData.GetDateTime(0),
+                                     mTrendData.GetDateTime(mTrendData.NumValues()-1)).getSeconds() > 60*60*24*30) { 
+                mTrendData.DeleteByIndex(0);
                 addOrRemoved = true;
             }
             
             if (addOrRemoved) {
-                CleanTrendData();
-                SaveTextTrendData();
-                if (msDebugLevel.ShowDebugging())
-                    DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----");
+                mTrendData.CleanTrendData();
+                mTrendData.WriteToFile(mTrendDataFilename);
+                if (DebugLevel().ShowDebugging())
+                    mTrendData.DumpTrendData("---- Post Save Dump at at " + mCurrObsTime + " ----", "---- END of Dump ----");
             }
             
             mTrendDisplayPanel.UpdateData(mTrendData);
@@ -1210,186 +1213,10 @@ class PiWeather
     
     
     
-    /**
-     * DumpTrendData(String header)  Dump the trend data to standard out.
-     * 
-     * @param header a header to show first
-     * 
-     */
-    private void DumpTrendData(String header)
-    {
-        System.out.println(header);
-        int i = 0;
-        for (TrendData td : mTrendData) {
-            System.out.print(String.format("%4d ", i++));
-            System.out.println(td.toString());
-        }
-
-        if (mTrendData.size() > 1) {
-            System.out.println("First: " + mTrendData.get(0).GetDateTime());
-            System.out.println("Last:  " + mTrendData.get(mTrendData.size()-1).GetDateTime());
-        }
-        System.out.println("----");
-    }
-    
-    
-    
-    
-    /**
-     * CleanTrendData()  Clean up trend data.  If it's unreasonable grab the previous entry to "fix" it
-     * 
-     */
-    private void CleanTrendData()
-    {
-        // look for humidity zeros and ...  First one better be good...
-        for (int i = 1; i < mTrendData.size(); i++)
-        {
-            if (mTrendData.get(i).GetBarometer() < 25 || mTrendData.get(i).GetBarometer() > 32)
-                mTrendData.get(i).SetBarometer(mTrendData.get(i-1).GetBarometer());
-            if (mTrendData.get(i).GetHumidity() < 0 || mTrendData.get(i).GetHumidity() > 100)
-                mTrendData.get(i).SetHumidity(mTrendData.get(i-1).GetHumidity());
-            if (mTrendData.get(i).GetSensorHumidity() < 0 || mTrendData.get(i).GetSensorHumidity() > 100)
-                mTrendData.get(i).SetSensorHumidity(mTrendData.get(i-1).GetSensorHumidity());
-            if (mTrendData.get(i).GetSensorTemp() < -40 || mTrendData.get(i).GetSensorTemp() > 150)
-                mTrendData.get(i).SetSensorTemp(mTrendData.get(i-1).GetSensorTemp());
-        }
-    }
-    
-    
-    
-    
-    /**
-     * GenFakeTrendData()  generate 3 days of fake data for trouble shooting
-     * 
-     */
-    private void GenFakeTrendData()
-    {
-        // Generate 3 days worth
-        for (int i = 24*6*3; i > 0; i--) {
-            LocalDateTime n = LocalDateTime.now();
-            LocalDateTime t = n.minusMinutes(i*10);
-            // 2017-02-07T07:55:00
-            String obstime = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(t) +"T" + DateTimeFormatter.ofPattern("HH:mm:ss").format(t);
-            // -20 to 120
-            double temp = -20 + i % 140;
-            // 0 to 100
-            double humidity = i % 100;
-            // 27 to 32
-            double press = 27 + (i%500)/100.0;
-            mTrendData.add(new TrendData(t, obstime, temp, humidity, press, temp+3, humidity+3, press + 0.2));
-        }
-    }
-    
-    
-    
-
-    
-      
-    
-    
-    
-    /**
-     * SaveTextTrendData() Save Trend Data in text format
-     * 
-     */
-    private void SaveTextTrendData()
-    {
-        try {
-            File file = new File(mTrendDataFilename);
-            if (!file.getParentFile().exists())
-                file.getParentFile().mkdirs();
-            PrintWriter writer = new PrintWriter(file);
-            writer.println("2"); //version number
-            for (TrendData td : mTrendData) {
-                String s =  td.GetDateTime().toString() + "|" +
-                            td.GetObsTime() + "|" +
-                            String.format("%f", td.GetTemp()) + "|" +
-                            String.format("%f", td.GetHumidity()) + "|" +
-                            String.format("%f", td.GetBarometer()) + "|" +
-                            String.format("%f", td.GetSensorTemp()) + "|" +
-                            String.format("%f", td.GetSensorHumidity()) + "|" +
-                            String.format("%f", td.GetSensorBarometer());
-                writer.println(s);
-            }
-            writer.close();
-        } catch (IOException ioe) {
-            DumpError("SaveTextTrendData: error writing trend data file", ioe);
-        }
-    }
-     
 
 
-    /**
-     * SetDataFromString() set a TrendData from a saved string
-     * 
-     * @param version   the version of the data file
-     * @param s         the string of data "|" deliniated
-     * @param td        TendData to fill in
-     * 
-     */
-    private void SetDataFromString(int version, String s, TrendData td)
-    {
-        String[] data = s.split("\\|");
-        switch(version) {
-        case 1:
-            td.SetDateTime(LocalDateTime.parse(data[0]));
-            td.SetObsTime(data[1]);
-            td.SetTemp(Double.parseDouble(data[2]));
-            td.SetHumidity(Double.parseDouble(data[3]));
-            td.SetBarometer(Double.parseDouble(data[4]));
-            td.SetSensorTemp(Double.parseDouble(data[5]));
-            td.SetSensorHumidity(Double.parseDouble(data[6]));
-            break;
-        case 2:
-            td.SetDateTime(LocalDateTime.parse(data[0]));
-            td.SetObsTime(data[1]);
-            td.SetTemp(Double.parseDouble(data[2]));
-            td.SetHumidity(Double.parseDouble(data[3]));
-            td.SetBarometer(Double.parseDouble(data[4]));
-            td.SetSensorTemp(Double.parseDouble(data[5]));
-            td.SetSensorHumidity(Double.parseDouble(data[6]));
-            td.SetSensorBarometer(Double.parseDouble(data[7]));
-            break;
-        }
-    }
 
-    
-    
-    
-    /**
-     * ReadTextTrendData() Read Trend Data in text format
-     * 
-     */
-    private void ReadTextTrendData()
-    {
-        File f = new File(mTrendDataFilename);
-        if (f.exists() && f.canRead()) {
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(f));
-                String line;
-                int version = 1;
-                if ((line = reader.readLine()) != null) {
-                    // the first line is the version number
-                    version = Integer.parseInt(line);
-                }
-    
-                while ((line = reader.readLine()) != null)
-                {
-                  TrendData td = new TrendData();
-                  SetDataFromString(version, line, td);
-                  mTrendData.add(td);
-                }
-                reader.close();
-            } catch (Exception e) {
-                DumpError("ReadTextTrendData: Error occurred trying to read " + mTrendDataFilename, e);
-            }
-        }
-    }
-    
-   
-    
-    
-    
+
     
     public static PiWeather piWXMain;        
 

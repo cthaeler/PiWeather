@@ -14,7 +14,7 @@ import java.io.*;
 public class TrendDisplayPanel extends JPanel
 {
     /** local trend data copy */
-    private ArrayList<TrendData> mTrendData;
+    private TrendData mTrendData;
     
     /** converted trend data for redraws */
     private int[][] mData;
@@ -264,13 +264,13 @@ public class TrendDisplayPanel extends JPanel
      * @param list  the list of TrendData items.  Return doing nothing if there are less than 2 values
      * 
      */
-    public void UpdateData(ArrayList<TrendData> list)
+    public void UpdateData(TrendData td)
     {
-        mTrendData = new ArrayList<TrendData>();
+        mTrendData = new TrendData(td);
 
-        for (int i = 0 ; i<list.size();i++) {
-            mTrendData.add(list.get(i)) ;
-        }
+        //for (int i = 0 ; i<list.size();i++) {
+        //    mTrendData.add(list.get(i)) ;
+        //}
         UpdateCycling();
         UpdateDrawingData();
     }
@@ -292,7 +292,7 @@ public class TrendDisplayPanel extends JPanel
     private void UpdateDrawingData()
     {
         
-        if (mTrendData == null || mTrendData.size() < 2) return;
+        if (mTrendData == null || mTrendData.NumValues() < 2) return;
         
         
         Dimension dim = getSize();
@@ -303,8 +303,8 @@ public class TrendDisplayPanel extends JPanel
         
         // we may have saved more than are going to be visible so find the first visible one
         int firstVisible = 0;
-        for (int i=0; i < mTrendData.size(); i++) {
-            long dt = Duration.between(mTrendData.get(i).GetDateTime(), mTrendData.get(mTrendData.size()-1).GetDateTime()).getSeconds();
+        for (int i=0; i < mTrendData.NumValues(); i++) {
+            long dt = Duration.between(mTrendData.GetDateTime(i), mTrendData.GetDateTime(mTrendData.NumValues()-1)).getSeconds();
             if (dt <= totalTime) {
                 firstVisible = i;
                 break;
@@ -341,25 +341,25 @@ public class TrendDisplayPanel extends JPanel
                 }
             }
         }
-        int numDataPoints = mTrendData.size()-firstVisible;
+        int numDataPoints = mTrendData.NumValues()-firstVisible;
        	mData = new int[7][numDataPoints];
 
 		try {
-	        for (int i=firstVisible, di=0; i < mTrendData.size(); i++, di++)
+	        for (int i=firstVisible, di=0; i < mTrendData.NumValues(); i++, di++)
 	        {
 	        	if (di >= numDataPoints) {
 	        		System.out.println(LocalDateTime.now());
 					System.out.println("numDataPoints = " + numDataPoints);
 		        	System.out.println("di = " + di);
 		        }
-	            TrendData td = mTrendData.get(i);
-	            mData[0][di] = GetX(td.GetDateTime()); // 0 is the time value (X)
-	            mData[1][di] = GetTempY(td.GetTemp()); // 1 is the y temperature
-	            mData[2][di] = GetHumidityY(td.GetHumidity()); // 2 is the humidity
-	            mData[3][di] = GetBarometerY(td.GetBarometer()); // 3 is the barometer
-	            mData[4][di] = GetTempY(td.GetSensorTemp()); // 4 is the y sensor temperature
-	            mData[5][di] = GetHumidityY(td.GetSensorHumidity()); // 5 is the sensor humidity
-	            mData[6][di] = GetBarometerY(td.GetSensorBarometer()); // 6 is the sensor barometer
+
+	            mData[0][di] = GetX(mTrendData.GetDateTime(i)); // 0 is the time value (X)
+	            mData[1][di] = GetTempY(mTrendData.GetTemp(i)); // 1 is the y temperature
+	            mData[2][di] = GetHumidityY(mTrendData.GetHumidity(i)); // 2 is the humidity
+	            mData[3][di] = GetBarometerY(mTrendData.GetBarometer(i)); // 3 is the barometer
+	            mData[4][di] = GetTempY(mTrendData.GetSensorTemp(i)); // 4 is the y sensor temperature
+	            mData[5][di] = GetHumidityY(mTrendData.GetSensorHumidity(i)); // 5 is the sensor humidity
+	            mData[6][di] = GetBarometerY(mTrendData.GetSensorBarometer(i)); // 6 is the sensor barometer
 	        }
 	    } catch (Exception e) {
 	    	if (PiWeather.DebugLevel().ShowStackTrace()) e.printStackTrace();
@@ -376,7 +376,7 @@ public class TrendDisplayPanel extends JPanel
      * @param displayDays number of days to display (0 == cycling)
      * 
      */
-    public void UpdateNumDays(ArrayList<TrendData> list, int displayDays)
+    public void UpdateNumDays(TrendData td, int displayDays)
     {
         if (displayDays == 0) {
             mCycleDisplayDays = true;
@@ -385,7 +385,7 @@ public class TrendDisplayPanel extends JPanel
             mDisplayDays = displayDays;
         }
 
-        UpdateData(list);
+        UpdateData(td);
     }
     
     /**
