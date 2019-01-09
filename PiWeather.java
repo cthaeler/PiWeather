@@ -234,14 +234,14 @@ class PiWeather
       {
         if (DebugLevel().ShowErrors()) {
             System.err.println();
-            System.err.println((char)27 + "[31m");
+            //System.err.println((char)27 + "[31m");
             System.err.println("ERROR: " + errorString);
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss dd MMM, yyyy");
             LocalDateTime dateTime = LocalDateTime.now();
 
             System.err.print(dateTime.format(formatter));
-            System.err.println((char)27 + "[39;49m");
+            //System.err.println((char)27 + "[39;49m");
         }
         if (exception != null && DebugLevel().ShowStackTrace()) {
              exception.printStackTrace();
@@ -757,10 +757,12 @@ class PiWeather
         };
         if (mTrendDataDays >= 0 && mTrendDataDays <=10) {
             chooser.setSelectedItem(Integer.toString(mTrendDataDays));
-        } else if (mTrendDataDays > 10 && mTrendDataDays <= 20) {
+        } else if (mTrendDataDays > 10 && mTrendDataDays < 20) {
             chooser.setSelectedItem("15");
-        } if (mTrendDataDays > 20) {
+        } if (mTrendDataDays >= 20 && mTrendDataDays < 30) {
             chooser.setSelectedItem("20");
+        } if (mTrendDataDays >= 30) {
+            chooser.setSelectedItem("30");
         }
         chooser.setPrototypeDisplayValue("XXXXX");
         chooser.addActionListener(new ActionListener() {
@@ -946,7 +948,7 @@ class PiWeather
         
         rightMainPanel.add(forcastPanel);
         
-        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, msDebugLevel.ShowDebugging());
+        mTrendDisplayPanel = new TrendDisplayPanel(mTrendDataDays, mWxSensor, false);
         
         rightMainPanel.add(mTrendDisplayPanel);
  

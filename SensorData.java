@@ -164,9 +164,7 @@ public class SensorData
             URL url = new URL(urlStr);
             InputStream stream = url.openStream();
             
-            if (PiWeather.DebugLevel().ShowDebugging()) System.out.println("Stream Open " + stream);
             Document doc = factory.newDocumentBuilder().parse(stream);
-            if (PiWeather.DebugLevel().ShowDebugging()) System.out.println("done reading from web");
             
             try {
                 mCurrObsTime = WxWebDocUtils.ReadStringFromDoc(doc, "start-valid-time");          
