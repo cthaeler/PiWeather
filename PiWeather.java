@@ -83,6 +83,14 @@ class PiWeather
   
     };
 
+    /** location of webpages */
+    private String mWebRootPiWx = "/Library/Webserver/Documents";
+
+    /** Website output of sensor data */
+    private boolean mSensorWebOut = false;
+    
+    /** output the UI as a webpage */
+    private boolean mGenerateHTMLOut = false;
 
 
     /** supported sensors */
@@ -341,6 +349,58 @@ class PiWeather
     }
     
     /**
+     * 
+     * ShouldOutputSensorDataOnWeb() output SensorData in a webpage
+     * 
+     * @return true if option set and a sensor is available
+     * 
+     */
+    public boolean ShouldOutputSensorDataOnWeb()
+    {
+        return (mSensorWebOut && HaveSensor());
+    }
+
+    /**
+     * 
+     * GeneratSensorWebpage() GeneratSensorWebpage (sensor.html)
+     * 
+     * @return true if successful
+     * 
+     */
+    public boolean OutputSensorDataToWeb()
+    {
+        if (!ShouldOutputSensorDataOnWeb()) {
+            return false;
+        }
+        /** now write the SensorData to the file sensor.html */
+        
+        try {
+        	String sensorName = mWxSensor.GetName();
+        	double temp = mSensorData.GetTemp();
+        	double humidity = mSensorData.GetHumidity();
+        	double press = mSensorData.GetBarometer();
+          File file = new File(mWebRootPiWx + "/WxPi/sensor.html");
+          if (!file.exists()) file.createNewFile();
+          FileWriter fileWriter = new FileWriter(file);
+          fileWriter.write("<html>\n<body>\n");
+          fileWriter.write("Sensor Name: " + sensorName + " at " + mCurrObsTime + "<br>\n" );
+          fileWriter.write("Temp: " + temp + "<br>\n");
+          fileWriter.write("Humidity: " + humidity + "<br>\n");
+          fileWriter.write("Press: " + press + "<br>");
+          fileWriter.write("</html>\n</body>\n");
+          fileWriter.flush();
+          fileWriter.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        
+        return true;
+    }
+    
+    
+    
+    
+    /**
      * GetWxSensor() get the sensor class for the named sensor
      * 
      * @param sensor Name of the sensor
@@ -401,6 +461,31 @@ class PiWeather
                         i++;
                     } else {
                         System.err.println("Bad Sensor type");
+                        PrintUsage();
+                        System.exit(1);
+                    }
+                }
+                break;
+                
+            case "-so": // output current sensor data to webpage
+                mSensorWebOut = true;
+                break;
+
+            case "-html": // Build a webpage of the data (mirror of UI)
+                mGenerateHTMLOut = true;
+                break;
+                
+            case "-webroot": // website root
+                if (i+1 >= args.length) {
+                    PrintUsage();
+                    System.exit(1);
+                } else {
+                    File dir = new File(args[i+1]);
+                    if (dir.exists()) {
+                        mWebRootPiWx = args[i+1];
+                        i++;
+                    } else {
+                        System.err.println("Bad webroot");
                         PrintUsage();
                         System.exit(1);
                     }
@@ -578,7 +663,10 @@ class PiWeather
     private void PrintUsage()
     {
         System.out.println("Usage: PiWeather -s [DHT11, DHT22, BME280, DUMMY] -td 4 -f");
-        System.out.println("  -s              Sensor type, one of DHT11, DHT22, BME280 or DUMMY The DUMMY sensor is a simulatored sensor for testing");
+        System.out.println("  -s               Sensor type, one of DHT11, DHT22, BME280 or DUMMY The DUMMY sensor is a simulatored sensor for testing");
+        System.out.println("  -so              Save sensor data as a webpage"); 
+        System.out.println("  -html            Generate an HTML page");
+        System.out.println("  -webroot         Website root for sensor and html version");
         System.out.println("  -f               Full frame");
         System.out.println("  -td <num>        Show num (1-30) days of trend data.  0 == cycle through # of days");
         System.out.println("  -ftd             Generate Fake Trend Data and exit");
@@ -1040,6 +1128,10 @@ class PiWeather
         if (HaveSensor()) {
             mSensorData.UpdateFromSensor(mWxSensor);
             UpdateDataValuesUI();
+            
+            if (ShouldOutputSensorDataOnWeb()) {
+            	  OutputSensorDataToWeb();
+            }
         }
     }
     
