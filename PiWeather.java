@@ -372,22 +372,29 @@ class PiWeather
         if (!ShouldOutputSensorDataOnWeb()) {
             return false;
         }
-        /** now write the SensorData to the file sensor.html */
         
+        /** now write the SensorData to the file sensor.html */
         try {
-        	String sensorName = mWxSensor.GetName();
-        	double temp = mSensorData.GetTemp();
-        	double humidity = mSensorData.GetHumidity();
-        	double press = mSensorData.GetBarometer();
+          String sensorName = mWxSensor.GetName();
+          String sensorAbilities = "";
+          if (mWxSensor.HasTemperature()) { sensorAbilities += "T"; }
+          if (mWxSensor.HasHumidity()) { sensorAbilities += "H"; }
+          if (mWxSensor.HasBarometricPressure()) { sensorAbilities += "P"; }
+          double temp = mSensorData.GetTemp();
+          double humidity = mSensorData.GetHumidity();
+          double press = mSensorData.GetBarometer();
           File file = new File(mWebRootPiWx + "/WxPi/sensor.html");
           if (!file.exists()) file.createNewFile();
           FileWriter fileWriter = new FileWriter(file);
           fileWriter.write("<html>\n<body>\n");
-          fileWriter.write("Sensor Name: " + sensorName + " at " + mCurrObsTime + "<br>\n" );
+          fileWriter.write("Sensor Name: " + sensorName + "<br>\n" );
+          fileWriter.write("Sensor Abilities: " + sensorAbilities + "<br>\n");
+          fileWriter.write("Date: " + LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE) + "<br>\n");
+          fileWriter.write("Time: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "<br>\n");
           fileWriter.write("Temp: " + temp + "<br>\n");
           fileWriter.write("Humidity: " + humidity + "<br>\n");
           fileWriter.write("Press: " + press + "<br>");
-          fileWriter.write("</html>\n</body>\n");
+          fileWriter.write("</body>\n</html>\n");
           fileWriter.flush();
           fileWriter.close();
         } catch (IOException e) {
