@@ -70,9 +70,6 @@ public class HTML_Sensor extends WxSensor
      */
     public int RefreshSensorData()
     {
-      
-          /** supported sensors */
-    
         try {
             URL url = new URL(mURL);
             InputStream is = url.openStream();
@@ -92,8 +89,8 @@ public class HTML_Sensor extends WxSensor
                     switch (quantity) {
                         case "Sensor Abilities":
                             if (valstr.indexOf('T') != -1) mHasTemp = true; else mHasTemp = false;
-                            if (valstr.indexOf('H') != -1) mHasHumidity = true; else mHasHumidity = false; 
-                            if (valstr.indexOf('P') != -1) mHasPressure = true; else mHasPressure = false;  
+                            if (valstr.indexOf('H') != -1) mHasHumidity = true; else mHasHumidity = false;
+                            if (valstr.indexOf('P') != -1) mHasPressure = true; else mHasPressure = false;
                             break;
                         
                         case "Temp":
@@ -110,6 +107,12 @@ public class HTML_Sensor extends WxSensor
                     }
                 }
             }
+/**
+            System.out.println(mURL);
+            System.out.println(mHasTemp + " " + mTemp);
+            System.out.println(mHasHumidity + " " + mHumidity);
+            System.out.println(mHasPressure + " " + mPressure);
+*/
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -176,7 +179,7 @@ public class HTML_Sensor extends WxSensor
      * 
      * @return pressure
      */
-    public double GetBarometrucPressure()
+    public double GetBarometricPressure()
     {
         return mPressure;
     }

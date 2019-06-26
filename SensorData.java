@@ -144,6 +144,7 @@ public class SensorData
 
         
         if (sensor.HasBarometricPressure()) {
+        	
             mBarometerValid = true;
             mBarometer = sensor.GetBarometricPressure();
         } else {

@@ -93,7 +93,7 @@ public class Dummy_Sensor extends WxSensor
      * 
      * @return 29.92
      */
-    public double GetBarometrucPressure()
+    public double GetBarometricPressure()
     {
         return 29.92;
     }
