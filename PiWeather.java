@@ -94,7 +94,7 @@ class PiWeather
 
 
     /** supported sensors */
-    private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "BMP280", "DUMMY"};
+    private static final String[] msSupportedSensors = {"DHT11", "DHT22", "BME280", "BMP280", "DUMMY", "HTML"};
     
     /** trend data file */
     private String mTrendDataFilename;
@@ -393,7 +393,7 @@ class PiWeather
           fileWriter.write("Time: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "<br>\n");
           fileWriter.write("Temp: " + temp + "<br>\n");
           fileWriter.write("Humidity: " + humidity + "<br>\n");
-          fileWriter.write("Press: " + press + "<br>");
+          fileWriter.write("Press: " + press + "<br>\n");
           fileWriter.write("</body>\n</html>\n");
           fileWriter.flush();
           fileWriter.close();
@@ -427,6 +427,8 @@ class PiWeather
             return new BMP280_Sensor();
         case "DUMMY":
             return new Dummy_Sensor();
+        case "HTML":
+            return new HTML_Sensor();
         }
         
         return null;
@@ -466,6 +468,15 @@ class PiWeather
                         if (msDebugLevel.ShowInformation() && mWxSensor != null)
                             System.out.println("Sensor: " + mWxSensor.GetName());
                         i++;
+
+                        if (sensor.equals("HTML")) {
+                            if (i+1 >= args.length) {
+                                PrintUsage();
+                                System.exit(1);
+                            }
+                            ((HTML_Sensor)mWxSensor).SetURL(args[i+1]);
+                            i++;
+                        }
                     } else {
                         System.err.println("Bad Sensor type");
                         PrintUsage();
@@ -669,8 +680,12 @@ class PiWeather
      */
     private void PrintUsage()
     {
-        System.out.println("Usage: PiWeather -s [DHT11, DHT22, BME280, DUMMY] -td 4 -f");
-        System.out.println("  -s               Sensor type, one of DHT11, DHT22, BME280 or DUMMY The DUMMY sensor is a simulatored sensor for testing");
+        System.out.println("Usage: PiWeather -s [DHT11, DHT22, BME280, DUMMY, HTML] -td 4 -f");
+        System.out.println("  -s               Sensor type, one of DHT11, DHT22, BME280, DUMMY or <URL>");
+        System.out.println("                   The DUMMY sensor is a simulatored sensor for testing");
+        System.out.println("                   The HTML is followed by a URL to a sensor.html on a");
+        System.out.println("                       machine running this code with a real sensor on it");
+        System.out.println("                       mthe URL is of the form: http://10.0.0.101/html/WxPi/sensor.html");
         System.out.println("  -so              Save sensor data as a webpage"); 
         System.out.println("  -html            Generate an HTML page");
         System.out.println("  -webroot         Website root for sensor and html version");

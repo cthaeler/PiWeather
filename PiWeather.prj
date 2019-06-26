@@ -30,6 +30,7 @@
   </Project_ID>
   <Files>
     <File>Dummy_Sensor.java</File>
+    <File>HTML_Sensor.java</File>
     <File>PiWeather.java</File>
     <File>ForecastData.java</File>
     <File>TimeUpdateTimer.java</File>

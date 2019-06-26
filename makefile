@@ -24,6 +24,7 @@ CLASSES = \
 	DHT22_Sensor.java \
 	DataValueUI.java \
 	Dummy_Sensor.java \
+	HTML_Sensor.java \
 	ForecastData.java \
 	ForecastDataValueUI.java \
 	MapUpdateTimer.java \
