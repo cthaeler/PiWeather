@@ -50,6 +50,7 @@ class PiWeather
     private static final String[][] msAirports = {
         {"KDVO", "https://w1.weather.gov/data/METAR/KDVO.1.txt"},
         {"KO69", "https://w1.weather.gov/data/METAR/KO69.1.txt"},
+        {"KRNO", "https://w1.weather.gov/data/METAR/KRNO.1.txt"},
     };
     
     /** map URLs for the center column of the UI */
@@ -58,7 +59,7 @@ class PiWeather
         {"http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptyp.gif" ,"RUC12 - sfc - prcp type"},  // Precipitation Type
         {"http://weather.rap.ucar.edu/model/ruc12hr_sfc_wind.gif" ,"RUC12 - sfc - Winds"},  // Surface Winds
         {"http://weather.rap.ucar.edu/model/ruc12hr_sfc_temp.gif" ,"RUC12 - sfc - Temp"},  // Temperature
-        {"http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif" ,"RUC12 - sfc - radar"},  // Radar Reflectivity
+        //{"http://weather.rap.ucar.edu/model/ruc12hr_sfc_ptnd.gif" ,"RUC12 - sfc - radar"},  // Radar Reflectivity
         {"http://weather.rap.ucar.edu/model/ruc12hr_0_clouds.gif" ,"RUC12 - clouds"},  // Clouds
     };
     
