@@ -50,6 +50,7 @@ public class ForecastData
         public String GetIconURL() { return mIconURL; }
         public void SetIconURL(String iconURL)
         {
+            //System.out.println("SetIconURL to " + iconURL);
             mIconURL = iconURL;
         }
         
@@ -126,6 +127,7 @@ public class ForecastData
 
     public boolean UpdateFromWeb(String urlStr, SensorData sData)
     {
+        //System.out.println(urlStr);
         /* Read from the web doc the weather information */
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -135,6 +137,7 @@ public class ForecastData
             InputStream stream = url.openStream();
             
             Document doc = factory.newDocumentBuilder().parse(stream);
+            
             
             try {
                 NodeList dataNodes = doc.getElementsByTagName("data");
@@ -149,6 +152,7 @@ public class ForecastData
                     // first let's find the icon data
                     Element dataElement = (Element) dataNodes.item(n);
                     String typeString = dataElement.getAttribute("type");
+                    //System.out.println("element type: " + typeString);
                     
                     // look for the forecast data
                     if (typeString.equals("forecast")) {
@@ -159,11 +163,14 @@ public class ForecastData
                             NodeList svtNodes = childElement.getElementsByTagName("start-valid-time");
                             // find the full list not the short lists just so it's easier
                             if (svtNodes.getLength() > 7) {
+                                //System.out.println("Found Full List\n");
                                 // found the full list
                                 for (int svt = 0; svt < svtNodes.getLength(); svt++) {
                                     Element svtElement = (Element) svtNodes.item(svt);
                                     Attr attr = svtElement.getAttributeNode("period-name");
                                     String info = attr.getValue();
+
+                                    //System.out.println("period-name is " + info);
                                     mValues.get(svt+1).SetInfo(info);
                                     
                                     if (svt+1 >= mValues.size()-1) break;
@@ -174,6 +181,7 @@ public class ForecastData
                         // now find the conditions icons
                         NodeList conditionNodes = dataElement.getElementsByTagName("conditions-icon");
                         int numConditionNodes = conditionNodes.getLength();
+                        //System.out.println("numConditionNodes= " + numConditionNodes);
                         if (conditionNodes.getLength() > 0) {
                             Element childElement = (Element) conditionNodes.item(0);
                             NodeList iconNodes = childElement.getElementsByTagName("icon-link");
@@ -183,8 +191,11 @@ public class ForecastData
                             for (int i = 0; i < iconNodes.getLength(); i++) {
                                Element iconElement = (Element) iconNodes.item(i);
                                String iconURL = WxWebDocUtils.GetCharacterDataFromElement(iconElement);
+                               //System.out.println("iconURL = " + iconURL);
                                if (i < mValues.size()-1) {
-                                   mValues.get(i+1).SetIconURL(iconURL);
+                                   int idx = i; //+1;
+                                   mValues.get(idx).SetIconURL(iconURL);
+                                   //System.out.println("idx = " + idx + " " + mValues.get(idx) + "\n");
                                 } else {
                                     break;
                                 }
@@ -227,6 +238,8 @@ public class ForecastData
             PiWeather.DumpError("ForecastData.UpdateFromWeb: Open and Parse Stream", e);
             return false;
         }
+        //System.out.println("Done UpdateFromWeb\n");
+        //System.out.println(mValues);
         return true;
     }
 }

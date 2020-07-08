@@ -69,12 +69,12 @@ public class ForecastDataValueUI
     private void CreateUIComponents()
     {
         mTempLabel = new JLabel("");
-        mTempLabel.setFont(new Font("Monospaced", Font.PLAIN, 48));
+        mTempLabel.setFont(new Font("Monospaced", Font.PLAIN, 48)); // UI SIZE DATA
         mTempLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mTempLabel.setForeground(Color.white);
 
         mInfoLabel = new JLabel("");
-        mInfoLabel.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        mInfoLabel.setFont(new Font("Monospaced", Font.PLAIN, 14)); // UI SIZE DATA
         mInfoLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mInfoLabel.setForeground(Color.white);
 

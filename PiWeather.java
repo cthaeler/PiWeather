@@ -734,6 +734,7 @@ class PiWeather
 
         // Main panel to add the sub panels too
         JPanel mainPanel = new JPanel();
+        mainPanel.setMinimumSize(new Dimension(640, 480));
         mainPanel.setBackground(Color.BLACK);
         BoxLayout frameBox = new BoxLayout(mainPanel, BoxLayout.X_AXIS);
         mainPanel.setLayout(frameBox);
@@ -1315,14 +1316,18 @@ class PiWeather
                 double temp = mForecastData.GetTemp(i);
                 String url = mForecastData.GetIconURL(i);
                 String info = mForecastData.GetInfo(i);
+                //System.out.println(i + " = " + temp + " " + url + " " + info);
                 if (url == null) break;
 
                 mForecastValues.get(i).setTemp(temp);
+                //System.out.println("Set Temp OK");
                 mForecastValues.get(i).setIconURL(url);
+                //System.out.println("setIconURL OK");
                 mForecastValues.get(i).setInfo(info, false);
+                //System.out.println("setInfo OK");
             }
         } catch (Exception e) {
-            DumpError("UpdateForecastValues", e);
+            DumpError("UpdateForecastValuesUI", e);
             return false;
         }
         return true;

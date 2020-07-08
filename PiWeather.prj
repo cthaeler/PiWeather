@@ -48,7 +48,7 @@
     <File>BME280_Sensor.java</File>
     <File>MapUpdateTimer.java</File>
     <File>BMP280_Sensor.java</File>
-    <File>SensorUpdateTimer.java</File>
     <File>ForecastDataValueUI.java</File>
+    <File>SensorUpdateTimer.java</File>
   </Files>
 </PRJ>
